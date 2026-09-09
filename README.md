@@ -31,11 +31,19 @@ logger y dato stale. `stale` global se calcula con los campos obligatorios de
 `DEYE_FRESH_REQUIRED_FIELDS`; nunca convierte un valor ausente en cero. El total
 solar permanece `null` hasta recibir PV1 y PV2.
 
+`observed_at` es el último evento (incluye conectividad), mientras
+`data_observed_at` es la última métrica. La página muestra la antigüedad relativa
+de esta última, para que una reconexión no parezca una lectura nueva.
+
 ## Configuración y validación pendiente (Delivery 0)
 
 Copiar `.env.example` a `.env`. Todos los suffixes, prefijo, umbral stale y credenciales MQTT son configurables allí. El adaptador inicial cubre `dc/pv1/power`, `dc/pv2/power`, `ac/l1/voltage`, `ac/daily_energy_bought`, `ac/daily_energy_sold`, `ac/total_power`, `radiator_temp` y `ac/temperature`.
 
 No se infieren SOC, potencia/estado de batería, consumo de Casa ni potencia de red. `ac/total_power` queda como diagnóstico del inversor, no como carga ni red. Sólo se puede habilitar potencia de red/batería con sus variables de topic y una convención explícita (`import_positive`/`export_positive`, `charge_positive`/`discharge_positive`); con `unknown` no se publica un valor.
+
+Las convenciones de signo son estrictas: un valor distinto de esos conjuntos
+detiene el arranque con un error de configuración, en lugar de interpretar una
+potencia ambiguamente.
 
 Antes de conectar al inversor real se debe validar y documentar: existencia y unidades de cada topic, prefijo y nivel de logger, payload/retained, frecuencia real y umbral stale, significado de `status` y `logger_status`, y signos de potencia de red/batería durante importación, exportación, carga y descarga. Los fixtures `grid_*_hypothesis.json` son hipótesis de signo, no evidencia.
 

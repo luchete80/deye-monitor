@@ -5,6 +5,11 @@ import os
 from dotenv import load_dotenv
 
 
+VALID_DATA_SOURCES = {"mqtt", "simulated"}
+VALID_GRID_POWER_SIGNS = {"unknown", "import_positive", "export_positive"}
+VALID_BATTERY_POWER_SIGNS = {"unknown", "charge_positive", "discharge_positive"}
+
+
 def _value(name: str, default: str = "") -> str:
     return os.getenv(name, default).strip()
 
@@ -27,6 +32,19 @@ class Config:
     topics: dict[str, str]
     grid_power_sign: str
     battery_power_sign: str
+
+    def __post_init__(self) -> None:
+        if self.data_source not in VALID_DATA_SOURCES:
+            raise ValueError(
+                f"DEYE_DATA_SOURCE must be one of {sorted(VALID_DATA_SOURCES)}, got {self.data_source!r}"
+            )
+        self._validate_sign("DEYE_GRID_POWER_SIGN", self.grid_power_sign, VALID_GRID_POWER_SIGNS)
+        self._validate_sign("DEYE_BATTERY_POWER_SIGN", self.battery_power_sign, VALID_BATTERY_POWER_SIGNS)
+
+    @staticmethod
+    def _validate_sign(name: str, value: str, allowed: set[str]) -> None:
+        if value not in allowed:
+            raise ValueError(f"{name} must be one of {sorted(allowed)}, got {value!r}")
 
     @classmethod
     def from_env(cls) -> "Config":

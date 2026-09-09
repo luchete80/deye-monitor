@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
 import json
+import pytest
 
 from deye_monitor.adapter import SG03LP1Adapter, parse_payload, parse_status
 from deye_monitor.app import create_app
@@ -85,6 +86,27 @@ def test_configured_power_signs_are_explicit_and_unknown_is_not_published():
     assert explicit.adapt("deye/battery/power", b"30") == ("battery.power_w", 30.0)
 
 
+def test_invalid_sign_and_data_source_configuration_fail_fast():
+    with pytest.raises(ValueError, match="DEYE_GRID_POWER_SIGN"):
+        config(grid_power_sign="exprot_positive")
+    with pytest.raises(ValueError, match="Invalid battery power sign"):
+        SG03LP1Adapter("deye", {}, battery_power_sign="maybe")
+    with pytest.raises(ValueError, match="DEYE_DATA_SOURCE"):
+        config(data_source="simulate")
+
+
+def test_data_observed_at_excludes_connectivity_events():
+    current = [datetime(2026, 1, 1, tzinfo=timezone.utc)]
+    store = StateStore(10, ("solar.pv1_power_w",), clock=lambda: current[0])
+    store.update("solar.pv1_power_w", 10)
+    data_at = store.snapshot()["data_observed_at"]
+    current[0] += timedelta(seconds=5)
+    store.set_broker(True)
+    snapshot = store.snapshot()
+    assert snapshot["data_observed_at"] == data_at
+    assert snapshot["observed_at"] != data_at
+
+
 class FakeClient:
     def __init__(self, *args, **kwargs):
         self.calls = []
@@ -120,6 +142,7 @@ def test_http_api_sse_and_page():
     assert client.get("/").status_code == 200
     assert client.get("/health").json["ok"] is True
     assert client.get("/api/state").json["solar"]["pv1_power_w"] == 42
+    assert client.get("/api/state").json["data_observed_at"] is not None
     response = client.get("/events", buffered=False)
     assert response.status_code == 200
     assert b"event: state" in next(response.response)
@@ -130,6 +153,8 @@ def test_sse_client_keeps_native_reconnect_enabled():
     script = open("deye_monitor/static/app.js", encoding="utf-8").read()
     assert "new EventSource('/events')" in script
     assert "source.close()" not in script
+    assert "data_observed_at" in script
+    assert "relativeAge" in script
 
 
 def test_all_fixtures_and_simulator_without_broker(caplog):

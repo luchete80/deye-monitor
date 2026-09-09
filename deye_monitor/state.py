@@ -31,6 +31,7 @@ class StateStore:
         self._timestamps = {group: {key: None for key in fields} for group, fields in self._values.items()}
         self._connectivity = {"broker": "disconnected", "service": "unknown", "logger": "unknown"}
         self._observed_at: datetime | None = None
+        self._data_observed_at: datetime | None = None
 
     def update(self, dotted: str, value: object, received_at: datetime | None = None) -> None:
         received_at = received_at or self.clock()
@@ -41,6 +42,7 @@ class StateStore:
             else:
                 self._values[group][field] = value
                 self._timestamps[group][field] = received_at
+                self._data_observed_at = received_at
             self._observed_at = received_at
         self._notify()
 
@@ -68,6 +70,7 @@ class StateStore:
             globally_fresh = bool(required) and all(required)
             result["connectivity"] = {**self._connectivity, "stale": not globally_fresh}
             result["observed_at"] = iso(self._observed_at)
+            result["data_observed_at"] = iso(self._data_observed_at)
             result["field_timestamps"] = {g: {k: iso(v) for k, v in fields.items()} for g, fields in timestamps.items()}
             result["field_freshness"] = freshness
             return result

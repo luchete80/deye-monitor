@@ -4,6 +4,10 @@ import json
 import math
 
 
+GRID_POWER_SIGNS = {"unknown", "import_positive", "export_positive"}
+BATTERY_POWER_SIGNS = {"unknown", "charge_positive", "discharge_positive"}
+
+
 def parse_payload(payload: bytes | str) -> float | None:
     """Accept a numeric scalar or a JSON numeric scalar; reject unknown values."""
     try:
@@ -31,6 +35,10 @@ def parse_status(payload: bytes | str) -> str | None:
 
 class SG03LP1Adapter:
     def __init__(self, prefix: str, topics: dict[str, str], grid_power_sign: str = "unknown", battery_power_sign: str = "unknown"):
+        if grid_power_sign not in GRID_POWER_SIGNS:
+            raise ValueError(f"Invalid grid power sign: {grid_power_sign!r}")
+        if battery_power_sign not in BATTERY_POWER_SIGNS:
+            raise ValueError(f"Invalid battery power sign: {battery_power_sign!r}")
         self.prefix = prefix.strip("/")
         self.by_topic = {f"{self.prefix}/{suffix}": field for field, suffix in topics.items()}
         self.signs = {"grid.power_w": grid_power_sign, "battery.power_w": battery_power_sign}
