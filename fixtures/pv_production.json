@@ -1,0 +1,1 @@
+{"note":"Synthetic fixture. No grid/battery sign claim.","messages":[{"topic":"deye/status","payload":"online"},{"topic":"deye/logger_status","payload":"online"},{"topic":"deye/dc/pv1/power","payload":"1800.5"},{"topic":"deye/dc/pv2/power","payload":"950"},{"topic":"deye/ac/l1/voltage","payload":"231.2"}]}

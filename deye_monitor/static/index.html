@@ -1,0 +1,8 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Deye Monitor</title><link rel="stylesheet" href="/static/style.css"></head><body>
+<header><h1>Deye Monitor</h1><p id="connection">Conectando…</p><p id="age">Sin datos</p></header>
+<main>
+<article><h2>Solar</h2><dl><dt>PV1</dt><dd data-path="solar.pv1_power_w" data-unit="W"></dd><dt>PV2</dt><dd data-path="solar.pv2_power_w" data-unit="W"></dd><dt>Total</dt><dd data-path="solar.total_power_w" data-unit="W"></dd></dl></article>
+<article><h2>Batería</h2><dl><dt>SOC</dt><dd data-path="battery.soc_pct" data-unit="%"></dd><dt>Potencia</dt><dd data-path="battery.power_w" data-unit="W"></dd></dl></article>
+<article><h2>Red</h2><dl><dt>Tensión</dt><dd data-path="grid.voltage_v" data-unit="V"></dd><dt>Potencia</dt><dd data-path="grid.power_w" data-unit="W"></dd><dt>Comprada hoy</dt><dd data-path="grid.energy_bought_today_kwh" data-unit="kWh"></dd><dt>Vendida hoy</dt><dd data-path="grid.energy_sold_today_kwh" data-unit="kWh"></dd></dl></article>
+<article><h2>Casa</h2><dl><dt>Potencia</dt><dd data-path="load.total_power_w" data-unit="W"></dd></dl></article>
+</main><script src="/static/app.js"></script></body></html>

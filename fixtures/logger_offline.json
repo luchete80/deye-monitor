@@ -1,0 +1,1 @@
+{"note":"Logger availability is distinct from broker and service.","messages":[{"topic":"deye/status","payload":"online"},{"topic":"deye/logger_status","payload":"offline"}]}

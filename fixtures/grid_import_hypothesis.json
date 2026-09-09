@@ -1,0 +1,1 @@
+{"note":"SIGN HYPOTHESIS ONLY UNTIL DELIVERY 0: example import payload; configured grid power topic/sign required.","messages":[{"topic":"deye/status","payload":"online"},{"topic":"deye/ac/grid_power_unvalidated","payload":"720"}]}

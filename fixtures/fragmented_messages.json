@@ -1,0 +1,1 @@
+{"note":"Topics arrive independently; partial state is expected.","messages":[{"topic":"deye/dc/pv1/power","payload":"1200","delay":0.01},{"topic":"deye/ac/l1/voltage","payload":"230.1","delay":0.01},{"topic":"deye/dc/pv2/power","payload":"700"}]}

@@ -1,59 +1,49 @@
-# Deye Monitor
+# Deye Monitor — Delivery 1
 
-Dashboard web liviano para visualizar datos publicados por
-[`deye-inverter-mqtt`](../deye-inverter-mqtt/) a través de Mosquitto.
+Monitor web liviano para el inversor esperado **Deye SUN-6K-OG03LP1-EU-AM2** (monofásico, familia SG03LP1). Consume MQTT publicado por otro servicio; no se conecta a Modbus ni modifica, copia o incluye `deye-inverter-mqtt` ni `deye-dashboard`.
 
-Este directorio contiene por ahora solamente la definición del proyecto. La
-implementación se realizará por entregas pequeñas después de validar los topics
-reales del inversor.
+Esta entrega guarda sólo estado en memoria y ofrece Flask, HTTP y SSE. No incluye SQLite, gráficos, SVG de flujos, Docker, WebSocket ni comandos MQTT.
 
-## Arquitectura objetivo
+## Ejecución local
 
-```text
-Deye inverter
-      |
-      | TCP/Modbus (una sola adquisición)
-      v
-deye-inverter-mqtt ---> Mosquitto ---> deye-monitor ---> navegador kiosk
-                                             |              |
-                                             v              v
-                                           SQLite        SSE + HTTP
+```bash
+python3 -m venv .venv
+. .venv/bin/activate
+pip install -r requirements.txt -r requirements-dev.txt
+cp .env.example .env
+# editar .env: DEYE_DATA_SOURCE=simulated
+python -m deye_monitor
 ```
 
-`deye-monitor` no accede directamente al logger y no reemplaza ni modifica
-`deye-inverter-mqtt`. Su responsabilidad empieza en MQTT.
+Abrir `http://127.0.0.1:5000`. El modo `simulated` reproduce el fixture elegido por `DEYE_FIXTURE`, en un hilo distinto del cliente MQTT. El modo `mqtt` usa paho-mqtt y reconecta con `connect_async`/`loop_start`; sus callbacks sólo adaptan el mensaje y actualizan el estado protegido por lock.
 
-## Decisiones iniciales
+Para pruebas: `pytest`.
 
-- Proyecto nuevo, no un fork ni una copia del repositorio MQTT.
-- Backend Python pequeño, inicialmente Flask.
-- Cliente MQTT en el backend; las credenciales no llegan al navegador.
-- Estado inicial mediante `GET /api/state` y actualizaciones mediante SSE en
-  `GET /events`.
-- Historial formado por snapshots coherentes, no por una fila por mensaje MQTT.
-- SQLite para persistencia y uPlot para series temporales.
-- SVG para el diagrama y las flechas de flujo energético.
-- Primera frecuencia recomendada de adquisición: 5 segundos. Una frecuencia de
-  1 segundo se considera experimental hasta medir el logger real.
+## API
 
-## Por qué no copiar `deye-inverter-mqtt`
+- `GET /health`: proceso vivo, estado del broker y frescura.
+- `GET /api/state`: snapshot normalizado; campos no recibidos son `null`.
+- `GET /events`: stream Server-Sent Events con evento `state`. La página carga primero la API y después escucha SSE; el navegador reconecta de forma nativa.
 
-El monitor no necesita protocolos Deye, mapas Modbus, escritura de registros,
-plugins de adquisición ni manejo de flotas. Copiar el repositorio duplicaría
-esas responsabilidades y dificultaría incorporar futuras actualizaciones del
-proyecto original.
+El snapshot incluye timestamps y frescura por campo (`field_timestamps`,
+`field_freshness`), `observed_at`, y estados separados de broker, servicio MQTT,
+logger y dato stale. `stale` global se calcula con los campos obligatorios de
+`DEYE_FRESH_REQUIRED_FIELDS`; nunca convierte un valor ausente en cero. El total
+solar permanece `null` hasta recibir PV1 y PV2.
 
-La reutilización correcta es por contrato: topics MQTT, unidades, disponibilidad
-y configuración. Si en el futuro hiciera falta lógica común, se extraería una
-pieza concreta; no se copiaría el backend entero.
+## Configuración y validación pendiente (Delivery 0)
 
-## Documentación
+Copiar `.env.example` a `.env`. Todos los suffixes, prefijo, umbral stale y credenciales MQTT son configurables allí. El adaptador inicial cubre `dc/pv1/power`, `dc/pv2/power`, `ac/l1/voltage`, `ac/daily_energy_bought`, `ac/daily_energy_sold`, `ac/total_power`, `radiator_temp` y `ac/temperature`.
 
-- [Plan de entregas](docs/PLAN.md)
-- [Mapa MQTT propuesto](docs/MQTT_MAPPING.md)
-- [Prompts para agentes](docs/AGENT_PROMPTS.md)
+No se infieren SOC, potencia/estado de batería, consumo de Casa ni potencia de red. `ac/total_power` queda como diagnóstico del inversor, no como carga ni red. Sólo se puede habilitar potencia de red/batería con sus variables de topic y una convención explícita (`import_positive`/`export_positive`, `charge_positive`/`discharge_positive`); con `unknown` no se publica un valor.
 
-## Estado
+Antes de conectar al inversor real se debe validar y documentar: existencia y unidades de cada topic, prefijo y nivel de logger, payload/retained, frecuencia real y umbral stale, significado de `status` y `logger_status`, y signos de potencia de red/batería durante importación, exportación, carga y descarga. Los fixtures `grid_*_hypothesis.json` son hipótesis de signo, no evidencia.
 
-Planificación. No existe todavía una aplicación ejecutable.
+## Fixtures
 
+`fixtures/` contiene estados iniciales, producción PV, importación/exportación
+hipotéticas, mensajes fragmentados, logger offline y datos stale. Para ejecutar
+los fixtures de red hay que configurar explícitamente
+`DEYE_TOPIC_GRID_POWER=ac/grid_power_unvalidated` y una convención de signo;
+esa configuración sigue siendo una hipótesis sintética. Son entradas de
+desarrollo y tests, no una captura física de Delivery 0.
