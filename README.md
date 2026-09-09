@@ -73,9 +73,15 @@ python -m deye_monitor
 ```
 
 Abrí `http://127.0.0.1:5000`. El modo simulado se identifica como tal y puede
-animar flujos aunque no exista un broker MQTT. Para el fixture `stale`, usá el
-mismo comando con `SCENARIO=stale DEYE_STALE_AFTER_SECONDS=-1`; las líneas se
-verán ámbar, sin animación y con la leyenda “antiguo”.
+animar flujos aunque no exista un broker MQTT. Para el fixture stale, ejecutá
+explícitamente antes del comando anterior:
+
+```bash
+export SCENARIO=stale
+export DEYE_STALE_AFTER_SECONDS=-1
+```
+
+Las líneas se verán ámbar, sin animación y con la leyenda “antiguo”.
 
 ## Configuración y validación pendiente (Delivery 0)
 

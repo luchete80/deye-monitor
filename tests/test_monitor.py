@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
 import json
+import subprocess
 import pytest
 
 from deye_monitor.adapter import SG03LP1Adapter, parse_payload, parse_status
@@ -166,6 +167,11 @@ def test_sse_client_keeps_native_reconnect_enabled():
     assert "source.close()" not in script
     assert "data_observed_at" in script
     assert "relativeAge" in script
+
+
+def test_frontend_node_checks_are_part_of_pytest():
+    for test in ("tests/test_flow_logic.js", "tests/test_flow_render.js"):
+        subprocess.run(["node", test], check=True, capture_output=True, text=True)
 
 
 def test_delivery_two_flow_assets_and_scenarios():
