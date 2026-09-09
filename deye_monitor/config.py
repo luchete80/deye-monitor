@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 import os
 from dotenv import load_dotenv
 
@@ -39,8 +40,8 @@ class Config:
             raise ValueError(
                 f"DEYE_DATA_SOURCE must be one of {sorted(VALID_DATA_SOURCES)}, got {self.data_source!r}"
             )
-        if self.flow_deadband_w < 0:
-            raise ValueError("DEYE_FLOW_DEADBAND_W must be zero or greater")
+        if not math.isfinite(self.flow_deadband_w) or self.flow_deadband_w < 0:
+            raise ValueError("DEYE_FLOW_DEADBAND_W must be a finite value equal to or greater than zero")
         self._validate_sign("DEYE_GRID_POWER_SIGN", self.grid_power_sign, VALID_GRID_POWER_SIGNS)
         self._validate_sign("DEYE_BATTERY_POWER_SIGN", self.battery_power_sign, VALID_BATTERY_POWER_SIGNS)
 

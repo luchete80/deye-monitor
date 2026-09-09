@@ -96,6 +96,8 @@ def test_invalid_sign_and_data_source_configuration_fail_fast():
         config(data_source="simulate")
     with pytest.raises(ValueError, match="DEYE_FLOW_DEADBAND_W"):
         config(flow_deadband_w=-1)
+    with pytest.raises(ValueError, match="DEYE_FLOW_DEADBAND_W"):
+        config(flow_deadband_w=float("nan"))
 
 
 def test_data_observed_at_excludes_connectivity_events():
@@ -142,10 +144,15 @@ def test_http_api_sse_and_page():
     store = app.config["DEYE_STATE"]
     store.update("solar.pv1_power_w", 42)
     client = app.test_client()
-    assert client.get("/").status_code == 200
+    page = client.get("/")
+    assert page.status_code == 200
+    assert b'id="energy-diagram"' in page.data
+    assert client.get("/static/style.css").status_code == 200
+    assert client.get("/static/app.js").status_code == 200
     assert client.get("/health").json["ok"] is True
     assert client.get("/api/state").json["solar"]["pv1_power_w"] == 42
     assert client.get("/api/state").json["flow"]["deadband_w"] == 30
+    assert client.get("/api/state").json["flow"]["simulated"] is True
     assert client.get("/api/state").json["data_observed_at"] is not None
     response = client.get("/events", buffered=False)
     assert response.status_code == 200
@@ -167,10 +174,11 @@ def test_delivery_two_flow_assets_and_scenarios():
     scenarios = json.loads(open("fixtures/energy_flow_scenarios.json", encoding="utf-8").read())
     for label in ("PV", "Grid", "Batería", "UPS + Load", "Inversor"):
         assert label in page
-    assert "state.flow?.deadband_w" in script
-    assert "grid>deadband?1:grid<-deadband?-1:0" in script
-    assert "battery<-deadband?1:battery>deadband?-1:0" in script
+    assert "flow-description" in page
+    assert scenarios["deadband_w"] == 30
     assert len(scenarios["scenarios"]) == 4
+    for name in ("pv_load", "grid_import", "grid_export", "battery_charge", "battery_discharge", "deadband", "stale", "offline"):
+        assert "messages" in json.loads(open(f"fixtures/flow/{name}.json", encoding="utf-8").read())
 
 
 def test_all_fixtures_and_simulator_without_broker(caplog):

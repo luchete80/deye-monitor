@@ -47,6 +47,36 @@ supera `DEYE_FLOW_DEADBAND_W` (30 W por defecto) se considera inactiva. Las
 animaciones se detienen si falta la métrica, queda stale o se reporta una
 desconexión; también respetan `prefers-reduced-motion`.
 
+La frescura se evalúa para cada conexión: un dato viejo de Grid no detiene una
+flecha de Batería que aún esté fresca. Una desconexión de broker (en MQTT),
+servicio o logger sí detiene todas las animaciones. La zona muerta no muestra
+flechas, pero mantiene la potencia visible; al cruzar de un signo a otro debe
+pasar por ese intervalo inactivo, evitando un cambio de dirección instantáneo.
+
+### Escenarios visuales reproducibles
+
+Los fixtures siguientes son datos sintéticos de interfaz, no evidencia del
+inversor real. Con el entorno virtual activo, elegí uno de
+`pv_load`, `grid_import`, `grid_export`, `battery_charge`,
+`battery_discharge`, `deadband` u `offline` y ejecutá:
+
+```bash
+export SCENARIO=pv_load
+DEYE_DATA_SOURCE=simulated \
+DEYE_FIXTURE="fixtures/flow/${SCENARIO}.json" \
+DEYE_TOPIC_GRID_POWER=ac/grid_power \
+DEYE_GRID_POWER_SIGN=import_positive \
+DEYE_TOPIC_BATTERY_POWER=battery/power \
+DEYE_BATTERY_POWER_SIGN=charge_positive \
+DEYE_TOPIC_UPS_LOAD_POWER=ac/ups/total_power \
+python -m deye_monitor
+```
+
+Abrí `http://127.0.0.1:5000`. El modo simulado se identifica como tal y puede
+animar flujos aunque no exista un broker MQTT. Para el fixture `stale`, usá el
+mismo comando con `SCENARIO=stale DEYE_STALE_AFTER_SECONDS=-1`; las líneas se
+verán ámbar, sin animación y con la leyenda “antiguo”.
+
 ## Configuración y validación pendiente (Delivery 0)
 
 Copiar `.env.example` a `.env`. Todos los suffixes, prefijo, umbral stale y credenciales MQTT son configurables allí. El adaptador inicial cubre `dc/pv1/power`, `dc/pv2/power`, `ac/l1/voltage`, `ac/daily_energy_bought`, `ac/daily_energy_sold`, `ac/total_power`, `radiator_temp` y `ac/temperature`.

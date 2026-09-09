@@ -90,6 +90,8 @@ SQLite, plots, SVG animado, controles del inversor y extras del dashboard viejo.
 
 ## Delivery 2 — Diagrama de flujo energético
 
+Estado: completado.
+
 ### Alcance
 
 - SVG responsive basado en la disposición de los diagramas Deye, con el

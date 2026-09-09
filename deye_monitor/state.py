@@ -15,8 +15,8 @@ def iso(value: datetime | None) -> str | None:
 
 
 class StateStore:
-    def __init__(self, stale_after_seconds: float, required_fresh_fields: tuple[str, ...] = (), flow_deadband_w: float = 30, clock=utcnow):
-        self.clock, self.stale_after_seconds, self.flow_deadband_w = clock, stale_after_seconds, flow_deadband_w
+    def __init__(self, stale_after_seconds: float, required_fresh_fields: tuple[str, ...] = (), flow_deadband_w: float = 30, simulated: bool = False, clock=utcnow):
+        self.clock, self.stale_after_seconds, self.flow_deadband_w, self.simulated = clock, stale_after_seconds, flow_deadband_w, simulated
         self.required_fresh_fields = required_fresh_fields
         self._lock = threading.Lock()
         self._listeners: list[queue.Queue] = []
@@ -71,7 +71,7 @@ class StateStore:
             result["connectivity"] = {**self._connectivity, "stale": not globally_fresh}
             result["observed_at"] = iso(self._observed_at)
             result["data_observed_at"] = iso(self._data_observed_at)
-            result["flow"] = {"deadband_w": self.flow_deadband_w}
+            result["flow"] = {"deadband_w": self.flow_deadband_w, "simulated": self.simulated}
             result["field_timestamps"] = {g: {k: iso(v) for k, v in fields.items()} for g, fields in timestamps.items()}
             result["field_freshness"] = freshness
             return result

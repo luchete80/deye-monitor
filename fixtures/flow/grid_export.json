@@ -1,0 +1,1 @@
+{"messages":[{"topic":"deye/status","payload":"online"},{"topic":"deye/logger_status","payload":"online"},{"topic":"deye/dc/pv1/power","payload":1500},{"topic":"deye/dc/pv2/power","payload":900},{"topic":"deye/ac/grid_power","payload":-540}]}
