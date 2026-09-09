@@ -1,0 +1,10 @@
+{
+  "note": "Expected normalized directions for Delivery 2. Positive grid means import; positive battery means charge.",
+  "deadband_w": 30,
+  "scenarios": [
+    {"name": "pv_and_load", "solar_total_w": 2800, "load_w": 1900, "expected": {"pv": "PV -> Inversor", "load": "Inversor -> UPS + Load"}},
+    {"name": "grid_import_and_battery_charge", "grid_w": 720, "battery_w": 420, "expected": {"grid": "Grid -> Inversor", "battery": "Inversor -> Batería"}},
+    {"name": "grid_export_and_battery_discharge", "grid_w": -540, "battery_w": -300, "expected": {"grid": "Inversor -> Grid", "battery": "Batería -> Inversor"}},
+    {"name": "deadband", "grid_w": 30, "battery_w": -30, "expected": {"grid": "idle", "battery": "idle"}}
+  ]
+}

@@ -26,6 +26,7 @@ class Config:
     mqtt_prefix: str
     mqtt_keepalive: int
     stale_after_seconds: float
+    flow_deadband_w: float
     fresh_required_fields: tuple[str, ...]
     fixture: str
     simulated_interval_seconds: float
@@ -38,6 +39,8 @@ class Config:
             raise ValueError(
                 f"DEYE_DATA_SOURCE must be one of {sorted(VALID_DATA_SOURCES)}, got {self.data_source!r}"
             )
+        if self.flow_deadband_w < 0:
+            raise ValueError("DEYE_FLOW_DEADBAND_W must be zero or greater")
         self._validate_sign("DEYE_GRID_POWER_SIGN", self.grid_power_sign, VALID_GRID_POWER_SIGNS)
         self._validate_sign("DEYE_BATTERY_POWER_SIGN", self.battery_power_sign, VALID_BATTERY_POWER_SIGNS)
 
@@ -63,6 +66,7 @@ class Config:
             "grid.power_w": _value("DEYE_TOPIC_GRID_POWER"),
             "battery.power_w": _value("DEYE_TOPIC_BATTERY_POWER"),
             "battery.soc_pct": _value("DEYE_TOPIC_BATTERY_SOC"),
+            "load.total_power_w": _value("DEYE_TOPIC_UPS_LOAD_POWER"),
         }
         return cls(
             host=_value("DEYE_HOST", "127.0.0.1"), port=int(_value("DEYE_PORT", "5000")),
@@ -72,6 +76,7 @@ class Config:
             mqtt_prefix=_value("DEYE_MQTT_TOPIC_PREFIX", "deye").strip("/"),
             mqtt_keepalive=int(_value("DEYE_MQTT_KEEPALIVE", "30")),
             stale_after_seconds=float(_value("DEYE_STALE_AFTER_SECONDS", "20")),
+            flow_deadband_w=float(_value("DEYE_FLOW_DEADBAND_W", "30")),
             fresh_required_fields=tuple(
                 field.strip() for field in _value(
                     "DEYE_FRESH_REQUIRED_FIELDS", "solar.pv1_power_w,solar.pv2_power_w"

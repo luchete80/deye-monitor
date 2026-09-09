@@ -92,7 +92,24 @@ SQLite, plots, SVG animado, controles del inversor y extras del dashboard viejo.
 
 ### Alcance
 
-- SVG responsive con Solar, Inversor, Batería, Red y Casa.
+- SVG responsive basado en la disposición de los diagramas Deye, con el
+  inversor como nodo central y cuatro bloques alrededor suyo:
+
+  ```text
+  PV ───────────────► Inversor ◄──────────────► Grid
+                            │
+                 Batería ◄──┴──► UPS + Load
+  ```
+
+  En el layout, PV ocupa la esquina superior izquierda, Grid la superior
+  derecha, Batería la inferior izquierda y UPS + Load la inferior derecha.
+  En pantallas angostas se puede reordenar visualmente sin cambiar estas
+  relaciones ni confundir el origen y destino de los flujos.
+- Mantener la terminología visible `PV`, `Grid`, `Batería` y `UPS + Load`; no
+  reemplazar UPS + Load por una Casa genérica en este diagrama.
+- Dibujar las conexiones y flechas correspondientes: PV → Inversor;
+  Inversor ↔ Grid para importación/exportación; Inversor ↔ Batería para
+  carga/descarga; e Inversor → UPS + Load para el consumo de las cargas.
 - Mostrar potencia instantánea junto a cada conexión.
 - Calcular dirección desde el modelo normalizado, no desde topics crudos.
 - Aplicar una zona muerta configurable, inicialmente 30 W.
@@ -101,7 +118,11 @@ SQLite, plots, SVG animado, controles del inversor y extras del dashboard viejo.
 
 ### Aceptación
 
-- Importación/exportación y carga/descarga producen flechas correctas.
+- La posición de los bloques coincide con el layout Deye definido: PV arriba a
+  la izquierda, Grid arriba a la derecha, Batería abajo a la izquierda y
+  UPS + Load abajo a la derecha, con el inversor en el centro.
+- Producción PV, consumo de UPS + Load, importación/exportación de Grid y
+  carga/descarga de Batería producen flechas con origen y destino correctos.
 - Potencias cercanas a cero no generan parpadeo de dirección.
 - El SVG funciona en escritorio, móvil y resolución kiosk objetivo.
 - Existen fixtures visuales para los principales escenarios energéticos.
@@ -183,4 +204,3 @@ confirmación, auditoría y límites seguros.
 
 No iniciar Delivery 1 hasta cerrar los campos esenciales de Delivery 0. Después,
 ejecutar D1 → D2 → D3 → D4. Los extras no bloquean una primera instalación útil.
-

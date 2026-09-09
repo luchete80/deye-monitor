@@ -1,8 +1,10 @@
-# Deye Monitor — Delivery 1
+# Deye Monitor — Delivery 2
 
 Monitor web liviano para el inversor esperado **Deye SUN-6K-OG03LP1-EU-AM2** (monofásico, familia SG03LP1). Consume MQTT publicado por otro servicio; no se conecta a Modbus ni modifica, copia o incluye `deye-inverter-mqtt` ni `deye-dashboard`.
 
-Esta entrega guarda sólo estado en memoria y ofrece Flask, HTTP y SSE. No incluye SQLite, gráficos, SVG de flujos, Docker, WebSocket ni comandos MQTT.
+Esta entrega guarda sólo estado en memoria y ofrece Flask, HTTP, SSE y un SVG de
+flujo energético. No incluye SQLite, gráficos históricos, Docker, WebSocket ni
+comandos MQTT.
 
 ## Ejecución local
 
@@ -35,11 +37,21 @@ solar permanece `null` hasta recibir PV1 y PV2.
 `data_observed_at` es la última métrica. La página muestra la antigüedad relativa
 de esta última, para que una reconexión no parezca una lectura nueva.
 
+## Flujo energético
+
+El diagrama sigue el layout Deye: PV arriba a la izquierda, Grid arriba a la
+derecha, Batería abajo a la izquierda, UPS + Load abajo a la derecha e Inversor
+en el centro. Sus flechas usan únicamente el modelo normalizado: Grid positivo
+es importación y Batería positivo es carga. Una potencia cuyo valor absoluto no
+supera `DEYE_FLOW_DEADBAND_W` (30 W por defecto) se considera inactiva. Las
+animaciones se detienen si falta la métrica, queda stale o se reporta una
+desconexión; también respetan `prefers-reduced-motion`.
+
 ## Configuración y validación pendiente (Delivery 0)
 
 Copiar `.env.example` a `.env`. Todos los suffixes, prefijo, umbral stale y credenciales MQTT son configurables allí. El adaptador inicial cubre `dc/pv1/power`, `dc/pv2/power`, `ac/l1/voltage`, `ac/daily_energy_bought`, `ac/daily_energy_sold`, `ac/total_power`, `radiator_temp` y `ac/temperature`.
 
-No se infieren SOC, potencia/estado de batería, consumo de Casa ni potencia de red. `ac/total_power` queda como diagnóstico del inversor, no como carga ni red. Sólo se puede habilitar potencia de red/batería con sus variables de topic y una convención explícita (`import_positive`/`export_positive`, `charge_positive`/`discharge_positive`); con `unknown` no se publica un valor.
+No se infieren SOC, potencia/estado de batería, consumo UPS + Load ni potencia de red. `ac/total_power` queda como diagnóstico del inversor, no como carga ni red. Sólo se puede habilitar potencia de red/batería con sus variables de topic y una convención explícita (`import_positive`/`export_positive`, `charge_positive`/`discharge_positive`); con `unknown` no se publica un valor. El topic de salida se habilita por separado con `DEYE_TOPIC_UPS_LOAD_POWER`, una vez confirmado en Delivery 0.
 
 Las convenciones de signo son estrictas: un valor distinto de esos conjuntos
 detiene el arranque con un error de configuración, en lugar de interpretar una

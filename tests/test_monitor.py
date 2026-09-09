@@ -15,6 +15,7 @@ def config(**kwargs):
         host="127.0.0.1", port=5000, data_source="simulated", mqtt_host="x",
         mqtt_port=1883, mqtt_username=None, mqtt_password=None, mqtt_prefix="deye",
         mqtt_keepalive=30, stale_after_seconds=10,
+        flow_deadband_w=30,
         fresh_required_fields=("solar.pv1_power_w", "solar.pv2_power_w"),
         fixture="fixtures/pv_production.json", simulated_interval_seconds=.001,
         topics={"solar.pv1_power_w": "dc/pv1/power", "solar.pv2_power_w": "dc/pv2/power",
@@ -93,6 +94,8 @@ def test_invalid_sign_and_data_source_configuration_fail_fast():
         SG03LP1Adapter("deye", {}, battery_power_sign="maybe")
     with pytest.raises(ValueError, match="DEYE_DATA_SOURCE"):
         config(data_source="simulate")
+    with pytest.raises(ValueError, match="DEYE_FLOW_DEADBAND_W"):
+        config(flow_deadband_w=-1)
 
 
 def test_data_observed_at_excludes_connectivity_events():
@@ -142,6 +145,7 @@ def test_http_api_sse_and_page():
     assert client.get("/").status_code == 200
     assert client.get("/health").json["ok"] is True
     assert client.get("/api/state").json["solar"]["pv1_power_w"] == 42
+    assert client.get("/api/state").json["flow"]["deadband_w"] == 30
     assert client.get("/api/state").json["data_observed_at"] is not None
     response = client.get("/events", buffered=False)
     assert response.status_code == 200
@@ -155,6 +159,18 @@ def test_sse_client_keeps_native_reconnect_enabled():
     assert "source.close()" not in script
     assert "data_observed_at" in script
     assert "relativeAge" in script
+
+
+def test_delivery_two_flow_assets_and_scenarios():
+    page = open("deye_monitor/static/index.html", encoding="utf-8").read()
+    script = open("deye_monitor/static/app.js", encoding="utf-8").read()
+    scenarios = json.loads(open("fixtures/energy_flow_scenarios.json", encoding="utf-8").read())
+    for label in ("PV", "Grid", "Batería", "UPS + Load", "Inversor"):
+        assert label in page
+    assert "state.flow?.deadband_w" in script
+    assert "grid>deadband?1:grid<-deadband?-1:0" in script
+    assert "battery<-deadband?1:battery>deadband?-1:0" in script
+    assert len(scenarios["scenarios"]) == 4
 
 
 def test_all_fixtures_and_simulator_without_broker(caplog):
