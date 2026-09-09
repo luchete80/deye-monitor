@@ -137,25 +137,28 @@ Estado: completado.
 - Construir estado inmediatamente al recibir MQTT, pero persistir un snapshot
   completo cada 5 s mediante una transacción.
 - No persistir snapshots incompletos como si fueran datos válidos.
-- Implementar retención configurable y compactación por resolución.
-- Exponer `GET /api/history?range=6h` con rangos permitidos.
+- Acumular inicialmente una ventana móvil de 24 h en SQLite. Cada nueva muestra
+  debe conservarse aunque el proceso o la Raspberry Pi se reinicien, y las
+  muestras con más de 24 h deben eliminarse de forma automática.
+- Exponer `GET /api/history?range=...` con rangos permitidos de `1h`, `6h`,
+  `12h` y `24h`, sin devolver datos anteriores a la ventana conservada.
 - Integrar uPlot con potencia PV, casa, batería y red, más un plot de SOC.
 
-### Política inicial de resolución
+### Política inicial de historial
 
-- Hasta 24 h: muestras de 5 s.
-- De 1 a 7 días: agregados de 1 min.
-- Períodos mayores: agregados configurables de 5 o 15 min.
-
-Se conservarán mínimos y máximos además del promedio cuando resulten relevantes,
-para no esconder picos.
+- Conservar como máximo las últimas 24 h.
+- Persistir un snapshot cada 5 s: hasta 17.280 muestras por día.
+- No compactar ni agregar muestras en esta primera versión.
+- Dejar la ampliación a 7 o 30 días, con compactación por resolución, para
+  una entrega posterior.
 
 ### Aceptación
 
 - Reiniciar el monitor conserva el historial.
 - Los gráficos distinguen huecos reales de valores cero.
 - Una consulta de 24 h es usable en Raspberry Pi 3B.
-- La compactación no elimina datos fuera de la política configurada.
+- La limpieza elimina solamente muestras anteriores a la ventana móvil de
+  24 h y no borra datos recientes.
 
 ## Delivery 4 — Operación en Raspberry Pi
 

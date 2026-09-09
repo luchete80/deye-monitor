@@ -99,12 +99,14 @@ deye-monitor, agregá tests de regresión y no amplíes alcance visual.
 
 ```text
 Implementá exactamente la parte backend de Delivery 3. Diseñá SQLite con
-migraciones, snapshots coherentes cada 5 s, transacciones, retención y
-compactación. No insertes una fila por mensaje MQTT. Preservá null/huecos y
-guardá suficiente información de calidad/frescura. Implementá
-GET /api/history?range=... con validación y límites. Incluí pruebas de reinicio,
-concurrencia, datos parciales, agregación, retención y migración. Medí una
-consulta sintética de 24 h. No implementes todavía extras ni escritura MQTT.
+migraciones, snapshots coherentes cada 5 s y transacciones. Conservá una
+ventana móvil de las últimas 24 h en disco y eliminá automáticamente sólo las
+muestras más antiguas; no implementes compactación todavía. No insertes una
+fila por mensaje MQTT. Preservá null/huecos y guardá suficiente información de
+calidad/frescura. Implementá GET /api/history?range=... para `1h`, `6h`, `12h`
+y `24h`, con validación y límites. Incluí pruebas de reinicio, concurrencia,
+datos parciales, retención, limpieza y migración. Medí una consulta sintética
+de 24 h. No implementes todavía extras ni escritura MQTT.
 ```
 
 ## Delivery 3 — Luna: plots uPlot
