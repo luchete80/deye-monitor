@@ -1,22 +1,32 @@
 const assert=require('node:assert/strict');
-const flow=require('../deye_monitor/static/app.js');
+const dashboard=require('../deye_monitor/static/app.js');
+
+assert.equal(dashboard.positivePower(720),720);
+assert.equal(dashboard.positivePower(-540),0);
+assert.equal(dashboard.positivePower(0),0);
+assert.equal(dashboard.positivePower(null),null);
+assert.equal(dashboard.positivePower(undefined),null);
 
 const online={broker:'connected',service:'online',logger:'online'};
+const snapshot={
+  solar:{total_power_w:2800},grid:{power_w:720},battery:{power_w:-300},load:{total_power_w:1900},
+  field_freshness:{solar:{total_power_w:true},grid:{power_w:true},battery:{power_w:true},load:{total_power_w:true}},
+  connectivity:online,
+};
+assert.equal(dashboard.metricState(snapshot,'solar','total_power_w'),'online');
+assert.equal(dashboard.metricState(snapshot,'grid','power_w'),'online');
+assert.equal(dashboard.metricState({...snapshot,flow:{simulated:true},connectivity:{...online,broker:'disconnected'}},'grid','power_w'),'online');
+assert.equal(dashboard.metricState({...snapshot,connectivity:{...online,logger:'offline'}},'grid','power_w'),'offline');
+assert.equal(dashboard.metricState({...snapshot,field_freshness:{...snapshot.field_freshness,grid:{power_w:false}}},'grid','power_w'),'stale');
+assert.equal(dashboard.metricState({...snapshot,grid:{power_w:null}},'grid','power_w'),'unknown');
 
-assert.equal(flow.direction('grid',720,30),1);
-assert.equal(flow.direction('grid',-540,30),-1);
-assert.equal(flow.direction('battery',420,30),1);
-assert.equal(flow.direction('battery',-300,30),-1);
-assert.equal(flow.pathDirection('battery',1),-1);
-assert.equal(flow.pathDirection('battery',-1),1);
-assert.equal(flow.direction('pv',2800,30),1);
-assert.equal(flow.direction('load',1900,30),1);
-assert.equal(flow.direction('grid',30,30),0);
-assert.equal(flow.direction('battery',-30,30),0);
-assert.deepEqual(flow.state('grid',720,30,true,online,false),{status:'active',direction:1});
-assert.deepEqual(flow.state('grid',20,30,true,online,false),{status:'idle',direction:0});
-assert.deepEqual(flow.state('grid',720,30,false,online,false),{status:'stale',direction:0});
-assert.deepEqual(flow.state('grid',720,30,true,{...online,logger:'offline'},false),{status:'offline',direction:0});
-assert.equal(flow.offline({broker:'disconnected',service:'online',logger:'online'},true),false);
-assert.equal(flow.offline({broker:'disconnected',service:'online',logger:'online'},false),true);
-console.log('flow logic ok');
+const data=dashboard.historyData([
+  {captured_at:'2026-01-01T00:00:00Z',pv_power_w:100,grid_power_w:-40,battery_power_w:-20,home_power_w:80},
+  {captured_at:'2026-01-01T00:00:20Z',pv_power_w:200,grid_power_w:50,battery_power_w:30,home_power_w:90},
+]);
+assert.deepEqual(data[1],[100,null,200]);
+assert.deepEqual(data[2],[0,null,50]);
+assert.deepEqual(data[3],[0,null,30]);
+assert.deepEqual(data[4],[80,null,90]);
+assert.equal(dashboard.chartOptions('x',500,300).axes[2].scale,'battery');
+console.log('dashboard logic ok');

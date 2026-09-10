@@ -131,6 +131,8 @@ Estado: completado.
 
 ## Delivery 3 — Historial y plots
 
+Estado: completado.
+
 ### Alcance
 
 - SQLite con migración/versionado de esquema.

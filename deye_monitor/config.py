@@ -34,6 +34,9 @@ class Config:
     topics: dict[str, str]
     grid_power_sign: str
     battery_power_sign: str
+    history_db_path: str = "data/deye-monitor.sqlite3"
+    history_interval_seconds: float = 5
+    history_retention_hours: float = 24
 
     def __post_init__(self) -> None:
         if self.data_source not in VALID_DATA_SOURCES:
@@ -42,6 +45,10 @@ class Config:
             )
         if not math.isfinite(self.flow_deadband_w) or self.flow_deadband_w < 0:
             raise ValueError("DEYE_FLOW_DEADBAND_W must be a finite value equal to or greater than zero")
+        if not math.isfinite(self.history_interval_seconds) or self.history_interval_seconds <= 0:
+            raise ValueError("DEYE_HISTORY_INTERVAL_SECONDS must be a finite value greater than zero")
+        if not math.isfinite(self.history_retention_hours) or self.history_retention_hours <= 0:
+            raise ValueError("DEYE_HISTORY_RETENTION_HOURS must be a finite value greater than zero")
         self._validate_sign("DEYE_GRID_POWER_SIGN", self.grid_power_sign, VALID_GRID_POWER_SIGNS)
         self._validate_sign("DEYE_BATTERY_POWER_SIGN", self.battery_power_sign, VALID_BATTERY_POWER_SIGNS)
 
@@ -88,4 +95,7 @@ class Config:
             topics={key: value.strip("/") for key, value in suffixes.items() if value},
             grid_power_sign=_value("DEYE_GRID_POWER_SIGN", "unknown"),
             battery_power_sign=_value("DEYE_BATTERY_POWER_SIGN", "unknown"),
+            history_db_path=_value("DEYE_HISTORY_DB_PATH", "data/deye-monitor.sqlite3"),
+            history_interval_seconds=float(_value("DEYE_HISTORY_INTERVAL_SECONDS", "5")),
+            history_retention_hours=float(_value("DEYE_HISTORY_RETENTION_HOURS", "24")),
         )

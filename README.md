@@ -1,10 +1,11 @@
-# Deye Monitor — Delivery 2
+# Deye Monitor — Delivery 3
 
 Monitor web liviano para el inversor esperado **Deye SUN-6K-OG03LP1-EU-AM2** (monofásico, familia SG03LP1). Consume MQTT publicado por otro servicio; no se conecta a Modbus ni modifica, copia o incluye `deye-inverter-mqtt` ni `deye-dashboard`.
 
-Esta entrega guarda sólo estado en memoria y ofrece Flask, HTTP, SSE y un SVG de
-flujo energético. No incluye SQLite, gráficos históricos, Docker, WebSocket ni
-comandos MQTT.
+Además del estado en memoria, esta entrega mantiene un historial SQLite local y
+un plot uPlot empaquetado en el proyecto; no depende de una CDN. La interfaz usa
+la mitad izquierda de la pantalla, con cuatro bloques 2×2 y un plot inferior.
+No incluye Docker, WebSocket ni comandos MQTT.
 
 ## Ejecución local
 
@@ -25,6 +26,8 @@ Para pruebas: `pytest`.
 
 - `GET /health`: proceso vivo, estado del broker y frescura.
 - `GET /api/state`: snapshot normalizado; campos no recibidos son `null`.
+- `GET /api/history?range=1h|6h|12h|24h`: muestras históricas completas, en
+  orden cronológico y nunca anteriores a la ventana conservada.
 - `GET /events`: stream Server-Sent Events con evento `state`. La página carga primero la API y después escucha SSE; el navegador reconecta de forma nativa.
 
 El snapshot incluye timestamps y frescura por campo (`field_timestamps`,
@@ -37,21 +40,36 @@ solar permanece `null` hasta recibir PV1 y PV2.
 `data_observed_at` es la última métrica. La página muestra la antigüedad relativa
 de esta última, para que una reconexión no parezca una lectura nueva.
 
-## Flujo energético
+## Historial
 
-El diagrama sigue el layout Deye: PV arriba a la izquierda, Grid arriba a la
-derecha, Batería abajo a la izquierda, UPS + Load abajo a la derecha e Inversor
-en el centro. Sus flechas usan únicamente el modelo normalizado: Grid positivo
-es importación y Batería positivo es carga. Una potencia cuyo valor absoluto no
-supera `DEYE_FLOW_DEADBAND_W` (30 W por defecto) se considera inactiva. Las
-animaciones se detienen si falta la métrica, queda stale o se reporta una
-desconexión; también respetan `prefers-reduced-motion`.
+Cada `DEYE_HISTORY_INTERVAL_SECONDS` (5 por defecto) se toma una copia del
+estado actual en una transacción SQLite. Se almacena sólo si PV total, carga,
+potencia de batería, potencia de red y SOC existen y siguen frescos; un estado
+parcial no se convierte en ceros ni se registra como una muestra válida. La base
+se versiona con `PRAGMA user_version` y se guarda en `DEYE_HISTORY_DB_PATH`
+(`data/deye-monitor.sqlite3` por defecto).
 
-La frescura se evalúa para cada conexión: un dato viejo de Grid no detiene una
-flecha de Batería que aún esté fresca. Una desconexión de broker (en MQTT),
-servicio o logger sí detiene todas las animaciones. La zona muerta no muestra
-flechas, pero mantiene la potencia visible; al cruzar de un signo a otro debe
-pasar por ese intervalo inactivo, evitando un cambio de dirección instantáneo.
+La limpieza corre con cada ciclo y conserva únicamente las últimas
+`DEYE_HISTORY_RETENTION_HOURS` (24 por defecto). Por eso un reinicio conserva
+las muestras dentro de esa ventana y una consulta de 24 h no puede exponer datos
+expirados. Cuando falta una muestra, los gráficos reciben un hueco (`null`), no
+una lectura de 0 W.
+
+## Interfaz y plot
+
+La pantalla de escritorio ocupa sólo la mitad izquierda: Paneles arriba a la
+izquierda (verde), Grid arriba a la derecha (violeta), Batería abajo a la
+izquierda (celeste) y UPS / Casa abajo a la derecha (amarillo). No se muestra un
+bloque central del inversor. En móvil la columna pasa a ocupar todo el ancho.
+
+El plot único consulta siempre las últimas 24 horas. Generación, Consumo de Grid
+y Consumo total usan el eje izquierdo en W; Carga de batería usa un eje derecho
+independiente. Grid negativo (exportación) y batería negativa (descarga) se
+representan como cero en esas series de consumo/carga, mientras que un valor
+ausente sigue siendo un hueco (`null`).
+
+La frescura se evalúa por bloque y se muestra como “Actualizado”, “Dato antiguo”,
+“Sin conexión” o “Sin dato”.
 
 ### Escenarios visuales reproducibles
 
@@ -72,16 +90,15 @@ DEYE_TOPIC_UPS_LOAD_POWER=ac/ups/total_power \
 python -m deye_monitor
 ```
 
-Abrí `http://127.0.0.1:5000`. El modo simulado se identifica como tal y puede
-animar flujos aunque no exista un broker MQTT. Para el fixture stale, ejecutá
-explícitamente antes del comando anterior:
+Abrí `http://127.0.0.1:5000`. El modo simulado se identifica como tal. Para el
+fixture stale, ejecutá explícitamente antes del comando anterior:
 
 ```bash
 export SCENARIO=stale
 export DEYE_STALE_AFTER_SECONDS=-1
 ```
 
-Las líneas se verán ámbar, sin animación y con la leyenda “antiguo”.
+Los bloques y el encabezado mostrarán el estado “Dato antiguo”.
 
 ## Configuración y validación pendiente (Delivery 0)
 

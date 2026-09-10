@@ -9,6 +9,7 @@ from deye_monitor.config import Config
 from deye_monitor.mqtt_client import MQTTClient
 from deye_monitor.simulator import FixtureSimulator
 from deye_monitor.state import StateStore
+from deye_monitor.history import HistoryStore
 
 
 def config(**kwargs):
@@ -147,18 +148,42 @@ def test_http_api_sse_and_page():
     client = app.test_client()
     page = client.get("/")
     assert page.status_code == 200
-    assert b'id="energy-diagram"' in page.data
+    assert b'class="metric-grid"' in page.data
+    assert b'id="power-chart"' in page.data
     assert client.get("/static/style.css").status_code == 200
     assert client.get("/static/app.js").status_code == 200
+    assert client.get("/static/uPlot.iife.min.js").status_code == 200
+    assert client.get("/static/uPlot.min.css").status_code == 200
     assert client.get("/health").json["ok"] is True
     assert client.get("/api/state").json["solar"]["pv1_power_w"] == 42
     assert client.get("/api/state").json["flow"]["deadband_w"] == 30
     assert client.get("/api/state").json["flow"]["simulated"] is True
     assert client.get("/api/state").json["data_observed_at"] is not None
+    assert client.get("/api/history?range=banana").status_code == 400
     response = client.get("/events", buffered=False)
     assert response.status_code == 200
     assert b"event: state" in next(response.response)
     response.close()
+
+
+def test_history_is_versioned_complete_bounded_and_persistent(tmp_path):
+    database = tmp_path / "history.sqlite3"
+    now = datetime(2026, 1, 2, tzinfo=timezone.utc)
+    snapshot = {
+        "solar": {"total_power_w": 500}, "load": {"total_power_w": 400},
+        "battery": {"power_w": -50, "soc_pct": 73}, "grid": {"power_w": 20},
+        "field_freshness": {"solar": {"total_power_w": True}, "load": {"total_power_w": True},
+                            "battery": {"power_w": True, "soc_pct": True}, "grid": {"power_w": True}},
+    }
+    history = HistoryStore(str(database), clock=lambda: now)
+    assert history.record({}) is False
+    assert history.record(snapshot) is True
+    assert history.query("1h", now) == [{"captured_at": "2026-01-02T00:00:00.000+00:00", "pv_power_w": 500.0, "home_power_w": 400.0, "battery_power_w": -50.0, "grid_power_w": 20.0, "soc_pct": 73.0}]
+    # A new process connection sees the committed raw snapshot.
+    reopened = HistoryStore(str(database), clock=lambda: now)
+    assert len(reopened.query("24h", now)) == 1
+    reopened.prune(now + timedelta(hours=24, seconds=1))
+    assert reopened.query("24h", now + timedelta(hours=24, seconds=1)) == []
 
 
 def test_sse_client_keeps_native_reconnect_enabled():
@@ -177,12 +202,12 @@ def test_frontend_node_checks_are_part_of_pytest():
 def test_delivery_two_flow_assets_and_scenarios():
     page = open("deye_monitor/static/index.html", encoding="utf-8").read()
     script = open("deye_monitor/static/app.js", encoding="utf-8").read()
-    scenarios = json.loads(open("fixtures/energy_flow_scenarios.json", encoding="utf-8").read())
-    for label in ("PV", "Grid", "Batería", "UPS + Load", "Inversor"):
+    for label in ("Paneles", "Grid", "Batería", "UPS / Casa", "Últimas 24 horas"):
         assert label in page
-    assert "flow-description" in page
-    assert scenarios["deadband_w"] == 30
-    assert len(scenarios["scenarios"]) == 4
+    assert "Inversor" not in page
+    assert "energy-diagram" not in page
+    assert "range=24h" in script
+    assert "scale:'battery'" in script
     for name in ("pv_load", "grid_import", "grid_export", "battery_charge", "battery_discharge", "deadband", "stale", "offline"):
         assert "messages" in json.loads(open(f"fixtures/flow/{name}.json", encoding="utf-8").read())
 
