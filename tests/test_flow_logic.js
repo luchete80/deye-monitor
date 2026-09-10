@@ -6,6 +6,13 @@ assert.equal(dashboard.positivePower(-540),0);
 assert.equal(dashboard.positivePower(0),0);
 assert.equal(dashboard.positivePower(null),null);
 assert.equal(dashboard.positivePower(undefined),null);
+assert.equal(dashboard.gaugePercent(0,6000),0);
+assert.equal(dashboard.gaugePercent(3000,6000),50);
+assert.equal(dashboard.gaugePercent(9000,6000),100);
+assert.equal(dashboard.gaugePercent(-3000,6000),0);
+assert.equal(dashboard.gaugePercent(-3000,6000,true),50);
+assert.equal(dashboard.gaugePercent(null,6000),null);
+assert.equal(dashboard.gaugePercent(100,0),null);
 
 const online={broker:'connected',service:'online',logger:'online'};
 const snapshot={

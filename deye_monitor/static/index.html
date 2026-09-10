@@ -17,22 +17,46 @@
     <section class="metric-grid" aria-label="Estado energético actual">
       <article class="metric-card metric-card--solar" data-metric="solar">
         <h2>Paneles</h2><p class="metric-status" id="solar-status">Esperando datos</p>
-        <p class="metric-value"><span id="solar-value">Sin dato</span> <span class="metric-unit">W</span></p>
+        <div class="metric-gauge" data-gauge="solar" role="img" aria-label="Paneles: Sin dato">
+          <svg class="metric-gauge__svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
+            <path class="metric-gauge__track" d="M 27.47 92.53 A 46 46 0 1 1 92.53 92.53" pathLength="100"></path>
+            <path class="metric-gauge__progress" d="M 27.47 92.53 A 46 46 0 1 1 92.53 92.53" pathLength="100"></path>
+          </svg>
+          <p class="metric-value"><span id="solar-value">Sin dato</span> <span class="metric-unit">W</span></p>
+        </div>
         <dl><dt>PV1</dt><dd data-path="solar.pv1_power_w" data-unit="W">Sin dato</dd><dt>PV2</dt><dd data-path="solar.pv2_power_w" data-unit="W">Sin dato</dd></dl>
       </article>
       <article class="metric-card metric-card--grid" data-metric="grid">
         <h2>Grid</h2><p class="metric-status" id="grid-status">Esperando datos</p>
-        <p class="metric-value"><span id="grid-value">Sin dato</span> <span class="metric-unit">W</span></p>
+        <div class="metric-gauge" data-gauge="grid" role="img" aria-label="Grid: Sin dato">
+          <svg class="metric-gauge__svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
+            <path class="metric-gauge__track" d="M 27.47 92.53 A 46 46 0 1 1 92.53 92.53" pathLength="100"></path>
+            <path class="metric-gauge__progress" d="M 27.47 92.53 A 46 46 0 1 1 92.53 92.53" pathLength="100"></path>
+          </svg>
+          <p class="metric-value"><span id="grid-value">Sin dato</span> <span class="metric-unit">W</span></p>
+        </div>
         <dl><dt>Tensión</dt><dd data-path="grid.voltage_v" data-unit="V">Sin dato</dd><dt>Importación (+) / exportación (-)</dt><dd data-path="grid.power_w" data-unit="W">Sin dato</dd></dl>
       </article>
       <article class="metric-card metric-card--battery" data-metric="battery">
         <h2>Batería</h2><p class="metric-status" id="battery-status">Esperando datos</p>
-        <p class="metric-value"><span id="battery-value">Sin dato</span> <span class="metric-unit">W</span></p>
+        <div class="metric-gauge" data-gauge="battery" role="img" aria-label="Batería: Sin dato">
+          <svg class="metric-gauge__svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
+            <path class="metric-gauge__track" d="M 27.47 92.53 A 46 46 0 1 1 92.53 92.53" pathLength="100"></path>
+            <path class="metric-gauge__progress" d="M 27.47 92.53 A 46 46 0 1 1 92.53 92.53" pathLength="100"></path>
+          </svg>
+          <p class="metric-value"><span id="battery-value">Sin dato</span> <span class="metric-unit">W</span></p>
+        </div>
         <dl><dt>SOC</dt><dd data-path="battery.soc_pct" data-unit="%">Sin dato</dd><dt>Carga (+) / descarga (-)</dt><dd data-path="battery.power_w" data-unit="W">Sin dato</dd></dl>
       </article>
       <article class="metric-card metric-card--load" data-metric="load">
         <h2>UPS / Casa</h2><p class="metric-status" id="load-status">Esperando datos</p>
-        <p class="metric-value"><span id="load-value">Sin dato</span> <span class="metric-unit">W</span></p>
+        <div class="metric-gauge" data-gauge="load" role="img" aria-label="UPS / Casa: Sin dato">
+          <svg class="metric-gauge__svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
+            <path class="metric-gauge__track" d="M 27.47 92.53 A 46 46 0 1 1 92.53 92.53" pathLength="100"></path>
+            <path class="metric-gauge__progress" d="M 27.47 92.53 A 46 46 0 1 1 92.53 92.53" pathLength="100"></path>
+          </svg>
+          <p class="metric-value"><span id="load-value">Sin dato</span> <span class="metric-unit">W</span></p>
+        </div>
         <dl><dt>Consumo total</dt><dd data-path="load.total_power_w" data-unit="W">Sin dato</dd></dl>
       </article>
     </section>

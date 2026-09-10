@@ -13,6 +13,12 @@ function relativeAge(timestamp){
 }
 
 function positivePower(value){return known(value)?Math.max(0,value):null}
+const GAUGE_MAX_W={solar:6000,grid:6000,battery:6000,load:6000};
+function gaugePercent(value,maximum,absolute=false){
+  if(!known(value)||!known(maximum)||maximum<=0)return null;
+  const magnitude=absolute?Math.abs(value):Math.max(0,value);
+  return Math.min(100,Math.max(0,magnitude/maximum*100));
+}
 function chartColor(variable,fallback){
   if(typeof document==='undefined')return fallback;
   return getComputedStyle(document.documentElement).getPropertyValue(variable).trim()||fallback;
@@ -28,13 +34,25 @@ function metricState(snapshot,group,field){
 function stateLabel(state){return {online:'Actualizado',stale:'Dato antiguo',offline:'Sin conexión',unknown:'Sin dato'}[state]||'Sin dato'}
 
 function renderMetrics(snapshot){
-  const metrics=[['solar','total_power_w','solar-value'],['grid','power_w','grid-value'],['battery','power_w','battery-value'],['load','total_power_w','load-value']];
-  metrics.forEach(([group,field,valueId])=>{
+  const metrics=[
+    {group:'solar',field:'total_power_w',valueId:'solar-value',absolute:false},
+    {group:'grid',field:'power_w',valueId:'grid-value',absolute:true},
+    {group:'battery',field:'power_w',valueId:'battery-value',absolute:true},
+    {group:'load',field:'total_power_w',valueId:'load-value',absolute:false},
+  ];
+  metrics.forEach(({group,field,valueId,absolute})=>{
     const state=metricState(snapshot,group,field),card=document.querySelector(`[data-metric="${group}"]`),status=document.querySelector(`#${group}-status`),value=lookup(snapshot,`${group}.${field}`);
     if(card)card.dataset.state=state;
     if(status)status.textContent=stateLabel(state);
     const element=document.querySelector(`#${valueId}`);
     if(element)element.textContent=valueText(value);
+    const gauge=document.querySelector(`[data-gauge="${group}"]`),progress=gauge?.querySelector('.metric-gauge__progress');
+    const percent=gaugePercent(value,GAUGE_MAX_W[group],absolute);
+    if(progress)progress.style.strokeDashoffset=String(100-(percent??0));
+    if(gauge){
+      gauge.dataset.percent=percent===null?'':String(percent);
+      gauge.setAttribute('aria-label',`${group==='load'?'UPS / Casa':group==='solar'?'Paneles':group==='battery'?'Batería':'Grid'}: ${valueText(value)} W · ${stateLabel(state)}`);
+    }
   });
 }
 
@@ -139,4 +157,4 @@ if(typeof document!=='undefined'){
   else window.addEventListener('resize',resizePlot);
 }
 
-if(typeof module!=='undefined')module.exports={known,lookup,number,valueText,positivePower,metricState,historyData,chartOptions};
+if(typeof module!=='undefined')module.exports={known,lookup,number,valueText,positivePower,gaugePercent,metricState,historyData,chartOptions};

@@ -12,3 +12,14 @@ body{max-width:none;margin:0;padding:1rem 0 1rem 1rem;background:#111820}
 .history{max-width:none;margin:1.5rem 0;padding:0}.history .section-heading{display:flex;align-items:center;justify-content:space-between;gap:1rem}.chart{width:100%;min-height:300px;margin:1rem 0;overflow:hidden}.history #history-status{color:var(--muted)}
 .uplot{font-family:system-ui,sans-serif;max-width:100%}.u-legend{font-size:.85rem}
 @media (max-width:700px){body{padding:.65rem}.dashboard-shell{width:100%}.metric-grid{gap:.65rem}.metric-card{padding:.75rem}.metric-value{font-size:1.35rem}.metric-card dl{font-size:.78rem}}
+.metric-gauge{position:relative;width:min(100%,13rem);aspect-ratio:1;margin:.35rem auto .8rem;display:grid;place-items:center;color:var(--metric-color)}
+.metric-gauge__svg{display:block;width:100%;height:100%;overflow:visible}
+.metric-gauge__track,.metric-gauge__progress{fill:none;stroke-width:10;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:100;transform-origin:60px 60px}
+.metric-gauge__track{stroke:var(--metric-color);opacity:.22}
+.metric-gauge__progress{stroke:var(--metric-color);stroke-dashoffset:100;transition:stroke-dashoffset .35s ease,opacity .2s ease}
+.metric-gauge .metric-value{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;align-content:center;flex-wrap:wrap;gap:.2rem;margin:0;padding:0 1rem;text-align:center;line-height:1.15;color:var(--metric-color);font-size:clamp(1.15rem,3vw,1.7rem);overflow-wrap:anywhere}
+.metric-gauge .metric-unit{font-size:.55em}
+.metric-card[data-state=stale] .metric-gauge__progress,.metric-card[data-state=offline] .metric-gauge__progress{opacity:.62}
+.metric-card[data-state=unknown] .metric-gauge__progress{opacity:0}
+@media (prefers-reduced-motion:reduce){.metric-gauge__progress{transition:none}}
+@media (max-width:700px){.metric-gauge{width:min(100%,10rem);margin:.25rem auto .65rem}.metric-gauge__track,.metric-gauge__progress{stroke-width:9}.metric-gauge .metric-value{font-size:clamp(1rem,6vw,1.35rem);padding:0 .7rem}}
