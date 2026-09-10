@@ -173,9 +173,9 @@ let historyRefreshTimer;
 let historyRefreshInFlight=false;
 const HISTORY_REFRESH_MS=5000;
 
-function plotHeight(){
-  const viewportHeight=typeof window!=='undefined'&&Number.isFinite(window.innerHeight)?window.innerHeight:600;
-  return Math.max(120,Math.min(180,Math.round(viewportHeight*.24)));
+function plotHeight(viewportHeight){
+  const height=Number.isFinite(viewportHeight)?viewportHeight:typeof window!=='undefined'&&Number.isFinite(window.innerHeight)?window.innerHeight:600;
+  return Math.max(120,Math.min(170,Math.round(height*.24)));
 }
 
 function historyData(samples){
