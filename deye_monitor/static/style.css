@@ -19,6 +19,12 @@ body{max-width:none;margin:0;padding:1rem 0 1rem 1rem;background:#111820}
 .metric-gauge__progress{stroke:var(--metric-color);stroke-dashoffset:100;transition:stroke-dashoffset .35s ease,opacity .2s ease}
 .metric-gauge .metric-value{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;align-content:center;flex-wrap:wrap;gap:.2rem;margin:0;padding:0 1rem;text-align:center;line-height:1.15;color:var(--metric-color);font-size:clamp(1.15rem,3vw,1.7rem);overflow-wrap:anywhere}
 .metric-gauge .metric-unit{font-size:.55em}
+.metric-value--battery{flex-direction:column;gap:.15rem}
+.metric-primary{display:block;font-size:1.1em;font-weight:700;line-height:1}
+.metric-value--battery .metric-unit{vertical-align:baseline}
+.metric-secondary{display:block;font-size:.46em;font-weight:500;line-height:1.1;opacity:.85}
+.metric-card--battery[data-battery-flow=charging]{--metric-color:#55b9ed}
+.metric-card--battery[data-battery-flow=discharging]{--metric-color:#ff6b6b}
 .metric-current{flex-basis:100%;font-size:.48em;font-weight:500;line-height:1.1;opacity:.85}
 .metric-card[data-current-state=stale] .metric-current{color:#f5c451}.metric-card[data-current-state=offline] .metric-current{color:#ff9e9e}.metric-card[data-current-state=unknown] .metric-current{color:var(--muted)}
 .metric-card[data-state=stale] .metric-gauge__progress,.metric-card[data-state=offline] .metric-gauge__progress{opacity:.62}

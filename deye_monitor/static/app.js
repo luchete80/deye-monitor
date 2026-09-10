@@ -14,7 +14,14 @@ function relativeAge(timestamp){
 }
 
 function positivePower(value){return known(value)?Math.max(0,value):null}
+function batteryFlowState(value){
+  if(!known(value))return 'unknown';
+  if(value>0)return 'charging';
+  if(value<0)return 'discharging';
+  return 'idle';
+}
 const GAUGE_MAX_W={solar:6000,grid:6000,battery:6000,load:6000};
+const GAUGE_MAX={solar:6000,grid:6000,battery:100,load:6000};
 function gaugePercent(value,maximum,absolute=false){
   if(!known(value)||!known(maximum)||maximum<=0)return null;
   const magnitude=absolute?Math.abs(value):Math.max(0,value);
@@ -36,28 +43,31 @@ function stateLabel(state){return {online:'Actualizado',stale:'Dato antiguo',off
 
 function renderMetrics(snapshot){
   const metrics=[
-    {group:'solar',field:'total_power_w',valueId:'solar-value',currentId:'solar-current',absolute:false},
-    {group:'grid',field:'power_w',valueId:'grid-value',currentField:'estimated_current_a',currentId:'grid-current',absolute:true},
-    {group:'battery',field:'power_w',valueId:'battery-value',currentField:'current_a',currentId:'battery-current',absolute:true},
-    {group:'load',field:'total_power_w',valueId:'load-value',currentField:'current_a',currentId:'load-current',absolute:false},
+    {group:'solar',field:'total_power_w',unit:'W',valueId:'solar-value',currentId:'solar-current',absolute:false},
+    {group:'grid',field:'power_w',unit:'W',valueId:'grid-value',currentField:'estimated_current_a',currentId:'grid-current',absolute:true},
+    {group:'battery',field:'soc_pct',unit:'%',valueId:'battery-value',powerField:'power_w',powerId:'battery-power',currentField:'current_a',currentId:'battery-current',absolute:false},
+    {group:'load',field:'total_power_w',unit:'W',valueId:'load-value',currentField:'current_a',currentId:'load-current',absolute:false},
   ];
-  metrics.forEach(({group,field,valueId,currentId,currentField,absolute})=>{
+  metrics.forEach(({group,field,unit,valueId,powerField,powerId,currentId,currentField,absolute})=>{
     const state=metricState(snapshot,group,field),card=document.querySelector(`[data-metric="${group}"]`),status=document.querySelector(`#${group}-status`),value=lookup(snapshot,`${group}.${field}`);
     if(card)card.dataset.state=state;
+    if(card&&group==='battery')card.dataset.batteryFlow=batteryFlowState(lookup(snapshot,`battery.${powerField}`));
     if(status)status.textContent=stateLabel(state);
     const element=document.querySelector(`#${valueId}`);
     if(element)element.textContent=valueText(value);
+    const powerElement=powerId&&document.querySelector(`#${powerId}`);
+    if(powerElement)powerElement.textContent=number(lookup(snapshot,`${group}.${powerField}`),'W');
     const currentElement=document.querySelector(`#${currentId}`);
     const currentLabel=group==='solar'?solarCurrentText(snapshot):currentText(lookup(snapshot,`${group}.${currentField}`));
     const currentState=group==='solar'?solarCurrentState(snapshot):metricState(snapshot,group,currentField);
     if(currentElement)currentElement.textContent=currentLabel;
     if(card)card.dataset.currentState=currentState;
     const gauge=document.querySelector(`[data-gauge="${group}"]`),progress=gauge?.querySelector('.metric-gauge__progress');
-    const percent=gaugePercent(value,GAUGE_MAX_W[group],absolute);
+    const percent=gaugePercent(value,(group==='battery'?GAUGE_MAX:GAUGE_MAX_W)[group],absolute);
     if(progress)progress.style.strokeDashoffset=String(100-(percent??0));
     if(gauge){
       gauge.dataset.percent=percent===null?'':String(percent);
-      gauge.setAttribute('aria-label',`${group==='load'?'UPS / Casa':group==='solar'?'Paneles':group==='battery'?'Batería':'Grid'}: ${valueText(value)} W · Corriente: ${currentLabel} · ${stateLabel(state)}`);
+      gauge.setAttribute('aria-label',`${group==='load'?'UPS / Casa':group==='solar'?'Paneles':group==='battery'?'Batería':'Grid'}: ${valueText(value)} ${unit} · Corriente: ${currentLabel} · ${stateLabel(state)}`);
     }
   });
 }
@@ -207,4 +217,4 @@ if(typeof document!=='undefined'){
   else window.addEventListener('resize',resizePlot);
 }
 
-if(typeof module!=='undefined')module.exports={known,lookup,number,valueText,positivePower,gaugePercent,metricState,historyData,chartOptions};
+if(typeof module!=='undefined')module.exports={known,lookup,number,valueText,positivePower,batteryFlowState,gaugePercent,metricState,historyData,chartOptions};

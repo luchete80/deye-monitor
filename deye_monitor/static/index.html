@@ -44,7 +44,11 @@
             <path class="metric-gauge__track" d="M 27.47 92.53 A 46 46 0 1 1 92.53 92.53" pathLength="100"></path>
             <path class="metric-gauge__progress" d="M 27.47 92.53 A 46 46 0 1 1 92.53 92.53" pathLength="100"></path>
           </svg>
-          <p class="metric-value"><span id="battery-value">Sin dato</span> <span class="metric-unit">W</span><span id="battery-current" class="metric-current">Sin dato</span></p>
+          <p class="metric-value metric-value--battery">
+            <span class="metric-primary"><span id="battery-value">Sin dato</span> <span class="metric-unit">%</span></span>
+            <span id="battery-power" class="metric-secondary">Sin dato</span>
+            <span id="battery-current" class="metric-secondary">Sin dato</span>
+          </p>
         </div>
         <dl><dt>SOC</dt><dd data-path="battery.soc_pct" data-unit="%">Sin dato</dd><dt>Carga (+) / descarga (-)</dt><dd data-path="battery.power_w" data-unit="W">Sin dato</dd></dl>
       </article>
