@@ -173,9 +173,9 @@ let historyRefreshTimer;
 let historyRefreshInFlight=false;
 const HISTORY_REFRESH_MS=5000;
 
-function plotHeight(viewportHeight){
-  const height=Number.isFinite(viewportHeight)?viewportHeight:typeof window!=='undefined'&&Number.isFinite(window.innerHeight)?window.innerHeight:600;
-  return Math.max(120,Math.min(170,Math.round(height*.24)));
+function chartHeight(viewportHeight){
+  const height=Number.isFinite(viewportHeight)?viewportHeight:typeof window!=='undefined'?window.innerHeight:900;
+  return height<=800?140:300;
 }
 
 function historyData(samples){
@@ -230,8 +230,7 @@ function renderHistory(samples){
     return;
   }
   historySamples=nextSamples;
-  const width=Math.max(240,container.clientWidth||600),height=plotHeight(),data=historyData(historySamples);
-  container.style.height=`${height}px`;
+  const width=Math.max(240,container.clientWidth||600),height=chartHeight(),data=historyData(historySamples);
   if(powerPlot){
     powerPlot.setData(data);
     powerPlot.setSize({width,height});
@@ -264,9 +263,7 @@ function startHistoryRefresh(){
 function resizePlot(){
   if(!powerPlot)return;
   const container=document.querySelector('#power-chart');
-  const height=plotHeight();
-  container.style.height=`${height}px`;
-  powerPlot.setSize({width:Math.max(240,container.clientWidth||600),height});
+  powerPlot.setSize({width:Math.max(240,container.clientWidth||600),height:chartHeight()});
 }
 
 if(typeof document!=='undefined'){
@@ -284,4 +281,4 @@ if(typeof document!=='undefined'){
   else window.addEventListener('resize',resizePlot);
 }
 
-if(typeof module!=='undefined')module.exports={known,lookup,number,valueText,positivePower,batteryFlowState,gaugePercent,metricState,historyData,chartOptions,FlowLogic,plotHeight};
+if(typeof module!=='undefined')module.exports={known,lookup,number,valueText,positivePower,batteryFlowState,gaugePercent,metricState,historyData,chartOptions,FlowLogic,chartHeight};

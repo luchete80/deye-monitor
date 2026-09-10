@@ -23,10 +23,10 @@
             <path d="M 0 0 L 10 5 L 0 10 z"></path>
           </marker>
         </defs>
-        <path id="flow-pv" class="flow-line idle" d="M 48 24 H 49 V 47 H 49.5"></path>
-        <path id="flow-grid" class="flow-line idle" d="M 52 24 H 51 V 47 H 50.5"></path>
-        <path id="flow-battery" class="flow-line idle" d="M 48 76 H 49 V 53 H 49.5"></path>
-        <path id="flow-load" class="flow-line idle" d="M 52 76 H 51 V 53 H 50.5"></path>
+        <path id="flow-pv" class="flow-line idle" d="M 46 24 H 48 V 47 H 49"></path>
+        <path id="flow-grid" class="flow-line idle" d="M 54 24 H 52 V 47 H 51"></path>
+        <path id="flow-battery" class="flow-line idle" d="M 46 76 H 48 V 53 H 49"></path>
+        <path id="flow-load" class="flow-line idle" d="M 54 76 H 52 V 53 H 51"></path>
       </svg>
       <section class="metric-grid" aria-label="Estado energético actual">
       <article class="metric-card metric-card--solar" data-metric="solar">
@@ -38,7 +38,6 @@
           </svg>
           <p class="metric-value"><span id="solar-value">Sin dato</span> <span class="metric-unit">W</span><span id="solar-current" class="metric-current">Sin dato</span></p>
         </div>
-        <dl><dt>PV1</dt><dd data-path="solar.pv1_power_w" data-unit="W">Sin dato</dd><dt>PV2</dt><dd data-path="solar.pv2_power_w" data-unit="W">Sin dato</dd></dl>
       </article>
       <article class="metric-card metric-card--grid" data-metric="grid">
         <h2>Grid</h2><p class="metric-status" id="grid-status">Esperando datos</p>
@@ -49,7 +48,6 @@
           </svg>
           <p class="metric-value"><span id="grid-value">Sin dato</span> <span class="metric-unit">W</span><span id="grid-current" class="metric-current">Sin dato</span></p>
         </div>
-        <dl><dt>Tensión</dt><dd data-path="grid.voltage_v" data-unit="V">Sin dato</dd><dt>Importación (+) / exportación (-)</dt><dd data-path="grid.power_w" data-unit="W">Sin dato</dd></dl>
       </article>
       <article class="metric-card metric-card--battery" data-metric="battery">
         <h2>Batería</h2><p class="metric-status" id="battery-status">Esperando datos</p>
@@ -64,7 +62,6 @@
             <span id="battery-current" class="metric-secondary">Sin dato</span>
           </p>
         </div>
-        <dl><dt>SOC</dt><dd data-path="battery.soc_pct" data-unit="%">Sin dato</dd><dt>Carga (+) / descarga (-)</dt><dd data-path="battery.power_w" data-unit="W">Sin dato</dd></dl>
       </article>
       <article class="metric-card metric-card--load" data-metric="load">
         <h2>UPS / Casa</h2><p class="metric-status" id="load-status">Esperando datos</p>
@@ -75,7 +72,6 @@
           </svg>
           <p class="metric-value"><span id="load-value">Sin dato</span> <span class="metric-unit">W</span><span id="load-current" class="metric-current">Sin dato</span></p>
         </div>
-        <dl><dt>Consumo total</dt><dd data-path="load.total_power_w" data-unit="W">Sin dato</dd></dl>
       </article>
       </section>
     </div>

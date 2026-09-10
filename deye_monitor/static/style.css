@@ -1,8 +1,8 @@
 :root{font-family:system-ui,sans-serif;color:#e8edf2;background:#111820}body{max-width:1100px;margin:auto;padding:1rem}header{display:flex;gap:1rem;align-items:baseline;flex-wrap:wrap}h1{margin-right:auto}#connection{color:#f5c451}.stale{color:#ff9e9e}.energy-flow{background:#1c2732;border-radius:14px;padding:1rem;margin-bottom:1rem}.section-heading{display:flex;justify-content:space-between;gap:1rem;align-items:baseline;flex-wrap:wrap}.section-heading h2{margin:0}.section-heading p{margin:.25rem 0;color:#aab9c8}.flow-legend{display:flex;gap:.8rem;flex-wrap:wrap;margin:.2rem 0 .6rem;color:#aab9c8;font-size:.85rem}.flow-legend span:nth-child(2){color:#f5c451}.flow-legend span:nth-child(3){color:#ff9e9e}#energy-diagram{display:block;width:100%;height:auto}.energy-node rect{fill:#243341;stroke:#506679;stroke-width:2}.pv-node rect{stroke:#f5c451}.grid-node rect{stroke:#72b7ff}.battery-node rect{stroke:#bc8cff}.load-node rect{stroke:#8ee6aa}.inverter-node rect{fill:#294556;stroke:#8ee6aa;stroke-width:3}.energy-node text{text-anchor:middle}.node-icon{font-size:28px;fill:#dce8f1}.node-name{font-size:20px;font-weight:700}.node-value{font-size:14px;fill:#b8c8d5}.flow-line{fill:none;stroke:#526576;stroke-width:7;stroke-linecap:round}.flow-line.active,.flow-line[marker-start],.flow-line[marker-end]{stroke:#8ee6aa}.flow-line.active{stroke-dasharray:10 10;animation:energy-flow 1s linear infinite}.flow-line.reverse{animation-direction:reverse}.flow-line.stale{stroke:#f5c451;stroke-dasharray:5 8}.flow-line.offline{stroke:#ff9e9e}.flow-label{fill:#d9e5ed;font-size:14px;font-weight:600}#flow-arrow path{fill:#8ee6aa}@keyframes energy-flow{to{stroke-dashoffset:-20}}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:1rem}article{background:#1c2732;border-radius:10px;padding:1rem}article h2{margin-top:0;color:#8ee6aa}dl{display:grid;grid-template-columns:1fr auto;gap:.5rem;margin:0}dd{margin:0;font-variant-numeric:tabular-nums}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}@media (max-width:700px){body{padding:.65rem}.energy-flow{margin-left:-.1rem;margin-right:-.1rem}.section-heading{padding:0 .2rem}.node-icon{font-size:32px}.node-name{font-size:22px}.node-value,.flow-label{font-size:16px}}@media (prefers-reduced-motion:reduce){.flow-line.active{animation:none}}
  .history{max-width:900px;margin:2rem auto;padding:0 1rem}.history .section-heading{display:flex;align-items:center;justify-content:space-between;gap:1rem}.history select{font:inherit;padding:.3rem}.chart{min-height:250px;margin:1rem 0;overflow:auto}.uplot{font-family:system-ui,sans-serif}.u-legend{font-size:.85rem}
 :root{--solar:#48c774;--grid:#b279ff;--battery:#55b9ed;--load:#f3c34f;--panel:#1c2732;--muted:#aab9c8}
-body{max-width:none;margin:0;padding:1rem;background:#111820;overflow-x:hidden}
-.dashboard-shell{width:100%;max-width:none;min-width:0;margin:0}
+body{max-width:none;margin:0;padding:1rem 0 1rem 1rem;background:#111820}
+.dashboard-shell{width:calc(50vw - 1rem);min-width:0;margin:0}
 .dashboard-header{display:flex;gap:1rem;align-items:baseline;flex-wrap:wrap}.dashboard-header h1{margin-right:auto}
 .dashboard-flow{position:relative}
 .metric-grid{position:relative;z-index:1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:3.5rem}
@@ -10,7 +10,7 @@ body{max-width:none;margin:0;padding:1rem;background:#111820;overflow-x:hidden}
 .metric-card--solar{--metric-color:var(--solar);border-color:var(--solar)}.metric-card--grid{--metric-color:var(--grid);border-color:var(--grid)}.metric-card--battery{--metric-color:var(--battery);border-color:var(--battery)}.metric-card--load{--metric-color:var(--load);border-color:var(--load)}
 .metric-status{margin:.2rem 0;color:var(--muted);font-size:.85rem}.metric-card[data-state=stale] .metric-status{color:#f5c451}.metric-card[data-state=offline] .metric-status{color:#ff9e9e}.metric-card[data-state=unknown] .metric-status{color:var(--muted)}
 .metric-value{margin:.8rem 0;font-size:1.7rem;font-weight:700;color:var(--metric-color);font-variant-numeric:tabular-nums}.metric-unit{font-size:.85rem;font-weight:400}.metric-card dl{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.45rem;margin:0;color:var(--muted);font-size:.85rem}.metric-card dd{margin:0;color:#e8edf2;text-align:right;overflow-wrap:anywhere}
-.history{max-width:none;margin:1.5rem 0;padding:0}.history .section-heading{display:flex;align-items:center;justify-content:space-between;gap:1rem}.chart{width:100%;height:170px;min-height:0;margin:1rem 0 0;overflow:hidden}.history #history-status{color:var(--muted)}
+.history{max-width:none;margin:1.5rem 0;padding:0}.history .section-heading{display:flex;align-items:center;justify-content:space-between;gap:1rem}.chart{width:100%;min-height:300px;margin:1rem 0;overflow:hidden}.history #history-status{color:var(--muted)}
 .uplot{font-family:system-ui,sans-serif;max-width:100%}.u-legend{font-size:.85rem}
 @media (max-width:700px){body{padding:.65rem}.dashboard-shell{width:100%}.metric-grid{gap:.65rem}.metric-card{padding:.75rem}.metric-value{font-size:1.35rem}.metric-card dl{font-size:.78rem}}
 .metric-gauge{position:relative;width:min(100%,19.5rem);aspect-ratio:1;margin:.35rem auto .8rem;display:grid;place-items:center;color:var(--metric-color)}
@@ -42,34 +42,23 @@ body{max-width:none;margin:0;padding:1rem;background:#111820;overflow-x:hidden}
 @media (prefers-reduced-motion:reduce){.metric-gauge__progress{transition:none}}
 @media (max-width:700px){.metric-grid{gap:1.75rem}.metric-card{padding:.75rem}.metric-gauge{width:min(100%,15rem);margin:.25rem auto .65rem}.metric-gauge__track,.metric-gauge__progress{stroke-width:9}.metric-gauge .metric-value{font-size:clamp(1.5rem,9vw,2.025rem);padding:0 .7rem}.flow-line{stroke-width:.7}}
 @media (max-width:1100px) and (max-height:800px){
-  body{padding:.5rem;overflow:hidden}
-  .dashboard-header{gap:.45rem;min-height:2rem;align-items:center}
-  .dashboard-header h1{font-size:1.25rem}
-  .dashboard-header p{margin:.1rem 0;font-size:.72rem}
-  .metric-grid{max-width:760px;margin:0 auto;gap:1.5rem 2rem}
-  .metric-card{box-sizing:border-box;height:clamp(142px,23vh,176px);aspect-ratio:auto;display:grid;grid-template-columns:minmax(0,1fr) minmax(120px,.9fr);grid-template-rows:auto minmax(0,1fr);column-gap:.55rem;padding:.5rem;border-radius:9px;overflow:hidden}
-  .metric-card h2{font-size:1rem;margin:0}
-  .metric-status{align-self:center;margin:0;font-size:.68rem;text-align:right}
-  .metric-gauge{grid-column:1;grid-row:2;height:100%;width:auto;max-width:100%;min-height:0;margin:0 auto}
-  .metric-card dl{grid-column:2;grid-row:2;align-self:center;min-width:0;font-size:.66rem;gap:.2rem}
-  .metric-gauge .metric-value{font-size:clamp(1.35rem,4vw,2rem);padding:0 .35rem}
-  .metric-value--battery{gap:.08rem}
-  .metric-secondary{font-size:.4em}
-  .history{margin:.45rem 0 0}
-  .history .section-heading h2{font-size:1rem}
-  .history .section-heading{gap:.5rem}
-  .history #history-status{font-size:.7rem;margin:.15rem 0}
-  .chart{height:140px;margin:.15rem 0 0}
+  body{padding:.4rem 0 .4rem .5rem}
+  .dashboard-shell{width:calc(50vw - .5rem)}
+  .dashboard-header{min-height:1.7rem;gap:.4rem;align-items:center}
+  .dashboard-header h1{margin:.1rem auto .1rem 0;font-size:1.15rem}
+  .dashboard-header p{margin:0;font-size:.68rem}
+  .metric-grid{max-width:300px;margin:0 auto;gap:1rem 1.25rem}
+  .metric-card{box-sizing:border-box;width:100%;height:132px;aspect-ratio:auto;padding:.35rem;overflow:hidden}
+  .metric-card h2{margin:0;font-size:.85rem;line-height:1}
+  .metric-status{display:none}
+  .metric-gauge{width:104px;max-width:100%;margin:.1rem auto 0}
+  .metric-gauge .metric-value{font-size:1.25rem;padding:0 .25rem}
+  .metric-value--battery{gap:.06rem}
+  .metric-secondary{font-size:.42em}
+  .history{margin:.35rem 0 0}
+  .history .section-heading h2{font-size:.95rem}
+  .history #history-status{margin:.1rem 0;font-size:.68rem}
+  .chart{min-height:0;height:140px;margin:.15rem 0 0}
   .u-title{font-size:12px}
   .u-axis,.u-legend{font-size:10px}
-}
-@media (min-width:701px) and (max-width:1100px) and (min-height:651px) and (max-height:800px){
-  .metric-grid{max-width:760px;gap:1.5rem 2rem}
-  .metric-card{height:176px}
-  .chart{height:170px}
-}
-@media (max-height:650px){
-  .metric-grid{max-width:720px;gap:1rem 1.5rem}
-  .metric-card{height:140px;padding:.4rem}
-  .chart{height:130px}
 }
