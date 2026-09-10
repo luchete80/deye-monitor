@@ -173,6 +173,11 @@ let historyRefreshTimer;
 let historyRefreshInFlight=false;
 const HISTORY_REFRESH_MS=5000;
 
+function plotHeight(){
+  const viewportHeight=typeof window!=='undefined'&&Number.isFinite(window.innerHeight)?window.innerHeight:600;
+  return Math.max(120,Math.min(180,Math.round(viewportHeight*.24)));
+}
+
 function historyData(samples){
   const columns=[[],[],[],[],[]];
   const times=samples.map(sample=>new Date(sample.captured_at).getTime()/1000);
@@ -225,13 +230,14 @@ function renderHistory(samples){
     return;
   }
   historySamples=nextSamples;
-  const width=Math.max(240,container.clientWidth||600),data=historyData(historySamples);
+  const width=Math.max(240,container.clientWidth||600),height=plotHeight(),data=historyData(historySamples);
+  container.style.height=`${height}px`;
   if(powerPlot){
     powerPlot.setData(data);
-    powerPlot.setSize({width,height:300});
+    powerPlot.setSize({width,height});
     return;
   }
-  powerPlot=new uPlot(chartOptions('Potencia de las últimas 24 horas',width,300),data,container);
+  powerPlot=new uPlot(chartOptions('Potencia de las últimas 24 horas',width,height),data,container);
 }
 
 async function loadHistory(initial=false){
@@ -258,7 +264,9 @@ function startHistoryRefresh(){
 function resizePlot(){
   if(!powerPlot)return;
   const container=document.querySelector('#power-chart');
-  powerPlot.setSize({width:Math.max(240,container.clientWidth||600),height:300});
+  const height=plotHeight();
+  container.style.height=`${height}px`;
+  powerPlot.setSize({width:Math.max(240,container.clientWidth||600),height});
 }
 
 if(typeof document!=='undefined'){
@@ -276,4 +284,4 @@ if(typeof document!=='undefined'){
   else window.addEventListener('resize',resizePlot);
 }
 
-if(typeof module!=='undefined')module.exports={known,lookup,number,valueText,positivePower,batteryFlowState,gaugePercent,metricState,historyData,chartOptions,FlowLogic};
+if(typeof module!=='undefined')module.exports={known,lookup,number,valueText,positivePower,batteryFlowState,gaugePercent,metricState,historyData,chartOptions,FlowLogic,plotHeight};
