@@ -4,20 +4,21 @@
 body{max-width:none;margin:0;padding:1rem 0 1rem 1rem;background:#111820}
 .dashboard-shell{width:calc(50vw - 1rem);min-width:0;margin:0}
 .dashboard-header{display:flex;gap:1rem;align-items:baseline;flex-wrap:wrap}.dashboard-header h1{margin-right:auto}
-.metric-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}
-.metric-card{min-width:0;background:var(--panel);border:2px solid transparent;border-radius:12px;padding:1rem}.metric-card h2{margin:.1rem 0;color:var(--metric-color)}
+.dashboard-flow{position:relative}
+.metric-grid{position:relative;z-index:1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:3.5rem}
+.metric-card{min-width:0;aspect-ratio:1/1;background:var(--panel);border:2px solid transparent;border-radius:12px;padding:1rem}.metric-card h2{margin:.1rem 0;color:var(--metric-color)}
 .metric-card--solar{--metric-color:var(--solar);border-color:var(--solar)}.metric-card--grid{--metric-color:var(--grid);border-color:var(--grid)}.metric-card--battery{--metric-color:var(--battery);border-color:var(--battery)}.metric-card--load{--metric-color:var(--load);border-color:var(--load)}
 .metric-status{margin:.2rem 0;color:var(--muted);font-size:.85rem}.metric-card[data-state=stale] .metric-status{color:#f5c451}.metric-card[data-state=offline] .metric-status{color:#ff9e9e}.metric-card[data-state=unknown] .metric-status{color:var(--muted)}
 .metric-value{margin:.8rem 0;font-size:1.7rem;font-weight:700;color:var(--metric-color);font-variant-numeric:tabular-nums}.metric-unit{font-size:.85rem;font-weight:400}.metric-card dl{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.45rem;margin:0;color:var(--muted);font-size:.85rem}.metric-card dd{margin:0;color:#e8edf2;text-align:right;overflow-wrap:anywhere}
 .history{max-width:none;margin:1.5rem 0;padding:0}.history .section-heading{display:flex;align-items:center;justify-content:space-between;gap:1rem}.chart{width:100%;min-height:300px;margin:1rem 0;overflow:hidden}.history #history-status{color:var(--muted)}
 .uplot{font-family:system-ui,sans-serif;max-width:100%}.u-legend{font-size:.85rem}
 @media (max-width:700px){body{padding:.65rem}.dashboard-shell{width:100%}.metric-grid{gap:.65rem}.metric-card{padding:.75rem}.metric-value{font-size:1.35rem}.metric-card dl{font-size:.78rem}}
-.metric-gauge{position:relative;width:min(100%,13rem);aspect-ratio:1;margin:.35rem auto .8rem;display:grid;place-items:center;color:var(--metric-color)}
+.metric-gauge{position:relative;width:min(100%,19.5rem);aspect-ratio:1;margin:.35rem auto .8rem;display:grid;place-items:center;color:var(--metric-color)}
 .metric-gauge__svg{display:block;width:100%;height:100%;overflow:visible}
 .metric-gauge__track,.metric-gauge__progress{fill:none;stroke-width:10;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:100;transform-origin:60px 60px}
 .metric-gauge__track{stroke:var(--metric-color);opacity:.22}
 .metric-gauge__progress{stroke:var(--metric-color);stroke-dashoffset:100;transition:stroke-dashoffset .35s ease,opacity .2s ease}
-.metric-gauge .metric-value{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;align-content:center;flex-wrap:wrap;gap:.2rem;margin:0;padding:0 1rem;text-align:center;line-height:1.15;color:var(--metric-color);font-size:clamp(1.15rem,3vw,1.7rem);overflow-wrap:anywhere}
+.metric-gauge .metric-value{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;align-content:center;flex-wrap:wrap;gap:.2rem;margin:0;padding:0 1rem;text-align:center;line-height:1.15;color:var(--metric-color);font-size:clamp(1.725rem,4.5vw,2.55rem);overflow-wrap:anywhere}
 .metric-gauge .metric-unit{font-size:.55em}
 .metric-value--battery{flex-direction:column;gap:.15rem}
 .metric-primary{display:block;font-size:1.1em;font-weight:700;line-height:1}
@@ -25,9 +26,18 @@ body{max-width:none;margin:0;padding:1rem 0 1rem 1rem;background:#111820}
 .metric-secondary{display:block;font-size:.46em;font-weight:500;line-height:1.1;opacity:.85}
 .metric-card--battery[data-battery-flow=charging]{--metric-color:#55b9ed}
 .metric-card--battery[data-battery-flow=discharging]{--metric-color:#ff6b6b}
+.flow-arrows{position:absolute;inset:0;z-index:2;width:100%;height:100%;overflow:visible;pointer-events:none}
+.flow-line{fill:none;stroke:#65798a;stroke-width:.9;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke;opacity:.6}
+.flow-line.active{stroke:#8ee6aa;stroke-dasharray:3 2;animation:energy-flow 1s linear infinite;opacity:1}
+.flow-line.reverse{animation-direction:reverse}
+.flow-line.stale{stroke:#f5c451;stroke-dasharray:2 2;opacity:.85}
+.flow-line.offline{stroke:#ff9e9e;stroke-dasharray:1.5 2.5;opacity:.85}
+.flow-line.unknown{opacity:.18}
+.flow-line.idle{opacity:.3}
+#flow-arrow path{fill:#8ee6aa}
 .metric-current{flex-basis:100%;font-size:.48em;font-weight:500;line-height:1.1;opacity:.85}
 .metric-card[data-current-state=stale] .metric-current{color:#f5c451}.metric-card[data-current-state=offline] .metric-current{color:#ff9e9e}.metric-card[data-current-state=unknown] .metric-current{color:var(--muted)}
 .metric-card[data-state=stale] .metric-gauge__progress,.metric-card[data-state=offline] .metric-gauge__progress{opacity:.62}
 .metric-card[data-state=unknown] .metric-gauge__progress{opacity:0}
 @media (prefers-reduced-motion:reduce){.metric-gauge__progress{transition:none}}
-@media (max-width:700px){.metric-gauge{width:min(100%,10rem);margin:.25rem auto .65rem}.metric-gauge__track,.metric-gauge__progress{stroke-width:9}.metric-gauge .metric-value{font-size:clamp(1rem,6vw,1.35rem);padding:0 .7rem}}
+@media (max-width:700px){.metric-grid{gap:1.75rem}.metric-card{padding:.75rem}.metric-gauge{width:min(100%,15rem);margin:.25rem auto .65rem}.metric-gauge__track,.metric-gauge__progress{stroke-width:9}.metric-gauge .metric-value{font-size:clamp(1.5rem,9vw,2.025rem);padding:0 .7rem}.flow-line{stroke-width:.7}}

@@ -20,6 +20,12 @@ assert.equal(dashboard.gaugePercent(null,6000),null);
 assert.equal(dashboard.gaugePercent(100,0),null);
 
 const online={broker:'connected',service:'online',logger:'online'};
+assert.deepEqual(dashboard.FlowLogic.state('grid',720,30,true,online,false),{status:'active',direction:1});
+assert.deepEqual(dashboard.FlowLogic.state('grid',-540,30,true,online,false),{status:'active',direction:-1});
+assert.deepEqual(dashboard.FlowLogic.state('battery',30,30,true,online,false),{status:'idle',direction:0});
+assert.equal(dashboard.FlowLogic.pathDirection('battery',1),-1);
+assert.equal(dashboard.FlowLogic.pathDirection('load',1),-1);
+assert.deepEqual(dashboard.FlowLogic.state('load',100,30,false,online,false),{status:'stale',direction:0});
 const snapshot={
   solar:{total_power_w:2800},grid:{power_w:720},battery:{power_w:-300},load:{total_power_w:1900},
   field_freshness:{solar:{total_power_w:true},grid:{power_w:true},battery:{power_w:true},load:{total_power_w:true}},

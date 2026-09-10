@@ -7,6 +7,10 @@ const htmlIds=new Set([...html.matchAll(/\bid="([^"]+)"/g)].map(match=>`#${match
 
 for(const id of ['#solar-value','#grid-value','#battery-value','#battery-power','#load-value','#solar-current','#grid-current','#battery-current','#load-current','#solar-status','#grid-status','#battery-status','#load-status','#power-chart','#history-status','#connection','#age'])assert.ok(htmlIds.has(id),`Missing ${id}`);
 assert.equal((html.match(/class="metric-gauge"/g)||[]).length,4);
+assert.match(html,/id="dashboard-flow-arrows"/);
+assert.match(html,/id="flow-arrow"/);
+for(const id of ['#flow-pv','#flow-grid','#flow-battery','#flow-load'])assert.ok(htmlIds.has(id),`Missing ${id}`);
+assert.equal((html.match(/class="flow-line/g)||[]).length,4);
 for(const group of ['solar','grid','battery','load']){
   assert.match(html,new RegExp(`data-gauge="${group}"`));
   assert.match(html,new RegExp(`data-gauge="${group}"[\\s\\S]*?metric-gauge__track`));
@@ -24,5 +28,7 @@ assert.match(script,/setInterval\(\(\)=>loadHistory\(false\),HISTORY_REFRESH_MS\
 assert.match(script,/solarCurrentText/);
 assert.match(script,/batteryFlowState/);
 assert.match(script,/field:'soc_pct'/);
+assert.match(script,/renderFlow/);
+assert.match(script,/deadband/);
 assert.match(script,/ResizeObserver/);
 console.log('dashboard render assets ok');

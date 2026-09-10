@@ -41,6 +41,64 @@ function metricState(snapshot,group,field){
 
 function stateLabel(state){return {online:'Actualizado',stale:'Dato antiguo',offline:'Sin conexión',unknown:'Sin dato'}[state]||'Sin dato'}
 
+const FlowLogic=(()=>{
+  function direction(kind,value,deadband){
+    if(!known(value)||Math.abs(value)<=deadband)return 0;
+    if(kind==='pv'||kind==='load')return value>0?1:0;
+    return value>0?1:-1;
+  }
+  function pathDirection(kind,semanticDirection){
+    // SVG routes are drawn from each card toward the centre gap.
+    return kind==='battery'||kind==='load'?-semanticDirection:semanticDirection;
+  }
+  function offline(connectivity={},simulated=false){
+    return(!simulated&&connectivity.broker==='disconnected')||connectivity.service==='offline'||connectivity.logger==='offline';
+  }
+  function state(kind,value,deadband,fresh,connectivity,simulated){
+    if(!known(value))return{status:'unknown',direction:0};
+    if(offline(connectivity,simulated))return{status:'offline',direction:0};
+    if(!fresh)return{status:'stale',direction:0};
+    const flowDirection=direction(kind,value,deadband);
+    return{status:flowDirection?'active':'idle',direction:flowDirection};
+  }
+  return{direction,pathDirection,offline,state};
+})();
+
+function setFlow(id,value,result,pathDirection,label){
+  const line=document.querySelector(`#flow-${id}`);
+  if(!line)return;
+  line.setAttribute('class',`flow-line ${result.status}${pathDirection<0?' reverse':''}`);
+  line.removeAttribute('marker-start');
+  line.removeAttribute('marker-end');
+  if(result.status==='active'&&pathDirection>0)line.setAttribute('marker-end','url(#flow-arrow)');
+  if(result.status==='active'&&pathDirection<0)line.setAttribute('marker-start','url(#flow-arrow)');
+  const suffix=result.status==='stale'?' · dato antiguo':result.status==='offline'?' · sin conexión':result.status==='unknown'?' · sin dato':'';
+  line.setAttribute('aria-label',`${label}: ${known(value)?number(Math.abs(value)): 'Sin dato'}${suffix}`);
+}
+
+function renderFlow(snapshot){
+  const deadband=snapshot.flow?.deadband_w??30;
+  const simulated=snapshot.flow?.simulated===true;
+  const connectivity=snapshot.connectivity||{};
+  const source=path=>lookup(snapshot,path);
+  const fresh=path=>lookup(snapshot,`field_freshness.${path}`)===true;
+  const flows=[
+    ['pv','solar.total_power_w','Paneles → centro'],
+    ['grid','grid.power_w','Grid → centro'],
+    ['battery','battery.power_w','centro → Batería'],
+    ['load','load.total_power_w','centro → UPS / Casa'],
+  ];
+  flows.forEach(([id,path,forwardLabel])=>{
+    const value=source(path);
+    const result=FlowLogic.state(id,value,deadband,fresh(path),connectivity,simulated);
+    const pathDirection=FlowLogic.pathDirection(id,result.direction);
+    let label=forwardLabel;
+    if(id==='grid'&&result.direction<0)label='centro → Grid';
+    if(id==='battery'&&result.direction<0)label='Batería → centro';
+    setFlow(id,value,result,pathDirection,label);
+  });
+}
+
 function renderMetrics(snapshot){
   const metrics=[
     {group:'solar',field:'total_power_w',unit:'W',valueId:'solar-value',currentId:'solar-current',absolute:false},
@@ -91,6 +149,7 @@ function solarCurrentState(snapshot){
 function render(snapshot){
   document.querySelectorAll('[data-path]').forEach(element=>element.textContent=number(lookup(snapshot,element.dataset.path),element.dataset.unit));
   renderMetrics(snapshot);
+  renderFlow(snapshot);
   const connectivity=snapshot.connectivity||{},connection=document.querySelector('#connection');
   connection.textContent=snapshot.flow?.simulated?'Fuente: simulada':`Broker: ${connectivity.broker} · Servicio: ${connectivity.service} · Logger: ${connectivity.logger}`;
   connection.className=connectivity.stale?'stale':'';
@@ -217,4 +276,4 @@ if(typeof document!=='undefined'){
   else window.addEventListener('resize',resizePlot);
 }
 
-if(typeof module!=='undefined')module.exports={known,lookup,number,valueText,positivePower,batteryFlowState,gaugePercent,metricState,historyData,chartOptions};
+if(typeof module!=='undefined')module.exports={known,lookup,number,valueText,positivePower,batteryFlowState,gaugePercent,metricState,historyData,chartOptions,FlowLogic};
