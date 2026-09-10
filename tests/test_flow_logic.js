@@ -28,5 +28,19 @@ assert.deepEqual(data[1],[100,null,200]);
 assert.deepEqual(data[2],[0,null,50]);
 assert.deepEqual(data[3],[0,null,30]);
 assert.deepEqual(data[4],[80,null,90]);
+
+const fiveMinuteData=dashboard.historyData([
+  {captured_at:'2026-01-01T00:00:00Z',pv_power_w:100,grid_power_w:10,battery_power_w:20,home_power_w:80},
+  {captured_at:'2026-01-01T00:05:00Z',pv_power_w:200,grid_power_w:20,battery_power_w:30,home_power_w:90},
+  {captured_at:'2026-01-01T00:10:00Z',pv_power_w:300,grid_power_w:30,battery_power_w:40,home_power_w:100},
+]);
+assert.deepEqual(fiveMinuteData[1],[100,200,300]);
+
+const fiveMinuteGap=dashboard.historyData([
+  {captured_at:'2026-01-01T00:00:00Z',pv_power_w:100,grid_power_w:10,battery_power_w:20,home_power_w:80},
+  {captured_at:'2026-01-01T00:05:00Z',pv_power_w:200,grid_power_w:20,battery_power_w:30,home_power_w:90},
+  {captured_at:'2026-01-01T00:15:00Z',pv_power_w:300,grid_power_w:30,battery_power_w:40,home_power_w:100},
+]);
+assert.deepEqual(fiveMinuteGap[1],[100,200,null,300]);
 assert.equal(dashboard.chartOptions('x',500,300).axes[2].scale,'battery');
 console.log('dashboard logic ok');

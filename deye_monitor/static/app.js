@@ -63,11 +63,15 @@ let historySamples=[];
 
 function historyData(samples){
   const columns=[[],[],[],[],[]];
+  const times=samples.map(sample=>new Date(sample.captured_at).getTime()/1000);
+  const intervals=times.slice(1).map((time,index)=>time-times[index]).filter(interval=>interval>0).sort((a,b)=>a-b);
+  const cadence=intervals.length>=2?intervals[Math.floor((intervals.length-1)*.25)]:5;
+  const gapThreshold=Math.max(7,cadence*1.5);
   let previous;
-  for(const sample of samples){
-    const time=new Date(sample.captured_at).getTime()/1000;
-    if(previous&&time-previous>7){
-      columns[0].push(previous+5);
+  samples.forEach((sample,index)=>{
+    const time=times[index];
+    if(previous&&time-previous>gapThreshold){
+      columns[0].push(previous+cadence);
       for(let index=1;index<columns.length;index++)columns[index].push(null);
     }
     columns[0].push(time);
@@ -76,7 +80,7 @@ function historyData(samples){
     columns[3].push(positivePower(sample.battery_power_w));
     columns[4].push(sample.home_power_w);
     previous=time;
-  }
+  });
   return columns;
 }
 
