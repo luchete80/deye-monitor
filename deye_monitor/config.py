@@ -63,6 +63,8 @@ class Config:
         suffixes = {
             "solar.pv1_power_w": _value("DEYE_TOPIC_PV1", "dc/pv1/power"),
             "solar.pv2_power_w": _value("DEYE_TOPIC_PV2", "dc/pv2/power"),
+            "solar.pv1_current_a": _value("DEYE_TOPIC_PV1_CURRENT", "dc/pv1/current"),
+            "solar.pv2_current_a": _value("DEYE_TOPIC_PV2_CURRENT", "dc/pv2/current"),
             "grid.voltage_v": _value("DEYE_TOPIC_GRID_VOLTAGE", "ac/l1/voltage"),
             "grid.energy_bought_today_kwh": _value("DEYE_TOPIC_GRID_ENERGY_BOUGHT", "ac/daily_energy_bought"),
             "grid.energy_sold_today_kwh": _value("DEYE_TOPIC_GRID_ENERGY_SOLD", "ac/daily_energy_sold"),
@@ -73,8 +75,10 @@ class Config:
             "connectivity.logger": _value("DEYE_TOPIC_LOGGER_STATUS", "logger_status"),
             "grid.power_w": _value("DEYE_TOPIC_GRID_POWER"),
             "battery.power_w": _value("DEYE_TOPIC_BATTERY_POWER"),
+            "battery.current_a": _value("DEYE_TOPIC_BATTERY_CURRENT", "battery/current"),
             "battery.soc_pct": _value("DEYE_TOPIC_BATTERY_SOC"),
             "load.total_power_w": _value("DEYE_TOPIC_UPS_LOAD_POWER"),
+            "load.current_a": _value("DEYE_TOPIC_LOAD_CURRENT", "ac/l1/current"),
         }
         return cls(
             host=_value("DEYE_HOST", "127.0.0.1"), port=int(_value("DEYE_PORT", "5000")),

@@ -7,6 +7,36 @@ un plot uPlot empaquetado en el proyecto; no depende de una CDN. La interfaz usa
 la mitad izquierda de la pantalla, con cuatro bloques 2×2 y un plot inferior.
 No incluye Docker, WebSocket ni comandos MQTT.
 
+## Ejecutar deye-inverter-mqtt en WSL
+
+`deye-inverter-mqtt` no está clonado como repositorio local: se ejecuta desde
+la imagen Docker `ghcr.io/kbialek/deye-inverter-mqtt`. Su configuración está en
+`/home/luciano/deye-test/config.env`.
+
+Para ejecutarlo en primer plano y ver su salida directamente:
+
+```bash
+cd ~/deye-test
+sudo docker run --rm \
+  --network host \
+  --env-file config.env \
+  ghcr.io/kbialek/deye-inverter-mqtt
+```
+
+Se detiene con `Ctrl+C`. Si ya existe el contenedor persistente `deye-mqtt`, se
+puede iniciar y seguir sus logs con:
+
+```bash
+sudo docker start deye-mqtt
+sudo docker logs -f deye-mqtt
+```
+
+Para comprobar si el contenedor existe y consultar su estado:
+
+```bash
+sudo docker ps -a --filter name=deye-mqtt
+```
+
 ## Ejecución local
 
 ```bash

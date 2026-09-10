@@ -54,6 +54,28 @@ def test_total_solar_requires_both_inputs_and_has_timestamp():
     assert complete["field_freshness"]["solar"]["total_power_w"] is True
 
 
+def test_current_topics_and_grid_current_estimate_are_exposed():
+    topics = {
+        "solar.pv1_current_a": "dc/pv1/current",
+        "solar.pv2_current_a": "dc/pv2/current",
+        "battery.current_a": "battery/current",
+        "load.current_a": "ac/l1/current",
+        "grid.power_w": "ac/total_grid_power",
+        "grid.voltage_v": "ac/l1/voltage",
+    }
+    adapter = SG03LP1Adapter("deye", topics, grid_power_sign="import_positive")
+    assert adapter.adapt("deye/dc/pv1/current", b"6.7") == ("solar.pv1_current_a", 6.7)
+    now = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    store = StateStore(10, clock=lambda: now)
+    for field, value in (("grid.power_w", -440), ("grid.voltage_v", 220), ("battery.current_a", 4.9)):
+        store.update(field, value)
+    snapshot = store.snapshot()
+    assert snapshot["grid"]["estimated_current_a"] == 2.0
+    assert snapshot["field_freshness"]["grid"]["estimated_current_a"] is True
+    store.update("grid.voltage_v", 0)
+    assert store.snapshot()["grid"]["estimated_current_a"] is None
+
+
 def test_required_freshness_cannot_be_hidden_by_other_field_updates():
     current = [datetime(2026, 1, 1, tzinfo=timezone.utc)]
     store = StateStore(5, ("solar.pv1_power_w", "solar.pv2_power_w"), clock=lambda: current[0])

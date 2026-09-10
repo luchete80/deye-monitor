@@ -24,8 +24,8 @@ class FixtureSimulator:
             messages = json.loads(self.fixture.read_text())["messages"]
             for message in messages:
                 if self._stop.is_set(): break
-                adapted = self.adapter.adapt(message["topic"], str(message["payload"]))
-                if adapted: self.state.update(*adapted)
+                for adapted in self.adapter.adapt_many(message["topic"], str(message["payload"])):
+                    self.state.update(*adapted)
                 self._stop.wait(message.get("delay", self.interval))
         except (OSError, KeyError, TypeError, json.JSONDecodeError):
             self.log.exception("Fixture simulator stopped: invalid fixture")

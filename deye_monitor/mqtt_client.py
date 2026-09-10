@@ -38,7 +38,7 @@ class MQTTClient:
 
     def _on_message(self, client, userdata, message):
         try:
-            adapted = self.adapter.adapt(message.topic, message.payload)
-            if adapted: self.state.update(*adapted)
+            for adapted in self.adapter.adapt_many(message.topic, message.payload):
+                self.state.update(*adapted)
         except Exception:
             self.log.exception("Ignoring MQTT callback failure")

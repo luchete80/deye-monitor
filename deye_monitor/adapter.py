@@ -40,7 +40,9 @@ class SG03LP1Adapter:
         if battery_power_sign not in BATTERY_POWER_SIGNS:
             raise ValueError(f"Invalid battery power sign: {battery_power_sign!r}")
         self.prefix = prefix.strip("/")
-        self.by_topic = {f"{self.prefix}/{suffix}": field for field, suffix in topics.items()}
+        self.by_topic: dict[str, list[str]] = {}
+        for field, suffix in topics.items():
+            self.by_topic.setdefault(f"{self.prefix}/{suffix}", []).append(field)
         self.signs = {"grid.power_w": grid_power_sign, "battery.power_w": battery_power_sign}
 
     @property
@@ -48,10 +50,7 @@ class SG03LP1Adapter:
         """Only listen to the configured contract, not the whole publisher tree."""
         return tuple(self.by_topic)
 
-    def adapt(self, topic: str, payload: bytes | str) -> tuple[str, object] | None:
-        field = self.by_topic.get(topic.strip("/"))
-        if not field:
-            return None
+    def _adapt_field(self, field: str, payload: bytes | str) -> tuple[str, object] | None:
         if field in {"connectivity.service", "connectivity.logger"}:
             status = parse_status(payload)
             return (field, status) if status is not None else None
@@ -65,3 +64,19 @@ class SG03LP1Adapter:
         if sign == "unknown":
             return None
         return field, value
+
+    def adapt_many(self, topic: str, payload: bytes | str) -> list[tuple[str, object]]:
+        fields = self.by_topic.get(topic.strip("/"), ())
+        return [adapted for field in fields if (adapted := self._adapt_field(field, payload)) is not None]
+
+    def adapt(self, topic: str, payload: bytes | str) -> tuple[str, object] | None:
+        """Adapt one message, retaining the legacy single-field API.
+
+        MQTT topics can intentionally feed more than one normalized field (for
+        example ``ac/total_power`` feeds both inverter diagnostics and load).
+        Runtime consumers use :meth:`adapt_many` so no duplicate mapping is lost.
+        """
+        adapted = self.adapt_many(topic, payload)
+        # Preserve the historical behavior for callers that only consume one
+        # field; runtime MQTT/simulator paths use adapt_many and update all.
+        return adapted[-1] if adapted else None

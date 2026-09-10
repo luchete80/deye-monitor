@@ -21,10 +21,16 @@ class StateStore:
         self._lock = threading.Lock()
         self._listeners: list[queue.Queue] = []
         self._values = {
-            "solar": {"pv1_power_w": None, "pv2_power_w": None, "total_power_w": None},
-            "battery": {"soc_pct": None, "power_w": None},
-            "grid": {"voltage_v": None, "power_w": None, "energy_bought_today_kwh": None, "energy_sold_today_kwh": None},
-            "load": {"total_power_w": None},
+            "solar": {
+                "pv1_power_w": None, "pv2_power_w": None, "total_power_w": None,
+                "pv1_current_a": None, "pv2_current_a": None,
+            },
+            "battery": {"soc_pct": None, "power_w": None, "current_a": None},
+            "grid": {
+                "voltage_v": None, "power_w": None, "estimated_current_a": None,
+                "energy_bought_today_kwh": None, "energy_sold_today_kwh": None,
+            },
+            "load": {"total_power_w": None, "current_a": None},
             "inverter": {"ac_power_w": None},
             "temperature": {"radiator_c": None, "ac_c": None},
         }
@@ -65,6 +71,25 @@ class StateStore:
                 }
                 for group, fields in timestamps.items()
             }
+            # No validated grid-current topic is available for this inverter.
+            # Expose an estimate only while both source measurements are fresh.
+            grid_power = result["grid"]["power_w"]
+            grid_voltage = result["grid"]["voltage_v"]
+            power_fresh = freshness["grid"]["power_w"]
+            voltage_fresh = freshness["grid"]["voltage_v"]
+            if (
+                isinstance(grid_power, (int, float)) and not isinstance(grid_power, bool)
+                and isinstance(grid_voltage, (int, float)) and not isinstance(grid_voltage, bool)
+                and grid_voltage != 0 and power_fresh and voltage_fresh
+            ):
+                result["grid"]["estimated_current_a"] = abs(grid_power) / abs(grid_voltage)
+                source_times = [timestamps["grid"][field] for field in ("power_w", "voltage_v")]
+                timestamps["grid"]["estimated_current_a"] = max(source_times)
+                freshness["grid"]["estimated_current_a"] = True
+            else:
+                result["grid"]["estimated_current_a"] = None
+                timestamps["grid"]["estimated_current_a"] = None
+                freshness["grid"]["estimated_current_a"] = False
             required = [self._field_fresh(freshness, field) for field in self.required_fresh_fields]
             # No configured requirement means no data freshness claim can be made.
             globally_fresh = bool(required) and all(required)
