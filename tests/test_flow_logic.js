@@ -6,8 +6,8 @@ assert.equal(dashboard.positivePower(-540),0);
 assert.equal(dashboard.positivePower(0),0);
 assert.equal(dashboard.positivePower(null),null);
 assert.equal(dashboard.positivePower(undefined),null);
-assert.equal(dashboard.batteryFlowState(250),'charging');
-assert.equal(dashboard.batteryFlowState(-250),'discharging');
+assert.equal(dashboard.batteryFlowState(250),'discharging');
+assert.equal(dashboard.batteryFlowState(-250),'charging');
 assert.equal(dashboard.batteryFlowState(0),'idle');
 assert.equal(dashboard.batteryFlowState(null),'unknown');
 assert.equal(dashboard.gaugePercent(0,6000),0);
@@ -23,7 +23,7 @@ const online={broker:'connected',service:'online',logger:'online'};
 assert.deepEqual(dashboard.FlowLogic.state('grid',720,30,true,online,false),{status:'active',direction:1});
 assert.deepEqual(dashboard.FlowLogic.state('grid',-540,30,true,online,false),{status:'active',direction:-1});
 assert.deepEqual(dashboard.FlowLogic.state('battery',30,30,true,online,false),{status:'idle',direction:0});
-assert.equal(dashboard.FlowLogic.pathDirection('battery',1),-1);
+assert.equal(dashboard.FlowLogic.pathDirection('battery',1),1);
 assert.equal(dashboard.FlowLogic.pathDirection('load',1),-1);
 assert.deepEqual(dashboard.FlowLogic.state('load',100,30,false,online,false),{status:'stale',direction:0});
 assert.equal(dashboard.chartHeight(600),140);
@@ -47,8 +47,9 @@ const data=dashboard.historyData([
 ]);
 assert.deepEqual(data[1],[100,null,200]);
 assert.deepEqual(data[2],[0,null,50]);
-assert.deepEqual(data[3],[0,null,30]);
-assert.deepEqual(data[4],[80,null,90]);
+assert.deepEqual(data[3],[-20,null,null]);
+assert.deepEqual(data[4],[null,null,30]);
+assert.deepEqual(data[5],[80,null,90]);
 
 const fiveMinuteData=dashboard.historyData([
   {captured_at:'2026-01-01T00:00:00Z',pv_power_w:100,grid_power_w:10,battery_power_w:20,home_power_w:80},
@@ -64,4 +65,6 @@ const fiveMinuteGap=dashboard.historyData([
 ]);
 assert.deepEqual(fiveMinuteGap[1],[100,200,null,300]);
 assert.equal(dashboard.chartOptions('x',500,300).axes[2].scale,'battery');
+const fixedRange=dashboard.chartOptions('x',500,300).scales.x.range();
+assert.equal(fixedRange[1]-fixedRange[0],24*60*60);
 console.log('dashboard logic ok');

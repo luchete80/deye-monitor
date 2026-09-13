@@ -16,8 +16,8 @@ function relativeAge(timestamp){
 function positivePower(value){return known(value)?Math.max(0,value):null}
 function batteryFlowState(value){
   if(!known(value))return 'unknown';
-  if(value>0)return 'charging';
-  if(value<0)return 'discharging';
+  if(value<0)return 'charging';
+  if(value>0)return 'discharging';
   return 'idle';
 }
 const GAUGE_MAX_W={solar:6000,grid:6000,battery:6000,load:6000};
@@ -49,7 +49,7 @@ const FlowLogic=(()=>{
   }
   function pathDirection(kind,semanticDirection){
     // SVG routes are drawn from each card toward the centre gap.
-    return kind==='battery'||kind==='load'?-semanticDirection:semanticDirection;
+    return kind==='load'?-semanticDirection:semanticDirection;
   }
   function offline(connectivity={},simulated=false){
     return(!simulated&&connectivity.broker==='disconnected')||connectivity.service==='offline'||connectivity.logger==='offline';
@@ -94,7 +94,7 @@ function renderFlow(snapshot){
     const pathDirection=FlowLogic.pathDirection(id,result.direction);
     let label=forwardLabel;
     if(id==='grid'&&result.direction<0)label='centro → Grid';
-    if(id==='battery'&&result.direction<0)label='Batería → centro';
+    if(id==='battery'&&result.direction>0)label='Batería → centro';
     setFlow(id,value,result,pathDirection,label);
   });
 }
@@ -179,7 +179,7 @@ function chartHeight(viewportHeight){
 }
 
 function historyData(samples){
-  const columns=[[],[],[],[],[]];
+  const columns=[[],[],[],[],[],[]];
   const times=samples.map(sample=>new Date(sample.captured_at).getTime()/1000);
   const intervals=times.slice(1).map((time,index)=>time-times[index]).filter(interval=>interval>0).sort((a,b)=>a-b);
   const cadence=intervals.length>=2?intervals[Math.floor((intervals.length-1)*.25)]:5;
@@ -194,28 +194,33 @@ function historyData(samples){
     columns[0].push(time);
     columns[1].push(sample.pv_power_w);
     columns[2].push(positivePower(sample.grid_power_w));
-    columns[3].push(positivePower(sample.battery_power_w));
-    columns[4].push(sample.home_power_w);
+    columns[3].push(known(sample.battery_power_w)&&sample.battery_power_w<0?sample.battery_power_w:null);
+    columns[4].push(known(sample.battery_power_w)&&sample.battery_power_w>0?sample.battery_power_w:null);
+    columns[5].push(sample.home_power_w);
     previous=time;
   });
   return columns;
 }
 
 function chartOptions(title,width,height){
-  const solar=chartColor('--solar','#48c774'),grid=chartColor('--grid','#b279ff'),battery=chartColor('--battery','#55b9ed'),load=chartColor('--load','#f3c34f');
+  const solar=chartColor('--solar','#48c774'),grid=chartColor('--grid','#b279ff'),battery=chartColor('--battery','#55b9ed'),discharge='#ff6b6b',load=chartColor('--load','#f3c34f');
   return {
     title,width,height,ms:1,
-    scales:{x:{time:true},y:{auto:true},battery:{auto:true}},
+    scales:{
+      x:{time:true,range:()=>{const end=Math.floor(Date.now()/1000);return[end-24*60*60,end]}},
+      y:{auto:true},battery:{auto:true}
+    },
     series:[{},
       {label:'Generación',scale:'y',stroke:solar,width:2},
       {label:'Consumo de Grid',scale:'y',stroke:grid,width:2},
       {label:'Carga de batería',scale:'battery',stroke:battery,width:2},
+      {label:'Descarga de batería',scale:'battery',stroke:discharge,width:2},
       {label:'Consumo total',scale:'y',stroke:load,width:2}
     ],
     axes:[
       {scale:'x'},
       {scale:'y',label:'Potencia (W)'},
-      {scale:'battery',label:'Carga batería (W)',side:1}
+      {scale:'battery',label:'Batería (W)',side:1}
     ]
   };
 }
@@ -230,7 +235,7 @@ function renderHistory(samples){
     return;
   }
   historySamples=nextSamples;
-  const width=Math.max(240,container.clientWidth||600),height=chartHeight(),data=historyData(historySamples);
+  const width=Math.max(240,container.clientWidth||600),height=Math.max(120,container.clientHeight||chartHeight()),data=historyData(historySamples);
   if(powerPlot){
     powerPlot.setData(data);
     powerPlot.setSize({width,height});
@@ -263,7 +268,7 @@ function startHistoryRefresh(){
 function resizePlot(){
   if(!powerPlot)return;
   const container=document.querySelector('#power-chart');
-  powerPlot.setSize({width:Math.max(240,container.clientWidth||600),height:chartHeight()});
+  powerPlot.setSize({width:Math.max(240,container.clientWidth||600),height:Math.max(120,container.clientHeight||chartHeight())});
 }
 
 if(typeof document!=='undefined'){
