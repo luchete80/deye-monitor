@@ -39,6 +39,7 @@ const styles=fs.readFileSync('deye_monitor/static/style.css','utf8');
 assert.match(styles,/width:calc\(50vw - 1rem\)/);
 assert.match(styles,/height:min\(100vh,var\(--dashboard-height\)\)/);
 assert.match(styles,/grid-template-rows:auto minmax\(0,62fr\) minmax\(0,38fr\)/);
+assert.match(styles,/\.dashboard-flow\{[^}]*aspect-ratio:1\/1[^}]*margin:0 auto/);
 const displayConfig=fs.readFileSync('deye_monitor/static/display-config.css','utf8');
 assert.match(displayConfig,/--dashboard-height:1080px/);
 assert.match(script,/chartHeight/);

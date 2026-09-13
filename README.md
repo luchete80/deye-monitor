@@ -104,7 +104,10 @@ muestra el CSS anterior.
 La pantalla de escritorio ocupa sólo la mitad izquierda: Paneles arriba a la
 izquierda (verde), Grid arriba a la derecha (violeta), Batería abajo a la
 izquierda (celeste) y UPS / Casa abajo a la derecha (amarillo). No se muestra un
-bloque central del inversor. En móvil la columna pasa a ocupar todo el ancho.
+bloque central del inversor. El conjunto 2×2 conserva una proporción cuadrada y
+se centra dentro de esa mitad para que las tarjetas no se ensanchen y las
+flechas mantengan su posición relativa. El plot sí usa todo el ancho disponible.
+En móvil la columna pasa a ocupar todo el ancho.
 
 El plot consulta el historial de 24 horas, pero su eje de tiempo queda fijo al
 día calendario local actual, desde las 0 hasta las 24 h, con marcas horarias
