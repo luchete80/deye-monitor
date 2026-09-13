@@ -42,14 +42,18 @@ assert.equal(dashboard.metricState({...snapshot,field_freshness:{...snapshot.fie
 assert.equal(dashboard.metricState({...snapshot,grid:{power_w:null}},'grid','power_w'),'unknown');
 
 const data=dashboard.historyData([
-  {captured_at:'2026-01-01T00:00:00Z',pv_power_w:100,grid_power_w:-40,battery_power_w:-20,home_power_w:80},
-  {captured_at:'2026-01-01T00:00:20Z',pv_power_w:200,grid_power_w:50,battery_power_w:30,home_power_w:90},
+  {captured_at:'2026-01-01T00:00:00Z',pv_power_w:100,grid_power_w:-40,battery_power_w:-20,home_power_w:80,soc_pct:50},
+  {captured_at:'2026-01-01T00:00:20Z',pv_power_w:200,grid_power_w:50,battery_power_w:30,home_power_w:90,soc_pct:51},
 ]);
 assert.deepEqual(data[1],[100,null,200]);
-assert.deepEqual(data[2],[0,null,50]);
-assert.deepEqual(data[3],[-20,null,null]);
-assert.deepEqual(data[4],[null,null,30]);
-assert.deepEqual(data[5],[80,null,90]);
+assert.deepEqual(data[2],[null,null,50]);
+assert.deepEqual(data[3],[50,null,51]);
+assert.deepEqual(data[4],[80,null,90]);
+
+const zeroReading=dashboard.historyData([
+  {captured_at:'2026-01-01T00:00:00Z',pv_power_w:0,grid_power_w:0,battery_power_w:0,home_power_w:0,soc_pct:0},
+]);
+for(let column=1;column<zeroReading.length;column++)assert.deepEqual(zeroReading[column],[null]);
 
 const fiveMinuteData=dashboard.historyData([
   {captured_at:'2026-01-01T00:00:00Z',pv_power_w:100,grid_power_w:10,battery_power_w:20,home_power_w:80},
@@ -65,6 +69,11 @@ const fiveMinuteGap=dashboard.historyData([
 ]);
 assert.deepEqual(fiveMinuteGap[1],[100,200,null,300]);
 assert.equal(dashboard.chartOptions('x',500,300).axes[2].scale,'battery');
-const fixedRange=dashboard.chartOptions('x',500,300).scales.x.range();
+assert.deepEqual(dashboard.chartOptions('x',500,300).scales.battery.range,[0,100]);
+const fixedRange=dashboard.todayRange(new Date(2026,0,2,12).getTime());
 assert.equal(fixedRange[1]-fixedRange[0],24*60*60);
+assert.deepEqual(dashboard.positiveNonZero(0),null);
+assert.deepEqual(dashboard.positiveNonZero(-78),null);
+assert.deepEqual(dashboard.positiveNonZero(722),722);
+assert.deepEqual(dashboard.chartOptions('x',500,300).axes[0].values(null,[0,1,2,3,4,5,6]),['0 h','4 h','8 h','12 h','16 h','20 h','24 h']);
 console.log('dashboard logic ok');

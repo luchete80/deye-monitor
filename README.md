@@ -87,16 +87,40 @@ una lectura de 0 W.
 
 ## Interfaz y plot
 
+### Tamaño de pantalla
+
+El tablero conserva un ancho igual a la mitad de la ventana. Su alto objetivo se
+configura en `deye_monitor/static/display-config.css` modificando un solo valor:
+
+```css
+:root{--dashboard-height:1080px}
+```
+
+Para una pantalla de 1024×600, cambiarlo a `600px`. El alto efectivo nunca
+supera el alto disponible de la ventana, por lo que también se adapta a tamaños
+intermedios. Después de cambiarlo, recargar el navegador con `Ctrl+F5` si todavía
+muestra el CSS anterior.
+
 La pantalla de escritorio ocupa sólo la mitad izquierda: Paneles arriba a la
 izquierda (verde), Grid arriba a la derecha (violeta), Batería abajo a la
 izquierda (celeste) y UPS / Casa abajo a la derecha (amarillo). No se muestra un
 bloque central del inversor. En móvil la columna pasa a ocupar todo el ancho.
 
-El plot único consulta siempre las últimas 24 horas. Generación, Consumo de Grid
-y Consumo total usan el eje izquierdo en W; Carga de batería usa un eje derecho
-independiente. Grid negativo (exportación) y batería negativa (descarga) se
-representan como cero en esas series de consumo/carga, mientras que un valor
-ausente sigue siendo un hueco (`null`).
+El plot consulta el historial de 24 horas, pero su eje de tiempo queda fijo al
+día calendario local actual, desde las 0 hasta las 24 h, con marcas horarias
+fijas. Generación,
+Consumo de Grid y Consumo total usan el eje izquierdo en W. El porcentaje de
+carga de batería usa el eje derecho, con escala fija de 0 a 100 %. Los valores
+cero no se dibujan: se muestran como huecos para evitar los pulsos transitorios
+del logger. Un valor ausente también sigue siendo un hueco (`null`). Las lecturas transitorias en las que
+todas las potencias y el SOC llegan simultáneamente en cero se consideran
+inválidas y se dibujan como un hueco; los ceros individuales legítimos se
+conservan.
+
+La serie amarilla de consumo requiere un valor estrictamente mayor que cero;
+los ceros y valores negativos inválidos se omiten. El gráfico no inventa datos
+anteriores al inicio del historial: si el servicio comenzó al mediodía, la mitad
+izquierda del día queda vacía.
 
 La frescura se evalúa por bloque y se muestra como “Actualizado”, “Dato antiguo”,
 “Sin conexión” o “Sin dato”.

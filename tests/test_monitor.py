@@ -224,7 +224,7 @@ def test_frontend_node_checks_are_part_of_pytest():
 def test_delivery_two_flow_assets_and_scenarios():
     page = open("deye_monitor/static/index.html", encoding="utf-8").read()
     script = open("deye_monitor/static/app.js", encoding="utf-8").read()
-    for label in ("Paneles", "Grid", "Batería", "UPS / Casa", "Últimas 24 horas"):
+    for label in ("Paneles", "Grid", "Batería", "UPS / Casa", "Hoy · 0–24 h"):
         assert label in page
     assert "Inversor" not in page
     assert "energy-diagram" not in page

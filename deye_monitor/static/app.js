@@ -14,6 +14,8 @@ function relativeAge(timestamp){
 }
 
 function positivePower(value){return known(value)?Math.max(0,value):null}
+function nonZero(value){return known(value)&&value!==0?value:null}
+function positiveNonZero(value){return known(value)&&value>0?value:null}
 function batteryFlowState(value){
   if(!known(value))return 'unknown';
   if(value<0)return 'charging';
@@ -179,7 +181,7 @@ function chartHeight(viewportHeight){
 }
 
 function historyData(samples){
-  const columns=[[],[],[],[],[],[]];
+  const columns=[[],[],[],[],[]];
   const times=samples.map(sample=>new Date(sample.captured_at).getTime()/1000);
   const intervals=times.slice(1).map((time,index)=>time-times[index]).filter(interval=>interval>0).sort((a,b)=>a-b);
   const cadence=intervals.length>=2?intervals[Math.floor((intervals.length-1)*.25)]:5;
@@ -192,35 +194,47 @@ function historyData(samples){
       for(let index=1;index<columns.length;index++)columns[index].push(null);
     }
     columns[0].push(time);
-    columns[1].push(sample.pv_power_w);
-    columns[2].push(positivePower(sample.grid_power_w));
-    columns[3].push(known(sample.battery_power_w)&&sample.battery_power_w<0?sample.battery_power_w:null);
-    columns[4].push(known(sample.battery_power_w)&&sample.battery_power_w>0?sample.battery_power_w:null);
-    columns[5].push(sample.home_power_w);
+    const invalidZeroReading=[sample.pv_power_w,sample.home_power_w,sample.battery_power_w,sample.grid_power_w,sample.soc_pct].every(value=>value===0);
+    columns[1].push(invalidZeroReading?null:nonZero(sample.pv_power_w));
+    columns[2].push(invalidZeroReading?null:positiveNonZero(sample.grid_power_w));
+    columns[3].push(invalidZeroReading?null:nonZero(sample.soc_pct));
+    columns[4].push(invalidZeroReading?null:positiveNonZero(sample.home_power_w));
     previous=time;
   });
   return columns;
 }
 
+function todayRange(now=Date.now()){
+  const start=new Date(now);
+  start.setHours(0,0,0,0);
+  const end=new Date(start);
+  end.setDate(end.getDate()+1);
+  return[start.getTime()/1000,end.getTime()/1000];
+}
+
+function dayHourSplits(){
+  const [start]=todayRange();
+  return [0,4,8,12,16,20,24].map(hour=>start+hour*60*60);
+}
+
 function chartOptions(title,width,height){
-  const solar=chartColor('--solar','#48c774'),grid=chartColor('--grid','#b279ff'),battery=chartColor('--battery','#55b9ed'),discharge='#ff6b6b',load=chartColor('--load','#f3c34f');
+  const solar=chartColor('--solar','#48c774'),grid=chartColor('--grid','#b279ff'),battery=chartColor('--battery','#55b9ed'),load=chartColor('--load','#f3c34f');
   return {
     title,width,height,ms:1,
     scales:{
-      x:{time:true,range:()=>{const end=Math.floor(Date.now()/1000);return[end-24*60*60,end]}},
-      y:{auto:true},battery:{auto:true}
+      x:{time:true,range:()=>todayRange()},
+      y:{auto:true},battery:{range:[0,100]}
     },
     series:[{},
       {label:'Generación',scale:'y',stroke:solar,width:2},
       {label:'Consumo de Grid',scale:'y',stroke:grid,width:2},
       {label:'Carga de batería',scale:'battery',stroke:battery,width:2},
-      {label:'Descarga de batería',scale:'battery',stroke:discharge,width:2},
       {label:'Consumo total',scale:'y',stroke:load,width:2}
     ],
     axes:[
-      {scale:'x'},
-      {scale:'y',label:'Potencia (W)'},
-      {scale:'battery',label:'Batería (W)',side:1}
+      {scale:'x',stroke:'#fff',ticks:{stroke:'#fff'},grid:{stroke:'#ffffff22'},splits:()=>dayHourSplits(),values:(_plot,splits)=>splits.map((_,index)=>`${index*4} h`)},
+      {scale:'y',label:'Potencia (W)',stroke:'#fff',ticks:{stroke:'#fff'},grid:{stroke:'#ffffff22'}},
+      {scale:'battery',label:'Carga batería (%)',side:1,stroke:'#fff',ticks:{stroke:'#fff'},grid:{stroke:'#ffffff22'}}
     ]
   };
 }
@@ -241,7 +255,7 @@ function renderHistory(samples){
     powerPlot.setSize({width,height});
     return;
   }
-  powerPlot=new uPlot(chartOptions('Potencia de las últimas 24 horas',width,height),data,container);
+  powerPlot=new uPlot(chartOptions('Energía del día actual',width,height),data,container);
 }
 
 async function loadHistory(initial=false){
@@ -286,4 +300,4 @@ if(typeof document!=='undefined'){
   else window.addEventListener('resize',resizePlot);
 }
 
-if(typeof module!=='undefined')module.exports={known,lookup,number,valueText,positivePower,batteryFlowState,gaugePercent,metricState,historyData,chartOptions,FlowLogic,chartHeight};
+if(typeof module!=='undefined')module.exports={known,lookup,number,valueText,positivePower,nonZero,positiveNonZero,batteryFlowState,gaugePercent,metricState,historyData,todayRange,dayHourSplits,chartOptions,FlowLogic,chartHeight};

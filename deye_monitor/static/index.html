@@ -4,9 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Deye Monitor</title>
-  <link rel="stylesheet" href="/static/uPlot.min.css">
-  <link rel="stylesheet" href="/static/style.css">
-  <link rel="stylesheet" href="/static/display-config.css">
+  <link rel="stylesheet" href="/static/uPlot.min.css?v=6">
+  <link rel="stylesheet" href="/static/style.css?v=6">
+  <link rel="stylesheet" href="/static/display-config.css?v=6">
 </head>
 <body>
   <main class="dashboard-shell">
@@ -31,7 +31,7 @@
       </svg>
       <section class="metric-grid" aria-label="Estado energético actual">
       <article class="metric-card metric-card--solar" data-metric="solar">
-        <h2>Paneles</h2><p class="metric-status" id="solar-status">Esperando datos</p>
+        <h2>Paneles</h2>
         <div class="metric-gauge" data-gauge="solar" role="img" aria-label="Paneles: Sin dato">
           <svg class="metric-gauge__svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
             <path class="metric-gauge__track" d="M 27.47 92.53 A 46 46 0 1 1 92.53 92.53" pathLength="100"></path>
@@ -41,7 +41,7 @@
         </div>
       </article>
       <article class="metric-card metric-card--grid" data-metric="grid">
-        <h2>Grid</h2><p class="metric-status" id="grid-status">Esperando datos</p>
+        <h2>Grid</h2>
         <div class="metric-gauge" data-gauge="grid" role="img" aria-label="Grid: Sin dato">
           <svg class="metric-gauge__svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
             <path class="metric-gauge__track" d="M 27.47 92.53 A 46 46 0 1 1 92.53 92.53" pathLength="100"></path>
@@ -51,7 +51,7 @@
         </div>
       </article>
       <article class="metric-card metric-card--battery" data-metric="battery">
-        <h2>Batería</h2><p class="metric-status" id="battery-status">Esperando datos</p>
+        <h2>Batería</h2>
         <div class="metric-gauge" data-gauge="battery" role="img" aria-label="Batería: Sin dato">
           <svg class="metric-gauge__svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
             <path class="metric-gauge__track" d="M 27.47 92.53 A 46 46 0 1 1 92.53 92.53" pathLength="100"></path>
@@ -65,7 +65,7 @@
         </div>
       </article>
       <article class="metric-card metric-card--load" data-metric="load">
-        <h2>UPS / Casa</h2><p class="metric-status" id="load-status">Esperando datos</p>
+        <h2>UPS / Casa</h2>
         <div class="metric-gauge" data-gauge="load" role="img" aria-label="UPS / Casa: Sin dato">
           <svg class="metric-gauge__svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
             <path class="metric-gauge__track" d="M 27.47 92.53 A 46 46 0 1 1 92.53 92.53" pathLength="100"></path>
@@ -77,12 +77,12 @@
       </section>
     </div>
     <section class="history" aria-labelledby="history-title">
-      <div class="section-heading"><h2 id="history-title">Últimas 24 horas</h2></div>
+      <div class="section-heading"><h2 id="history-title">Hoy · 0–24 h</h2></div>
       <p id="history-status" aria-live="polite">Cargando historial…</p>
-      <div id="power-chart" class="chart" aria-label="Generación, consumo de Grid, carga de batería y consumo total de las últimas 24 horas"></div>
+      <div id="power-chart" class="chart" aria-label="Generación, consumo de Grid, porcentaje de batería y consumo total del día actual"></div>
     </section>
   </main>
-  <script src="/static/uPlot.iife.min.js"></script>
-  <script src="/static/app.js"></script>
+  <script src="/static/uPlot.iife.min.js?v=6"></script>
+  <script src="/static/app.js?v=6"></script>
 </body>
 </html>
