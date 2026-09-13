@@ -97,6 +97,7 @@ El tamaño y la fuente del tablero se configuran en
   --dashboard-width:1024px;
   --dashboard-height:600px;
   --dashboard-font-size:12px;
+  --dashboard-gauges-width:50%;
 }
 ```
 
@@ -105,6 +106,10 @@ efectivo nunca supera el espacio disponible, por lo que también se adapta a
 pantallas más chicas. Para achicar o agrandar todos los textos, cambiar
 `--dashboard-font-size`. Después de modificarlo, recargar el navegador con
 `Ctrl+F5` si todavía muestra el CSS anterior.
+
+`--dashboard-gauges-width` limita sólo el bloque de los cuatro relojes. Con
+`50%` ocupa como máximo la mitad del ancho real del tablero (512 px cuando el
+tablero mide 1024 px); el gráfico inferior sigue usando todo el ancho.
 
 En la pantalla se muestran Paneles arriba a la
 izquierda (verde), Grid arriba a la derecha (violeta), Batería abajo a la

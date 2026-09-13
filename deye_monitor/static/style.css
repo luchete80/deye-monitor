@@ -4,7 +4,7 @@
 body{max-width:none;margin:0;padding:0;background:#111820;overflow:hidden}
 .dashboard-shell{box-sizing:border-box;width:min(100vw,var(--dashboard-width));height:min(100vh,var(--dashboard-height));min-width:0;margin:0;padding:.4rem;display:grid;grid-template-rows:auto minmax(0,62fr) minmax(0,38fr);gap:.35rem;font-size:var(--dashboard-font-size)}
 .dashboard-header{display:flex;gap:1rem;align-items:baseline;flex-wrap:wrap}.dashboard-header h1{margin-right:auto}
-.dashboard-flow{position:relative;min-height:0;height:100%;width:auto;max-width:100%;aspect-ratio:1/1;margin:0 auto}
+.dashboard-flow{position:relative;min-height:0;height:100%;width:auto;max-width:var(--dashboard-gauges-width);aspect-ratio:1/1;margin:0 auto}
 .metric-grid{position:relative;z-index:1;display:grid;height:100%;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:1.5rem}
 .metric-card{box-sizing:border-box;min-width:0;min-height:0;background:var(--panel);border:2px solid transparent;border-radius:12px;padding:.55rem;overflow:hidden}.metric-card h2{margin:.1rem 0;color:var(--metric-color)}
 .metric-card--solar{--metric-color:var(--solar);border-color:var(--solar)}.metric-card--grid{--metric-color:var(--grid);border-color:var(--grid)}.metric-card--battery{--metric-color:var(--battery);border-color:var(--battery)}.metric-card--load{--metric-color:var(--load);border-color:var(--load)}
