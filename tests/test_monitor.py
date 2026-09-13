@@ -173,6 +173,7 @@ def test_http_api_sse_and_page():
     assert b'class="metric-grid"' in page.data
     assert b'id="power-chart"' in page.data
     assert client.get("/static/style.css").status_code == 200
+    assert client.get("/static/config.css").status_code == 200
     assert client.get("/static/app.js").status_code == 200
     assert client.get("/static/uPlot.iife.min.js").status_code == 200
     assert client.get("/static/uPlot.min.css").status_code == 200

@@ -4,7 +4,7 @@ Monitor web liviano para el inversor esperado **Deye SUN-6K-OG03LP1-EU-AM2** (mo
 
 Además del estado en memoria, esta entrega mantiene un historial SQLite local y
 un plot uPlot empaquetado en el proyecto; no depende de una CDN. La interfaz usa
-la mitad izquierda de la pantalla, con cuatro bloques 2×2 y un plot inferior.
+un área configurable, con cuatro bloques 2×2 y un plot inferior.
 No incluye Docker, WebSocket ni comandos MQTT.
 
 ## Ejecutar deye-inverter-mqtt en WSL
@@ -89,23 +89,28 @@ una lectura de 0 W.
 
 ### Tamaño de pantalla
 
-El tablero conserva un ancho igual a la mitad de la ventana. Su alto objetivo se
-configura en `deye_monitor/static/display-config.css` modificando un solo valor:
+El tamaño y la fuente del tablero se configuran en
+`deye_monitor/static/config.css`:
 
 ```css
-:root{--dashboard-height:1080px}
+:root{
+  --dashboard-width:1024px;
+  --dashboard-height:600px;
+  --dashboard-font-size:12px;
+}
 ```
 
-Para una pantalla de 1024×600, cambiarlo a `600px`. El alto efectivo nunca
-supera el alto disponible de la ventana, por lo que también se adapta a tamaños
-intermedios. Después de cambiarlo, recargar el navegador con `Ctrl+F5` si todavía
-muestra el CSS anterior.
+Los valores predeterminados corresponden a una pantalla de 1024×600. El tamaño
+efectivo nunca supera el espacio disponible, por lo que también se adapta a
+pantallas más chicas. Para achicar o agrandar todos los textos, cambiar
+`--dashboard-font-size`. Después de modificarlo, recargar el navegador con
+`Ctrl+F5` si todavía muestra el CSS anterior.
 
-La pantalla de escritorio ocupa sólo la mitad izquierda: Paneles arriba a la
+En la pantalla se muestran Paneles arriba a la
 izquierda (verde), Grid arriba a la derecha (violeta), Batería abajo a la
 izquierda (celeste) y UPS / Casa abajo a la derecha (amarillo). No se muestra un
 bloque central del inversor. El conjunto 2×2 conserva una proporción cuadrada y
-se centra dentro de esa mitad para que las tarjetas no se ensanchen y las
+se centra dentro del ancho configurado para que las tarjetas no se ensanchen y las
 flechas mantengan su posición relativa. El plot sí usa todo el ancho disponible.
 En móvil la columna pasa a ocupar todo el ancho.
 
