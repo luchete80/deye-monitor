@@ -132,6 +132,18 @@ function renderMetrics(snapshot){
   });
 }
 
+function renderAmbientTemperature(snapshot){
+  const state=metricState(snapshot,'temperature','ambient_c');
+  const value=lookup(snapshot,'temperature.ambient_c');
+  const card=document.querySelector('[data-ambient-temperature]');
+  const status=document.querySelector('#ambient-status');
+  const reading=document.querySelector('#ambient-value');
+  if(card)card.dataset.state=state;
+  if(status)status.textContent=stateLabel(state);
+  if(reading)reading.textContent=valueText(value);
+  if(card)card.setAttribute('aria-label',`Temperatura ambiente: ${valueText(value)} °C · ${stateLabel(state)}`);
+}
+
 function solarCurrentValues(snapshot){
   return [lookup(snapshot,'solar.pv1_current_a'),lookup(snapshot,'solar.pv2_current_a')];
 }
@@ -151,6 +163,7 @@ function solarCurrentState(snapshot){
 function render(snapshot){
   document.querySelectorAll('[data-path]').forEach(element=>element.textContent=number(lookup(snapshot,element.dataset.path),element.dataset.unit));
   renderMetrics(snapshot);
+  renderAmbientTemperature(snapshot);
   renderFlow(snapshot);
   const connectivity=snapshot.connectivity||{},connection=document.querySelector('#connection');
   connection.textContent=snapshot.flow?.simulated?'Fuente: simulada':`Broker: ${connectivity.broker} · Servicio: ${connectivity.service} · Logger: ${connectivity.logger}`;

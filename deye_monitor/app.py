@@ -30,7 +30,10 @@ def create_app(config: Config | None = None, start_source: bool = True) -> Flask
         config.stale_after_seconds, config.fresh_required_fields,
         config.flow_deadband_w, simulated=config.data_source == "simulated",
     )
-    adapter = SG03LP1Adapter(config.mqtt_prefix, config.topics, config.grid_power_sign, config.battery_power_sign)
+    adapter = SG03LP1Adapter(
+        config.mqtt_prefix, config.topics, config.grid_power_sign,
+        config.battery_power_sign, config.mqtt_absolute_topics,
+    )
     history = HistoryStore(config.history_db_path, config.history_retention_hours)
     app.config.update(DEYE_CONFIG=config, DEYE_STATE=state, DEYE_HISTORY=history)
     if start_source:

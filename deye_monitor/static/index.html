@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Deye Monitor</title>
   <link rel="stylesheet" href="/static/uPlot.min.css?v=6">
-  <link rel="stylesheet" href="/static/style.css?v=6">
+  <link rel="stylesheet" href="/static/style.css?v=7">
   <link rel="stylesheet" href="/static/config.css?v=7">
 </head>
 <body>
@@ -15,6 +15,7 @@
       <p id="connection">Conectando…</p>
       <p id="age">Sin datos</p>
     </header>
+    <section class="dashboard-main" aria-label="Paneles y temperatura ambiente">
     <div class="dashboard-flow">
       <svg id="dashboard-flow-arrows" class="flow-arrows" viewBox="0 0 100 100" preserveAspectRatio="none" role="img" aria-labelledby="flow-arrows-title flow-arrows-description">
         <title id="flow-arrows-title">Sentido del flujo energético</title>
@@ -76,6 +77,12 @@
       </article>
       </section>
     </div>
+    <article class="ambient-card" data-ambient-temperature data-state="unknown" aria-labelledby="ambient-title">
+      <h2 id="ambient-title">Temperatura ambiente</h2>
+      <p id="ambient-status" class="ambient-status" aria-live="polite">Sin dato</p>
+      <p class="ambient-reading"><span id="ambient-value">Sin dato</span> <span class="ambient-unit">°C</span></p>
+    </article>
+    </section>
     <section class="history" aria-labelledby="history-title">
       <div class="section-heading"><h2 id="history-title">Hoy · 0–24 h</h2></div>
       <p id="history-status" aria-live="polite">Cargando historial…</p>
@@ -83,6 +90,6 @@
     </section>
   </main>
   <script src="/static/uPlot.iife.min.js?v=6"></script>
-  <script src="/static/app.js?v=6"></script>
+  <script src="/static/app.js?v=7"></script>
 </body>
 </html>

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import math
 import os
 from dotenv import load_dotenv
@@ -37,6 +37,7 @@ class Config:
     history_db_path: str = "data/deye-monitor.sqlite3"
     history_interval_seconds: float = 5
     history_retention_hours: float = 24
+    mqtt_absolute_topics: dict[str, str] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         if self.data_source not in VALID_DATA_SOURCES:
@@ -102,4 +103,9 @@ class Config:
             history_db_path=_value("DEYE_HISTORY_DB_PATH", "data/deye-monitor.sqlite3"),
             history_interval_seconds=float(_value("DEYE_HISTORY_INTERVAL_SECONDS", "5")),
             history_retention_hours=float(_value("DEYE_HISTORY_RETENTION_HOURS", "24")),
+            mqtt_absolute_topics={
+                "temperature.ambient_c": topic
+                for topic in [_value("DEYE_TOPIC_AMBIENT_TEMPERATURE", "nodemcu/temperatura")]
+                if topic
+            },
         )

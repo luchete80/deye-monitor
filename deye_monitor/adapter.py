@@ -34,7 +34,14 @@ def parse_status(payload: bytes | str) -> str | None:
 
 
 class SG03LP1Adapter:
-    def __init__(self, prefix: str, topics: dict[str, str], grid_power_sign: str = "unknown", battery_power_sign: str = "unknown"):
+    def __init__(
+        self,
+        prefix: str,
+        topics: dict[str, str],
+        grid_power_sign: str = "unknown",
+        battery_power_sign: str = "unknown",
+        absolute_topics: dict[str, str] | None = None,
+    ):
         if grid_power_sign not in GRID_POWER_SIGNS:
             raise ValueError(f"Invalid grid power sign: {grid_power_sign!r}")
         if battery_power_sign not in BATTERY_POWER_SIGNS:
@@ -43,6 +50,10 @@ class SG03LP1Adapter:
         self.by_topic: dict[str, list[str]] = {}
         for field, suffix in topics.items():
             self.by_topic.setdefault(f"{self.prefix}/{suffix}", []).append(field)
+        for field, topic in (absolute_topics or {}).items():
+            normalized_topic = topic.strip("/")
+            if normalized_topic:
+                self.by_topic.setdefault(normalized_topic, []).append(field)
         self.signs = {"grid.power_w": grid_power_sign, "battery.power_w": battery_power_sign}
 
     @property
