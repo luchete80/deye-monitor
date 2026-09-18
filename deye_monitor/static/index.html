@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Deye Monitor</title>
   <link rel="stylesheet" href="/static/uPlot.min.css?v=6">
-  <link rel="stylesheet" href="/static/style.css?v=7">
+  <link rel="stylesheet" href="/static/style.css?v=8">
   <link rel="stylesheet" href="/static/config.css?v=7">
 </head>
 <body>
@@ -83,13 +83,20 @@
       <p class="ambient-reading"><span id="ambient-value">Sin dato</span> <span class="ambient-unit">°C</span></p>
     </article>
     </section>
-    <section class="history" aria-labelledby="history-title">
-      <div class="section-heading"><h2 id="history-title">Hoy · 0–24 h</h2></div>
-      <p id="history-status" aria-live="polite">Cargando historial…</p>
-      <div id="power-chart" class="chart" aria-label="Generación, consumo de Grid, porcentaje de batería y consumo total del día actual"></div>
+    <section class="history-dashboard" aria-label="Historial de las últimas 24 horas">
+      <section class="history history--power" aria-labelledby="history-title">
+        <div class="section-heading"><h2 id="history-title">Potencia · hoy · 0–24 h</h2></div>
+        <p id="history-status" aria-live="polite">Cargando historial…</p>
+        <div id="power-chart" class="chart" aria-label="Generación, consumo de Grid, porcentaje de batería y consumo total del día actual"></div>
+      </section>
+      <section class="history history--temperature" aria-labelledby="temperature-history-title">
+        <div class="section-heading"><h2 id="temperature-history-title">Temperatura ambiente · últimas 24 h</h2></div>
+        <p id="temperature-history-status" aria-live="polite">Cargando historial de temperatura…</p>
+        <div id="temperature-chart" class="chart" aria-label="Temperatura ambiente en grados Celsius durante las últimas 24 horas"></div>
+      </section>
     </section>
   </main>
   <script src="/static/uPlot.iife.min.js?v=6"></script>
-  <script src="/static/app.js?v=7"></script>
+  <script src="/static/app.js?v=8"></script>
 </body>
 </html>

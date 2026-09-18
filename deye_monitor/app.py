@@ -56,6 +56,16 @@ def create_app(config: Config | None = None, start_source: bool = True) -> Flask
             return jsonify({"range": range_name, "samples": history.query(range_name)})
         except ValueError as error:
             return jsonify({"error": str(error)}), 400
+    @app.get("/api/history/temperature")
+    def api_temperature_history():
+        range_name = request.args.get("range", "24h")
+        try:
+            return jsonify({
+                "range": range_name,
+                "samples": history.query_temperature_series(range_name),
+            })
+        except ValueError as error:
+            return jsonify({"error": str(error)}), 400
     @app.get("/events")
     def events(): return Response(stream_with_context(event_stream(state)), mimetype="text/event-stream", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
     return app

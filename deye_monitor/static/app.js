@@ -183,7 +183,9 @@ function connect(){
 }
 
 let powerPlot;
+let temperaturePlot;
 let historySamples=[];
+let temperatureSamples=[];
 let historyRefreshTimer;
 let historyRefreshInFlight=false;
 const HISTORY_REFRESH_MS=5000;
@@ -217,6 +219,13 @@ function historyData(samples){
   return columns;
 }
 
+function temperatureData(samples){
+  return [
+    samples.map(sample=>new Date(sample.captured_at).getTime()/1000),
+    samples.map(sample=>known(sample.ambient_c)?sample.ambient_c:null),
+  ];
+}
+
 function todayRange(now=Date.now()){
   const start=new Date(now);
   start.setHours(0,0,0,0);
@@ -227,6 +236,16 @@ function todayRange(now=Date.now()){
 
 function dayHourSplits(){
   const [start]=todayRange();
+  return [0,4,8,12,16,20,24].map(hour=>start+hour*60*60);
+}
+
+function rollingDayRange(now=Date.now()){
+  const end=now/1000;
+  return [end-24*60*60,end];
+}
+
+function rollingDaySplits(){
+  const [start]=rollingDayRange();
   return [0,4,8,12,16,20,24].map(hour=>start+hour*60*60);
 }
 
@@ -252,6 +271,20 @@ function chartOptions(title,width,height){
   };
 }
 
+function temperatureChartOptions(title,width,height){
+  return {
+    title,width,height,ms:1,
+    scales:{x:{time:true,range:()=>rollingDayRange()},y:{auto:true}},
+    series:[{},
+      {label:'Temperatura ambiente',scale:'y',stroke:'#f5c451',width:2,points:{show:true,size:4}},
+    ],
+    axes:[
+      {scale:'x',stroke:'#fff',ticks:{stroke:'#fff'},grid:{stroke:'#ffffff22'},splits:()=>rollingDaySplits(),values:(_plot,splits)=>splits.map((_,index)=>`${index*4-24} h`)},
+      {scale:'y',label:'Temperatura (°C)',stroke:'#fff',ticks:{stroke:'#fff'},grid:{stroke:'#ffffff22'}},
+    ],
+  };
+}
+
 function renderHistory(samples){
   if(typeof uPlot==='undefined')return;
   const nextSamples=samples||[];
@@ -262,7 +295,7 @@ function renderHistory(samples){
     return;
   }
   historySamples=nextSamples;
-  const width=Math.max(240,container.clientWidth||600),height=Math.max(120,container.clientHeight||chartHeight()),data=historyData(historySamples);
+  const width=Math.max(1,container.clientWidth||600),height=Math.max(80,container.clientHeight||chartHeight()),data=historyData(historySamples);
   if(powerPlot){
     powerPlot.setData(data);
     powerPlot.setSize({width,height});
@@ -271,18 +304,59 @@ function renderHistory(samples){
   powerPlot=new uPlot(chartOptions('Energía del día actual',width,height),data,container);
 }
 
-async function loadHistory(initial=false){
-  if(historyRefreshInFlight)return;
-  historyRefreshInFlight=true;
+function renderTemperatureHistory(samples){
+  if(typeof uPlot==='undefined')return;
+  const nextSamples=samples||[];
+  const container=document.querySelector('#temperature-chart');
+  if(!nextSamples.length){
+    if(!temperaturePlot)temperatureSamples=[];
+    return;
+  }
+  temperatureSamples=nextSamples;
+  const width=Math.max(1,container.clientWidth||500),height=Math.max(80,container.clientHeight||chartHeight()),data=temperatureData(temperatureSamples);
+  if(temperaturePlot){
+    temperaturePlot.setData(data);
+    temperaturePlot.setSize({width,height});
+    return;
+  }
+  temperaturePlot=new uPlot(temperatureChartOptions('Temperatura · últimas 24 h',width,height),data,container);
+}
+
+async function loadPowerHistory(initial){
   const status=document.querySelector('#history-status');
   if(initial)status.textContent='Cargando historial…';
   try{
     const response=await fetch('/api/history?range=24h'),payload=await response.json();
-    if(!response.ok)throw new Error(payload.error||'No se pudo cargar el historial');
+    if(!response.ok)throw new Error(payload.error||'No se pudo cargar el historial de potencia');
+    const hadSamples=historySamples.length>0;
     renderHistory(payload.samples);
-    status.textContent=payload.samples.length?`${payload.samples.length.toLocaleString('es-AR')} muestras completas`:'Aún no hay muestras completas para este rango.';
+    if(payload.samples.length)status.textContent=`${payload.samples.length.toLocaleString('es-AR')} muestras completas`;
+    else if(!hadSamples)status.textContent='Aún no hay muestras completas para este rango.';
   }catch(error){
     if(initial||!historySamples.length)status.textContent=error.message;
+  }
+}
+
+async function loadTemperatureHistory(initial){
+  const status=document.querySelector('#temperature-history-status');
+  if(initial)status.textContent='Cargando historial de temperatura…';
+  try{
+    const response=await fetch('/api/history/temperature?range=24h'),payload=await response.json();
+    if(!response.ok)throw new Error(payload.error||'No se pudo cargar el historial de temperatura');
+    const hadSamples=temperatureSamples.length>0;
+    renderTemperatureHistory(payload.samples);
+    if(payload.samples.length)status.textContent=`${payload.samples.filter(sample=>known(sample.ambient_c)).length.toLocaleString('es-AR')} lecturas en las últimas 24 h`;
+    else if(!hadSamples)status.textContent='Todavía no hay lecturas de temperatura para las últimas 24 h.';
+  }catch(error){
+    if(initial||!temperatureSamples.length)status.textContent=error.message;
+  }
+}
+
+async function loadHistory(initial=false){
+  if(historyRefreshInFlight)return;
+  historyRefreshInFlight=true;
+  try{
+    await Promise.all([loadPowerHistory(initial),loadTemperatureHistory(initial)]);
   }finally{historyRefreshInFlight=false}
 }
 
@@ -293,9 +367,14 @@ function startHistoryRefresh(){
 }
 
 function resizePlot(){
-  if(!powerPlot)return;
-  const container=document.querySelector('#power-chart');
-  powerPlot.setSize({width:Math.max(240,container.clientWidth||600),height:Math.max(120,container.clientHeight||chartHeight())});
+  if(powerPlot){
+    const container=document.querySelector('#power-chart');
+    powerPlot.setSize({width:Math.max(1,container.clientWidth||500),height:Math.max(80,container.clientHeight||chartHeight())});
+  }
+  if(temperaturePlot){
+    const container=document.querySelector('#temperature-chart');
+    temperaturePlot.setSize({width:Math.max(1,container.clientWidth||500),height:Math.max(80,container.clientHeight||chartHeight())});
+  }
 }
 
 if(typeof document!=='undefined'){
@@ -309,8 +388,12 @@ if(typeof document!=='undefined'){
     if(historyRefreshTimer)clearInterval(historyRefreshTimer);
     historyRefreshTimer=null;
   },{once:true});
-  if(typeof ResizeObserver!=='undefined')new ResizeObserver(resizePlot).observe(document.querySelector('#power-chart'));
+  if(typeof ResizeObserver!=='undefined'){
+    const historyResizeObserver=new ResizeObserver(resizePlot);
+    historyResizeObserver.observe(document.querySelector('#power-chart'));
+    historyResizeObserver.observe(document.querySelector('#temperature-chart'));
+  }
   else window.addEventListener('resize',resizePlot);
 }
 
-if(typeof module!=='undefined')module.exports={known,lookup,number,valueText,positivePower,nonZero,positiveNonZero,batteryFlowState,gaugePercent,metricState,historyData,todayRange,dayHourSplits,chartOptions,FlowLogic,chartHeight};
+if(typeof module!=='undefined')module.exports={known,lookup,number,valueText,positivePower,nonZero,positiveNonZero,batteryFlowState,gaugePercent,metricState,historyData,temperatureData,todayRange,dayHourSplits,rollingDayRange,rollingDaySplits,chartOptions,temperatureChartOptions,FlowLogic,chartHeight};
