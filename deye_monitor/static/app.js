@@ -301,7 +301,7 @@ function renderHistory(samples){
     powerPlot.setSize({width,height});
     return;
   }
-  powerPlot=new uPlot(chartOptions('Energía del día actual',width,height),data,container);
+  powerPlot=new uPlot(chartOptions('',width,height),data,container);
 }
 
 function renderTemperatureHistory(samples){
@@ -319,7 +319,7 @@ function renderTemperatureHistory(samples){
     temperaturePlot.setSize({width,height});
     return;
   }
-  temperaturePlot=new uPlot(temperatureChartOptions('Temperatura · últimas 24 h',width,height),data,container);
+  temperaturePlot=new uPlot(temperatureChartOptions('',width,height),data,container);
 }
 
 async function loadPowerHistory(initial){
