@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import csv
 import json
 import queue
+from datetime import datetime, timedelta
 from pathlib import Path
 from flask import Flask, Response, jsonify, request, send_from_directory, stream_with_context
 from .adapter import SG03LP1Adapter
@@ -10,6 +12,47 @@ from .mqtt_client import MQTTClient
 from .simulator import FixtureSimulator
 from .state import StateStore
 from .history import HistoryStore, SnapshotRecorder
+
+
+DUMMY_HISTORY_DIR = Path(__file__).resolve().parent.parent / "fixtures"
+
+
+def _read_dummy_csv(filename: str) -> list[dict[str, str]]:
+    with (DUMMY_HISTORY_DIR / filename).open(encoding="utf-8", newline="") as source:
+        return list(csv.DictReader(source))
+
+
+def dummy_power_history(now: datetime | None = None) -> list[dict[str, float | str]]:
+    current = now or datetime.now().astimezone()
+    samples = []
+    for row in _read_dummy_csv("dummy_power_history.csv"):
+        source_time = datetime.fromisoformat(row["captured_at"])
+        captured_at = current.replace(
+            hour=source_time.hour, minute=source_time.minute,
+            second=source_time.second, microsecond=0,
+        )
+        samples.append({
+            "captured_at": captured_at.isoformat(),
+            "pv_power_w": float(row["pv_power_w"]),
+            "grid_power_w": float(row["grid_power_w"]),
+            "battery_power_w": float(row["battery_power_w"]),
+            "home_power_w": float(row["home_power_w"]),
+            "soc_pct": float(row["soc_pct"]),
+        })
+    return samples
+
+
+def dummy_temperature_history(now: datetime | None = None) -> list[dict[str, float | str]]:
+    rows = _read_dummy_csv("dummy_temperature_history.csv")
+    end = (now or datetime.now().astimezone()).replace(minute=0, second=0, microsecond=0)
+    start = end - timedelta(hours=max(0, len(rows) - 1))
+    return [
+        {
+            "captured_at": (start + timedelta(hours=index)).isoformat(),
+            "ambient_c": float(row["ambient_c"]),
+        }
+        for index, row in enumerate(rows)
+    ]
 
 
 def event_stream(store: StateStore):
@@ -66,6 +109,14 @@ def create_app(config: Config | None = None, start_source: bool = True) -> Flask
             })
         except ValueError as error:
             return jsonify({"error": str(error)}), 400
+    @app.get("/api/demo/history")
+    def api_demo_history():
+        kind = request.args.get("kind", "power")
+        if kind == "power":
+            return jsonify({"demo": True, "samples": dummy_power_history()})
+        if kind == "temperature":
+            return jsonify({"demo": True, "samples": dummy_temperature_history()})
+        return jsonify({"error": "kind must be power or temperature"}), 400
     @app.get("/events")
     def events(): return Response(stream_with_context(event_stream(state)), mimetype="text/event-stream", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
     return app

@@ -183,6 +183,14 @@ def test_http_api_sse_and_page():
     assert client.get("/api/state").json["flow"]["simulated"] is True
     assert client.get("/api/state").json["data_observed_at"] is not None
     assert client.get("/api/history?range=banana").status_code == 400
+    demo_power = client.get("/api/demo/history?kind=power")
+    assert demo_power.status_code == 200
+    assert demo_power.json["demo"] is True
+    assert len(demo_power.json["samples"]) == 24
+    demo_temperature = client.get("/api/demo/history?kind=temperature")
+    assert demo_temperature.status_code == 200
+    assert len(demo_temperature.json["samples"]) == 24
+    assert client.get("/api/demo/history?kind=unknown").status_code == 400
     response = client.get("/events", buffered=False)
     assert response.status_code == 200
     assert b"event: state" in next(response.response)
@@ -225,9 +233,12 @@ def test_frontend_node_checks_are_part_of_pytest():
 def test_delivery_two_flow_assets_and_scenarios():
     page = open("deye_monitor/static/index.html", encoding="utf-8").read()
     script = open("deye_monitor/static/app.js", encoding="utf-8").read()
-    for label in ("Paneles", "Grid", "Batería", "UPS / Casa", "Hoy · 0–24 h"):
+    for label in ("Sol", "Red", "Bat", "Casa"):
         assert label in page
-    assert "Inversor" not in page
+    assert "Potencia · hoy · 0–24 h" not in page
+    assert "Temperatura ambiente · últimas 24 h" not in page
+    assert 'class="central-info"' in page
+    assert ">Inv</span>" in page
     assert "energy-diagram" not in page
     assert "range=24h" in script
     assert "scale:'battery'" in script

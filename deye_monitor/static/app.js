@@ -85,18 +85,18 @@ function renderFlow(snapshot){
   const source=path=>lookup(snapshot,path);
   const fresh=path=>lookup(snapshot,`field_freshness.${path}`)===true;
   const flows=[
-    ['pv','solar.total_power_w','Paneles → centro'],
-    ['grid','grid.power_w','Grid → centro'],
-    ['battery','battery.power_w','centro → Batería'],
-    ['load','load.total_power_w','centro → UPS / Casa'],
+    ['pv','solar.total_power_w','Sol → centro'],
+    ['grid','grid.power_w','Red → centro'],
+    ['battery','battery.power_w','centro → Bat'],
+    ['load','load.total_power_w','centro → Casa'],
   ];
   flows.forEach(([id,path,forwardLabel])=>{
     const value=source(path);
     const result=FlowLogic.state(id,value,deadband,fresh(path),connectivity,simulated);
     const pathDirection=FlowLogic.pathDirection(id,result.direction);
     let label=forwardLabel;
-    if(id==='grid'&&result.direction<0)label='centro → Grid';
-    if(id==='battery'&&result.direction>0)label='Batería → centro';
+    if(id==='grid'&&result.direction<0)label='centro → Red';
+    if(id==='battery'&&result.direction>0)label='Bat → centro';
     setFlow(id,value,result,pathDirection,label);
   });
 }
@@ -127,7 +127,7 @@ function renderMetrics(snapshot){
     if(progress)progress.style.strokeDashoffset=String(100-(percent??0));
     if(gauge){
       gauge.dataset.percent=percent===null?'':String(percent);
-      gauge.setAttribute('aria-label',`${group==='load'?'UPS / Casa':group==='solar'?'Paneles':group==='battery'?'Batería':'Grid'}: ${valueText(value)} ${unit} · Corriente: ${currentLabel} · ${stateLabel(state)}`);
+      gauge.setAttribute('aria-label',`${group==='load'?'Casa':group==='solar'?'Sol':group==='battery'?'Bat':'Red'}: ${valueText(value)} ${unit} · Corriente: ${currentLabel} · ${stateLabel(state)}`);
     }
   });
 }
@@ -259,7 +259,7 @@ function chartOptions(title,width,height){
     },
     series:[{},
       {label:'Generación',scale:'y',stroke:solar,width:2},
-      {label:'Consumo de Grid',scale:'y',stroke:grid,width:2},
+      {label:'Consumo de Red',scale:'y',stroke:grid,width:2},
       {label:'Carga de batería',scale:'battery',stroke:battery,width:2},
       {label:'Consumo total',scale:'y',stroke:load,width:2}
     ],
@@ -322,15 +322,28 @@ function renderTemperatureHistory(samples){
   temperaturePlot=new uPlot(temperatureChartOptions('',width,height),data,container);
 }
 
+async function fetchJson(url,description){
+  const response=await fetch(url);
+  const contentType=response.headers.get('content-type')||'';
+  if(!contentType.includes('application/json')){
+    throw new Error(`${description}: respuesta ${response.status} no válida. Reiniciá el servicio.`);
+  }
+  const payload=await response.json();
+  if(!response.ok)throw new Error(payload.error||description);
+  return payload;
+}
+
 async function loadPowerHistory(initial){
   const status=document.querySelector('#history-status');
   if(initial)status.textContent='Cargando historial…';
   try{
-    const response=await fetch('/api/history?range=24h'),payload=await response.json();
-    if(!response.ok)throw new Error(payload.error||'No se pudo cargar el historial de potencia');
+    let payload=await fetchJson('/api/history?range=24h','No se pudo cargar el historial de potencia');
+    if(payload.samples.length<2){
+      payload=await fetchJson('/api/demo/history?kind=power','No se pudo cargar el historial demo de potencia');
+    }
     const hadSamples=historySamples.length>0;
     renderHistory(payload.samples);
-    if(payload.samples.length)status.textContent=`${payload.samples.length.toLocaleString('es-AR')} muestras completas`;
+    if(payload.samples.length)status.textContent=payload.demo?`${payload.samples.length.toLocaleString('es-AR')} muestras · datos demo`:`${payload.samples.length.toLocaleString('es-AR')} muestras completas`;
     else if(!hadSamples)status.textContent='Aún no hay muestras completas para este rango.';
   }catch(error){
     if(initial||!historySamples.length)status.textContent=error.message;
@@ -341,11 +354,13 @@ async function loadTemperatureHistory(initial){
   const status=document.querySelector('#temperature-history-status');
   if(initial)status.textContent='Cargando historial de temperatura…';
   try{
-    const response=await fetch('/api/history/temperature?range=24h'),payload=await response.json();
-    if(!response.ok)throw new Error(payload.error||'No se pudo cargar el historial de temperatura');
+    let payload=await fetchJson('/api/history/temperature?range=24h','No se pudo cargar el historial de temperatura');
+    if(payload.samples.length<2){
+      payload=await fetchJson('/api/demo/history?kind=temperature','No se pudo cargar el historial demo de temperatura');
+    }
     const hadSamples=temperatureSamples.length>0;
     renderTemperatureHistory(payload.samples);
-    if(payload.samples.length)status.textContent=`${payload.samples.filter(sample=>known(sample.ambient_c)).length.toLocaleString('es-AR')} lecturas en las últimas 24 h`;
+    if(payload.samples.length)status.textContent=payload.demo?`${payload.samples.length.toLocaleString('es-AR')} lecturas · datos demo`:`${payload.samples.filter(sample=>known(sample.ambient_c)).length.toLocaleString('es-AR')} lecturas en las últimas 24 h`;
     else if(!hadSamples)status.textContent='Todavía no hay lecturas de temperatura para las últimas 24 h.';
   }catch(error){
     if(initial||!temperatureSamples.length)status.textContent=error.message;

@@ -5,58 +5,57 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Deye Monitor</title>
   <link rel="stylesheet" href="/static/uPlot.min.css?v=6">
-  <link rel="stylesheet" href="/static/style.css?v=8">
+  <link rel="stylesheet" href="/static/style.css?v=23">
   <link rel="stylesheet" href="/static/config.css?v=7">
 </head>
 <body>
   <main class="dashboard-shell">
     <header class="dashboard-header">
-      <h1>Deye Monitor</h1>
       <p id="connection">Conectando…</p>
       <p id="age">Sin datos</p>
     </header>
-    <section class="dashboard-main" aria-label="Paneles y temperatura ambiente">
+    <section class="dashboard-main" aria-label="Sol, Red, Bat, Casa y temperatura ambiente">
     <div class="dashboard-flow">
       <svg id="dashboard-flow-arrows" class="flow-arrows" viewBox="0 0 100 100" preserveAspectRatio="none" role="img" aria-labelledby="flow-arrows-title flow-arrows-description">
         <title id="flow-arrows-title">Sentido del flujo energético</title>
-        <desc id="flow-arrows-description">Flechas entre Paneles, Grid, Batería y UPS/Casa. El sentido se actualiza según la potencia medida.</desc>
+        <desc id="flow-arrows-description">Flechas entre Sol, Red, Bat y Casa. El sentido se actualiza según la potencia medida.</desc>
         <defs>
           <marker id="flow-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
             <path d="M 0 0 L 10 5 L 0 10 z"></path>
           </marker>
         </defs>
-        <path id="flow-pv" class="flow-line idle" d="M 46 24 H 48 V 47 H 49"></path>
-        <path id="flow-grid" class="flow-line idle" d="M 54 24 H 52 V 47 H 51"></path>
-        <path id="flow-battery" class="flow-line idle" d="M 46 76 H 48 V 53 H 49"></path>
-        <path id="flow-load" class="flow-line idle" d="M 54 76 H 52 V 53 H 51"></path>
+        <path id="flow-pv" class="flow-line idle" d="M 46 24 H 47.5 V 41.7"></path>
+        <path id="flow-grid" class="flow-line idle" d="M 54 24 H 52.5 V 41.7"></path>
+        <path id="flow-battery" class="flow-line idle" d="M 46 76 H 47.5 V 58.3"></path>
+        <path id="flow-load" class="flow-line idle" d="M 54 76 H 52.5 V 58.3"></path>
       </svg>
+      <div class="central-info" aria-label="Inversor"><span>Inv</span></div>
       <section class="metric-grid" aria-label="Estado energético actual">
       <article class="metric-card metric-card--solar" data-metric="solar">
-        <h2>Paneles</h2>
-        <div class="metric-gauge" data-gauge="solar" role="img" aria-label="Paneles: Sin dato">
+        <div class="metric-gauge" data-gauge="solar" role="img" aria-label="Sol: Sin dato">
           <svg class="metric-gauge__svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
-            <path class="metric-gauge__track" d="M 27.47 92.53 A 46 46 0 1 1 92.53 92.53" pathLength="100"></path>
-            <path class="metric-gauge__progress" d="M 27.47 92.53 A 46 46 0 1 1 92.53 92.53" pathLength="100"></path>
+            <path class="metric-gauge__track" d="M 23.23 96.77 A 52 52 0 1 1 96.77 96.77" pathLength="100"></path>
+            <path class="metric-gauge__progress" d="M 23.23 96.77 A 52 52 0 1 1 96.77 96.77" pathLength="100"></path>
           </svg>
           <p class="metric-value"><span id="solar-value">Sin dato</span> <span class="metric-unit">W</span><span id="solar-current" class="metric-current">Sin dato</span></p>
         </div>
+        <h2>Sol</h2>
       </article>
       <article class="metric-card metric-card--grid" data-metric="grid">
-        <h2>Grid</h2>
-        <div class="metric-gauge" data-gauge="grid" role="img" aria-label="Grid: Sin dato">
+        <div class="metric-gauge" data-gauge="grid" role="img" aria-label="Red: Sin dato">
           <svg class="metric-gauge__svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
-            <path class="metric-gauge__track" d="M 27.47 92.53 A 46 46 0 1 1 92.53 92.53" pathLength="100"></path>
-            <path class="metric-gauge__progress" d="M 27.47 92.53 A 46 46 0 1 1 92.53 92.53" pathLength="100"></path>
+            <path class="metric-gauge__track" d="M 23.23 96.77 A 52 52 0 1 1 96.77 96.77" pathLength="100"></path>
+            <path class="metric-gauge__progress" d="M 23.23 96.77 A 52 52 0 1 1 96.77 96.77" pathLength="100"></path>
           </svg>
           <p class="metric-value"><span id="grid-value">Sin dato</span> <span class="metric-unit">W</span><span id="grid-current" class="metric-current">Sin dato</span></p>
         </div>
+        <h2>Red</h2>
       </article>
       <article class="metric-card metric-card--battery" data-metric="battery">
-        <h2>Batería</h2>
-        <div class="metric-gauge" data-gauge="battery" role="img" aria-label="Batería: Sin dato">
+        <div class="metric-gauge" data-gauge="battery" role="img" aria-label="Bat: Sin dato">
           <svg class="metric-gauge__svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
-            <path class="metric-gauge__track" d="M 27.47 92.53 A 46 46 0 1 1 92.53 92.53" pathLength="100"></path>
-            <path class="metric-gauge__progress" d="M 27.47 92.53 A 46 46 0 1 1 92.53 92.53" pathLength="100"></path>
+            <path class="metric-gauge__track" d="M 23.23 96.77 A 52 52 0 1 1 96.77 96.77" pathLength="100"></path>
+            <path class="metric-gauge__progress" d="M 23.23 96.77 A 52 52 0 1 1 96.77 96.77" pathLength="100"></path>
           </svg>
           <p class="metric-value metric-value--battery">
             <span class="metric-primary"><span id="battery-value">Sin dato</span> <span class="metric-unit">%</span></span>
@@ -64,16 +63,17 @@
             <span id="battery-current" class="metric-secondary">Sin dato</span>
           </p>
         </div>
+        <h2>Bat</h2>
       </article>
       <article class="metric-card metric-card--load" data-metric="load">
-        <h2>UPS / Casa</h2>
-        <div class="metric-gauge" data-gauge="load" role="img" aria-label="UPS / Casa: Sin dato">
+        <div class="metric-gauge" data-gauge="load" role="img" aria-label="Casa: Sin dato">
           <svg class="metric-gauge__svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
-            <path class="metric-gauge__track" d="M 27.47 92.53 A 46 46 0 1 1 92.53 92.53" pathLength="100"></path>
-            <path class="metric-gauge__progress" d="M 27.47 92.53 A 46 46 0 1 1 92.53 92.53" pathLength="100"></path>
+            <path class="metric-gauge__track" d="M 23.23 96.77 A 52 52 0 1 1 96.77 96.77" pathLength="100"></path>
+            <path class="metric-gauge__progress" d="M 23.23 96.77 A 52 52 0 1 1 96.77 96.77" pathLength="100"></path>
           </svg>
           <p class="metric-value"><span id="load-value">Sin dato</span> <span class="metric-unit">W</span><span id="load-current" class="metric-current">Sin dato</span></p>
         </div>
+        <h2>Casa</h2>
       </article>
       </section>
     </div>
@@ -84,19 +84,17 @@
     </article>
     </section>
     <section class="history-dashboard" aria-label="Historial de las últimas 24 horas">
-      <section class="history history--power" aria-labelledby="history-title">
-        <div class="section-heading"><h2 id="history-title">Potencia · hoy · 0–24 h</h2></div>
+      <section class="history history--power" aria-label="Historial de potencia">
         <p id="history-status" aria-live="polite">Cargando historial…</p>
-        <div id="power-chart" class="chart" aria-label="Generación, consumo de Grid, porcentaje de batería y consumo total del día actual"></div>
+        <div id="power-chart" class="chart" aria-label="Generación, consumo de Red, porcentaje de batería y consumo total del día actual"></div>
       </section>
-      <section class="history history--temperature" aria-labelledby="temperature-history-title">
-        <div class="section-heading"><h2 id="temperature-history-title">Temperatura ambiente · últimas 24 h</h2></div>
+      <section class="history history--temperature" aria-label="Historial de temperatura ambiente">
         <p id="temperature-history-status" aria-live="polite">Cargando historial de temperatura…</p>
         <div id="temperature-chart" class="chart" aria-label="Temperatura ambiente en grados Celsius durante las últimas 24 horas"></div>
       </section>
     </section>
   </main>
   <script src="/static/uPlot.iife.min.js?v=6"></script>
-  <script src="/static/app.js?v=9"></script>
+  <script src="/static/app.js?v=11"></script>
 </body>
 </html>
