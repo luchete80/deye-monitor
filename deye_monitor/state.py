@@ -32,7 +32,7 @@ class StateStore:
             },
             "load": {"total_power_w": None, "current_a": None},
             "inverter": {"ac_power_w": None},
-            "temperature": {"radiator_c": None, "ac_c": None, "ambient_c": None},
+            "temperature": {"radiator_c": None, "ac_c": None, "ambient_c": None, "ambient2_c": None},
         }
         self._timestamps = {group: {key: None for key in fields} for group, fields in self._values.items()}
         self._connectivity = {"broker": "disconnected", "service": "unknown", "logger": "unknown"}

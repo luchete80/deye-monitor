@@ -104,8 +104,9 @@ class Config:
             history_interval_seconds=float(_value("DEYE_HISTORY_INTERVAL_SECONDS", "5")),
             history_retention_hours=float(_value("DEYE_HISTORY_RETENTION_HOURS", "24")),
             mqtt_absolute_topics={
-                "temperature.ambient_c": topic
-                for topic in [_value("DEYE_TOPIC_AMBIENT_TEMPERATURE", "nodemcu/temperatura")]
-                if topic
+                key: topic for key, topic in {
+                    "temperature.ambient_c": _value("DEYE_TOPIC_AMBIENT_TEMPERATURE", "nodemcu/temperatura"),
+                    "temperature.ambient2_c": _value("DEYE_TOPIC_AMBIENT_TEMPERATURE2", "nodemcu/temperatura2"),
+                }.items() if topic
             },
         )

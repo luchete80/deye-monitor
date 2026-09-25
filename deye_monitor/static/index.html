@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Deye Monitor</title>
   <link rel="stylesheet" href="/static/uPlot.min.css?v=6">
-  <link rel="stylesheet" href="/static/style.css?v=23">
+  <link rel="stylesheet" href="/static/style.css?v=24">
   <link rel="stylesheet" href="/static/config.css?v=7">
 </head>
 <body>
@@ -77,11 +77,18 @@
       </article>
       </section>
     </div>
+    <div class="temperature-cards" aria-label="Temperaturas ambiente">
     <article class="ambient-card" data-ambient-temperature data-state="unknown" aria-labelledby="ambient-title">
       <h2 id="ambient-title">Temperatura ambiente</h2>
       <p id="ambient-status" class="ambient-status" aria-live="polite">Sin dato</p>
       <p class="ambient-reading"><span id="ambient-value">Sin dato</span> <span class="ambient-unit">°C</span></p>
     </article>
+    <article class="ambient-card ambient-card--second" data-ambient-temperature2 data-state="unknown" aria-labelledby="ambient2-title">
+      <h2 id="ambient2-title">Temperatura ambiente 2</h2>
+      <p id="ambient2-status" class="ambient-status" aria-live="polite">Sin dato</p>
+      <p class="ambient-reading"><span id="ambient2-value">Sin dato</span> <span class="ambient-unit">°C</span></p>
+    </article>
+    </div>
     </section>
     <section class="history-dashboard" aria-label="Historial de las últimas 24 horas">
       <section class="history history--power" aria-label="Historial de potencia">
@@ -90,11 +97,11 @@
       </section>
       <section class="history history--temperature" aria-label="Historial de temperatura ambiente">
         <p id="temperature-history-status" aria-live="polite">Cargando historial de temperatura…</p>
-        <div id="temperature-chart" class="chart" aria-label="Temperatura ambiente en grados Celsius durante las últimas 24 horas"></div>
+        <div id="temperature-chart" class="chart" aria-label="Temperaturas ambiente 1 y 2 en grados Celsius durante las últimas 24 horas"></div>
       </section>
     </section>
   </main>
   <script src="/static/uPlot.iife.min.js?v=6"></script>
-  <script src="/static/app.js?v=11"></script>
+  <script src="/static/app.js?v=12"></script>
 </body>
 </html>

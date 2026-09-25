@@ -7,7 +7,7 @@ import sqlite3
 import threading
 
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 RANGES = {"1h": 1, "6h": 6, "12h": 12, "24h": 24}
 HISTORY_FIELDS = (
     ("solar", "total_power_w", "pv_power_w"),
@@ -67,6 +67,14 @@ class HistoryStore:
                     )
                 """)
                 connection.execute("PRAGMA user_version = 2")
+            if version < 3:
+                connection.execute("""
+                    CREATE TABLE IF NOT EXISTS temperature2_samples (
+                      captured_at TEXT PRIMARY KEY,
+                      ambient2_c REAL NOT NULL
+                    )
+                """)
+                connection.execute("PRAGMA user_version = 3")
 
     @staticmethod
     def complete(snapshot: dict) -> bool:
@@ -78,47 +86,48 @@ class HistoryStore:
         return True
 
     def record(self, snapshot: dict, captured_at: datetime | None = None) -> bool:
-        """Save a complete power snapshot and any ambient reading independently."""
+        """Save power and each ambient sensor independently."""
         captured_at = captured_at or self.clock()
         record_power = self.complete(snapshot)
         values = [snapshot[group][field] for group, field, _ in HISTORY_FIELDS] if record_power else None
-        temperature = snapshot.get("temperature", {}).get("ambient_c")
-        record_temperature = (
-            isinstance(temperature, (int, float))
-            and not isinstance(temperature, bool)
-            and math.isfinite(temperature)
-        )
-        temperature_at = captured_at
-        if record_temperature:
-            raw_timestamp = snapshot.get("field_timestamps", {}).get("temperature", {}).get("ambient_c")
+        temperatures = []
+        for field, table in (("ambient_c", "temperature_samples"), ("ambient2_c", "temperature2_samples")):
+            value = snapshot.get("temperature", {}).get(field)
+            if not isinstance(value, (int, float)) or isinstance(value, bool) or not math.isfinite(value):
+                continue
+            sample_at = captured_at
+            raw_timestamp = snapshot.get("field_timestamps", {}).get("temperature", {}).get(field)
             if raw_timestamp:
                 try:
-                    temperature_at = datetime.fromisoformat(raw_timestamp)
-                    if temperature_at.tzinfo is None:
-                        temperature_at = temperature_at.replace(tzinfo=timezone.utc)
+                    sample_at = datetime.fromisoformat(raw_timestamp)
+                    if sample_at.tzinfo is None:
+                        sample_at = sample_at.replace(tzinfo=timezone.utc)
                 except (TypeError, ValueError):
-                    temperature_at = captured_at
+                    pass
+            temperatures.append((table, field, sample_at, value))
         with self._lock, self._connect() as connection:
             if record_power:
                 connection.execute(
                     "INSERT OR REPLACE INTO snapshots VALUES (?, ?, ?, ?, ?, ?)",
                     (timestamp(captured_at), *values),
                 )
-            if record_temperature:
+            for table, field, sample_at, value in temperatures:
                 connection.execute(
-                    "INSERT OR REPLACE INTO temperature_samples (captured_at, ambient_c) VALUES (?, ?)",
-                    (timestamp(temperature_at), temperature),
+                    f"INSERT OR REPLACE INTO {table} (captured_at, {field}) VALUES (?, ?)",
+                    (timestamp(sample_at), value),
                 )
             cutoff = timestamp(captured_at - self.retention)
             connection.execute("DELETE FROM snapshots WHERE captured_at < ?", (cutoff,))
             connection.execute("DELETE FROM temperature_samples WHERE captured_at < ?", (cutoff,))
-        return record_power or record_temperature
+            connection.execute("DELETE FROM temperature2_samples WHERE captured_at < ?", (cutoff,))
+        return record_power or bool(temperatures)
 
     def prune(self, now: datetime | None = None) -> None:
         now = now or self.clock()
         with self._lock, self._connect() as connection:
             connection.execute("DELETE FROM snapshots WHERE captured_at < ?", (timestamp(now - self.retention),))
             connection.execute("DELETE FROM temperature_samples WHERE captured_at < ?", (timestamp(now - self.retention),))
+            connection.execute("DELETE FROM temperature2_samples WHERE captured_at < ?", (timestamp(now - self.retention),))
 
     def query(self, range_name: str, now: datetime | None = None) -> list[dict]:
         if range_name not in RANGES:
@@ -140,18 +149,28 @@ class HistoryStore:
         return RANGES[range_name]
 
     def query_temperature(self, range_name: str, now: datetime | None = None) -> list[dict]:
-        """Return ambient readings in the requested rolling range, preserving zeroes."""
+        """Return both ambient series by timestamp, preserving zeroes."""
         hours = self._validate_range(range_name)
         now = now or self.clock()
         hours = min(hours, self.retention.total_seconds() / 3600)
         cutoff = timestamp(now - timedelta(hours=hours))
         with self._lock, self._connect() as connection:
-            rows = connection.execute(
+            first = connection.execute(
                 "SELECT captured_at, ambient_c FROM temperature_samples "
                 "WHERE captured_at >= ? AND captured_at <= ? ORDER BY captured_at",
                 (cutoff, timestamp(now)),
             ).fetchall()
-        return [dict(row) for row in rows]
+            second = connection.execute(
+                "SELECT captured_at, ambient2_c FROM temperature2_samples "
+                "WHERE captured_at >= ? AND captured_at <= ? ORDER BY captured_at",
+                (cutoff, timestamp(now)),
+            ).fetchall()
+        merged = {}
+        for row in first:
+            merged[row["captured_at"]] = {"captured_at": row["captured_at"], "ambient_c": row["ambient_c"], "ambient2_c": None}
+        for row in second:
+            merged.setdefault(row["captured_at"], {"captured_at": row["captured_at"], "ambient_c": None, "ambient2_c": None})["ambient2_c"] = row["ambient2_c"]
+        return [merged[key] for key in sorted(merged)]
 
     def query_temperature_series(self, range_name: str, now: datetime | None = None) -> list[dict]:
         """Return readings with explicit null markers across inferred collection gaps."""
@@ -170,7 +189,7 @@ class HistoryStore:
         for index, sample in enumerate(samples):
             if index and times[index] - times[index - 1] > gap_threshold:
                 gap_at = datetime.fromtimestamp(times[index - 1] + cadence, timezone.utc)
-                series.append({"captured_at": timestamp(gap_at), "ambient_c": None})
+                series.append({"captured_at": timestamp(gap_at), "ambient_c": None, "ambient2_c": None})
             series.append(sample)
         return series
 

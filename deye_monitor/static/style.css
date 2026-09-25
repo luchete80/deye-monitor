@@ -54,3 +54,10 @@ body{max-width:none;margin:0;padding:0;background:#111820;overflow:hidden}
 @media (max-width:700px){.metric-grid{gap:.65rem}.metric-card{padding:0}.metric-gauge__track,.metric-gauge__progress{stroke-width:9}.metric-gauge .metric-value{font-size:1.7em;padding:0 .7rem}.flow-line{stroke-width:1.4}}
 @media (max-height:700px){.dashboard-header p{margin:0;font-size:.68rem}.metric-card h2{font-size:2rem}.metric-status{display:none}.history .section-heading h2{font-size:.95rem}.history #history-status{font-size:.68rem}.u-title{font-size:12px}.u-axis,.u-legend{font-size:10px}}
 .ambient-card[data-state=online] .ambient-status{color:#8ee6aa}
+.temperature-cards{display:grid;grid-template-rows:repeat(2,minmax(0,1fr));gap:.55rem;min-width:0;min-height:0}
+.temperature-cards .ambient-card{padding:.5rem}
+.temperature-cards .ambient-card h2{font-size:clamp(.9rem,1.6vw,1.4rem)}
+.temperature-cards .ambient-reading{font-size:clamp(1.8rem,4vw,3.8rem)}
+.ambient-card--second{border-color:#55b9ed}
+.ambient-card--second h2,.ambient-card--second .ambient-reading{color:#55b9ed}
+@media (max-width:700px){.temperature-cards{grid-template-rows:repeat(2,minmax(9rem,auto))}}

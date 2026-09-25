@@ -133,15 +133,20 @@ function renderMetrics(snapshot){
 }
 
 function renderAmbientTemperature(snapshot){
-  const state=metricState(snapshot,'temperature','ambient_c');
-  const value=lookup(snapshot,'temperature.ambient_c');
-  const card=document.querySelector('[data-ambient-temperature]');
-  const status=document.querySelector('#ambient-status');
-  const reading=document.querySelector('#ambient-value');
-  if(card)card.dataset.state=state;
-  if(status)status.textContent=stateLabel(state);
-  if(reading)reading.textContent=valueText(value);
-  if(card)card.setAttribute('aria-label',`Temperatura ambiente: ${valueText(value)} °C · ${stateLabel(state)}`);
+  for(const [field,selector,statusId,valueId,label] of [
+    ['ambient_c','[data-ambient-temperature]','#ambient-status','#ambient-value','Temperatura ambiente'],
+    ['ambient2_c','[data-ambient-temperature2]','#ambient2-status','#ambient2-value','Temperatura ambiente 2'],
+  ]){
+    const state=metricState(snapshot,'temperature',field);
+    const value=lookup(snapshot,`temperature.${field}`);
+    const card=document.querySelector(selector);
+    const status=document.querySelector(statusId);
+    const reading=document.querySelector(valueId);
+    if(card)card.dataset.state=state;
+    if(status)status.textContent=stateLabel(state);
+    if(reading)reading.textContent=valueText(value);
+    if(card)card.setAttribute('aria-label',`${label}: ${valueText(value)} °C · ${stateLabel(state)}`);
+  }
 }
 
 function solarCurrentValues(snapshot){
@@ -223,6 +228,7 @@ function temperatureData(samples){
   return [
     samples.map(sample=>new Date(sample.captured_at).getTime()/1000),
     samples.map(sample=>known(sample.ambient_c)?sample.ambient_c:null),
+    samples.map(sample=>known(sample.ambient2_c)?sample.ambient2_c:null),
   ];
 }
 
@@ -276,7 +282,8 @@ function temperatureChartOptions(title,width,height){
     title,width,height,ms:1,
     scales:{x:{time:true,range:()=>rollingDayRange()},y:{auto:true}},
     series:[{},
-      {label:'Temperatura ambiente',scale:'y',stroke:'#f5c451',width:2,points:{show:true,size:4}},
+      {label:'Temperatura ambiente',scale:'y',stroke:'#f5c451',width:2,spanGaps:true,points:{show:true,size:4}},
+      {label:'Temperatura ambiente 2',scale:'y',stroke:'#55b9ed',width:2,spanGaps:true,points:{show:true,size:4}},
     ],
     axes:[
       {scale:'x',stroke:'#fff',ticks:{stroke:'#fff'},grid:{stroke:'#ffffff22'},splits:()=>rollingDaySplits(),values:(_plot,splits)=>splits.map((_,index)=>`${index*4-24} h`)},
@@ -355,12 +362,12 @@ async function loadTemperatureHistory(initial){
   if(initial)status.textContent='Cargando historial de temperatura…';
   try{
     let payload=await fetchJson('/api/history/temperature?range=24h','No se pudo cargar el historial de temperatura');
-    if(payload.samples.length<2){
+    if(!payload.samples.length){
       payload=await fetchJson('/api/demo/history?kind=temperature','No se pudo cargar el historial demo de temperatura');
     }
     const hadSamples=temperatureSamples.length>0;
     renderTemperatureHistory(payload.samples);
-    if(payload.samples.length)status.textContent=payload.demo?`${payload.samples.length.toLocaleString('es-AR')} lecturas · datos demo`:`${payload.samples.filter(sample=>known(sample.ambient_c)).length.toLocaleString('es-AR')} lecturas en las últimas 24 h`;
+    if(payload.samples.length)status.textContent=payload.demo?`${payload.samples.length.toLocaleString('es-AR')} lecturas · datos demo`:`${payload.samples.filter(sample=>known(sample.ambient_c)||known(sample.ambient2_c)).length.toLocaleString('es-AR')} lecturas en las últimas 24 h`;
     else if(!hadSamples)status.textContent='Todavía no hay lecturas de temperatura para las últimas 24 h.';
   }catch(error){
     if(initial||!temperatureSamples.length)status.textContent=error.message;
