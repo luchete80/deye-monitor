@@ -280,7 +280,7 @@ function chartOptions(title,width,height){
 function temperatureChartOptions(title,width,height){
   return {
     title,width,height,ms:1,
-    scales:{x:{time:true,range:()=>rollingDayRange()},y:{auto:true}},
+    scales:{x:{time:true,range:()=>rollingDayRange()},y:{range:[0,100]}},
     series:[{},
       {label:'Temperatura ambiente',scale:'y',stroke:'#f5c451',width:2,spanGaps:true,points:{show:true,size:4}},
       {label:'Temperatura ambiente 2',scale:'y',stroke:'#55b9ed',width:2,spanGaps:true,points:{show:true,size:4}},
