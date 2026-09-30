@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd "$(dirname "$0")"
+cd "$HOME/deye-monitor" || exit 1
 
 echo "Iniciando Mosquitto..."
 sudo systemctl start mosquitto
@@ -8,15 +8,18 @@ sudo systemctl start mosquitto
 echo "Iniciando deye-mqtt..."
 sudo docker start deye-mqtt
 
+echo "Activando entorno virtual..."
+source .venv/bin/activate
+
 echo "Iniciando deye-monitor..."
-python3 -m deye_monitor &
+python -m deye_monitor &
 
 echo "Esperando al dashboard..."
 sleep 5
 
-echo "Abriendo Chromium en modo kiosco..."
+echo "Abriendo Chromium..."
 chromium \
     --kiosk \
     --noerrdialogs \
     --disable-infobars \
-    http://localhost:5000
+    http://127.0.0.1:5000
