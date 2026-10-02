@@ -51,7 +51,7 @@ body{max-width:none;margin:0;padding:0;background:#111820;overflow:hidden}
 .metric-card[data-state=stale] .metric-gauge__progress,.metric-card[data-state=offline] .metric-gauge__progress{opacity:.62}
 .metric-card[data-state=unknown] .metric-gauge__progress{opacity:0}
 @media (prefers-reduced-motion:reduce){.metric-gauge__progress{transition:none}}
-@media (max-width:700px){.metric-grid{gap:.65rem}.metric-card{padding:0}.metric-gauge__track,.metric-gauge__progress{stroke-width:9}.metric-gauge .metric-value{font-size:1.7em;padding:0 .7rem}.flow-line{stroke-width:1.4}}
+@media (max-width:700px){.metric-grid{gap:.65rem}.metric-card{padding:0}.metric-gauge .metric-value{font-size:1.7em;padding:0 .7rem}.flow-line{stroke-width:1.4}}
 @media (max-height:700px){.dashboard-header p{margin:0;font-size:.68rem}.metric-card h2{font-size:2rem}.metric-status{display:none}.history .section-heading h2{font-size:.95rem}.history #history-status{font-size:.68rem}.u-title{font-size:12px}.u-axis,.u-legend{font-size:10px}}
 .ambient-card[data-state=online] .ambient-status{color:#8ee6aa}
 .temperature-cards{display:grid;grid-template-rows:repeat(2,minmax(0,1fr));gap:.55rem;min-width:0;min-height:0}
@@ -65,7 +65,7 @@ body{max-width:none;margin:0;padding:0;background:#111820;overflow:hidden}
 .dashboard-shell{grid-template-rows:minmax(0,68fr) auto minmax(0,32fr) auto;gap:.3rem}
 .dashboard-main{grid-row:1}.energy-summary{grid-row:2}.history-dashboard{grid-row:3}.dashboard-header{grid-row:4;gap:.5rem;font-size:.75em;min-height:0}
 .dashboard-header p{margin:0}.dashboard-header #age{margin-left:auto}
-.energy-summary{display:flex;gap:.65rem;align-items:center;flex-wrap:wrap;font-size:.8em;color:var(--muted)}
+.energy-summary{display:flex;gap:.65rem;align-items:center;justify-content:flex-end;flex-wrap:wrap;text-align:right;font-size:.8em;color:var(--muted)}
 button{font:inherit;color:#fff;background:#243341;border:1px solid #65798a;border-radius:4px;padding:.2rem .4rem;cursor:pointer}
 button[hidden]{display:none}
 .metric-card{
@@ -134,7 +134,3 @@ button[hidden]{display:none}
     line-height: 1.2;
 }
 
-/* Nombre debajo del reloj: Sol, Red, Bat, Casa */
-.metric-card h2 {
-    font-size: 3.5em;
-}
