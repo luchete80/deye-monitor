@@ -115,7 +115,7 @@ function batteryDetails(snapshot,config){
   return {alert,available,fraction,flow:fresh?(charging?'charging':discharging?'discharging':'idle'):'unknown'};
 }
 function energyText(period){
-  return known(period?.kwh)?`${number(period.kwh,'kWh')}${period.complete?'':' · parcial'}`:'Sin historial suficiente';
+  return known(period?.kwh)?`${number(period.kwh,'kWh')}${period.complete?'':''}`:'Sin historial suficiente';
 }
 function put(id,text){const element=document.querySelector(`#${id}`);if(element)element.textContent=text}
 function renderMetrics(snapshot){

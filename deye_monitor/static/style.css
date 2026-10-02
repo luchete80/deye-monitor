@@ -68,7 +68,10 @@ body{max-width:none;margin:0;padding:0;background:#111820;overflow:hidden}
 .energy-summary{display:flex;gap:.65rem;align-items:center;flex-wrap:wrap;font-size:.8em;color:var(--muted)}
 button{font:inherit;color:#fff;background:#243341;border:1px solid #65798a;border-radius:4px;padding:.2rem .4rem;cursor:pointer}
 button[hidden]{display:none}
-.metric-card{padding:1.25rem 0 1.5rem;justify-content:flex-start}
+.metric-card{
+    padding:0;
+    justify-content:flex-start;
+}
 .metric-card:nth-child(even){justify-content:flex-end}
 .metric-gauge{height:auto;width:100%;max-height:100%}
 .metric-gauge .metric-value{font-size:clamp(1.3rem,2.5vw,2rem);color:#fff;padding:0 .55rem;flex-wrap:nowrap}
@@ -87,7 +90,7 @@ button[hidden]{display:none}
 .metric-gauge{width:min(100cqw,100cqh);height:min(100cqw,100cqh);max-height:none;flex:none}
 .metric-gauge .metric-value{font-size:clamp(1rem,16cqh,2rem)}
 .metric-card h2{bottom:1.35rem;font-size:1.2em}
-.metric-grid{row-gap:1rem}
+.metric-grid{row-gap:.4rem}
 .metric-card{--gauge-size:min(100cqw,100cqh)}
 .metric-detail{width:var(--gauge-size);right:auto}
 .metric-card:nth-child(even) .metric-detail{left:auto;right:0}
@@ -110,4 +113,28 @@ button[hidden]{display:none}
 .metric-card--grid .metric-secondary,
 .metric-card--load .metric-secondary {
     text-align: center;
+}
+
+/* Número principal: 291, 25, etc. */
+.metric-primary {
+    font-size: 1.3em;
+    font-weight: 700;
+}
+
+/* Unidad principal: W */
+.metric-primary .metric-unit {
+    font-size: .55em;
+    font-weight: 400;
+}
+
+/* Datos secundarios: Hoy, tensión, kWh */
+.metric-secondary {
+    font-size: .55em;
+    font-weight: 500;
+    line-height: 1.2;
+}
+
+/* Nombre debajo del reloj: Sol, Red, Bat, Casa */
+.metric-card h2 {
+    font-size: 3.5em;
 }
