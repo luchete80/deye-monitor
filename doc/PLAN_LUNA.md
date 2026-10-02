@@ -56,10 +56,10 @@ Propuesta de composición: potencia instantánea al centro para Sol, Red y Casa;
 
 | Reloj | Centro | Arriba | Abajo |
 |---|---|---|---|
-| Sol | Potencia actual W/kW | Producción del día, kWh | Capacidad solar configurada |
+| Sol | Potencia actual W/kW | Producción del día, kWh | — |
 | Red | Potencia actual W/kW, con dirección | Tensión, V | Importación acumulada del ciclo de facturación, kWh |
 | Casa | Potencia actual W/kW | Consumo del día calendario, kWh | Consumo del mes calendario, kWh |
-| Batería | SOC, % | Energía útil disponible, kWh | `Rem:` tiempo hasta mínimo o máximo según descarga/carga |
+| Batería | Energía disponible, kWh, calculada con el SOC | — | — |
 
 En Casa, mostrar el acumulado diario con escala inicial de 6 kWh; al superar 6, pasar a 12. Si supera 12, ampliar por múltiplos de 6 para evitar saturación permanente. Reiniciar la escala al comenzar el siguiente día. El número siempre muestra el valor real.
 
@@ -67,7 +67,7 @@ Para Red sin tensión, tachar “Red” o mostrar “Sin tensión” con señal 
 
 Usar `kWh` para energía, `kW` para potencia y `V` para tensión; interpretar “kW/hora” de las notas como energía acumulada en kWh.
 
-## 4. Alertas de SOC y tiempo restante
+## 4. Alertas de SOC y energía disponible
 
 - SOC ≤ mínimo (25 % inicialmente): titilar sólo si la batería **no está cargando**, con estado conocido y fresco; incluye reposo y descarga.
 - SOC ≥ máximo (95 % inicialmente): titilar sólo mientras la batería **está cargando**, con estado conocido y fresco.
@@ -80,12 +80,9 @@ Definir `C_util` como los kWh utilizables entre los SOC configurados `S_min` y `
 ```text
 fracción = limitar((SOC - S_min) / (S_max - S_min), 0, 1)
 energía disponible = C_util × fracción
-energía para alcanzar máximo = C_util × (1 - fracción)
-tiempo de descarga [h] = energía disponible [kWh] / potencia de descarga [kW]
-tiempo de carga [h] = energía para alcanzar máximo [kWh] / potencia de carga [kW]
 ```
 
-Estos kWh se calculan a partir del SOC, como se pidió. No confundirlos con consumo acumulado: Casa, Sol y Red requieren sus propias mediciones. Mostrar el tiempo como estimación (`Rem: ~2 h 15 min`); en reposo, falta de datos o potencia cerca de cero, mostrar `Rem: —`. Usar potencia suavizada para reducir saltos y no asumir rendimientos desconocidos.
+Los kWh disponibles se calculan a partir del SOC configurado. Mostrar sólo el valor grande en el reloj con unidad `kWh`, sin leyenda, porcentaje ni tiempo restante. El arco representa la fracción de capacidad útil disponible. No confundirlos con consumo acumulado: Casa, Sol y Red requieren sus propias mediciones.
 
 ## 5. Acumulados diarios, mensuales y de facturación
 

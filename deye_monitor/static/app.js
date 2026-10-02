@@ -110,7 +110,7 @@ function batteryDetails(snapshot,config){
   const deadband=snapshot.flow?.deadband_w??30;
   const charging=fresh&&raw < -deadband,discharging=fresh&&raw > deadband;
   const alert=fresh&&((soc<=config.soc_min&&!charging)||(soc>=config.soc_max&&charging));
-  const fraction=known(soc)?Math.min(1,Math.max(0,(soc-config.soc_min)/(config.soc_max-config.soc_min))):null;
+  const fraction=metricState(snapshot,'battery','soc_pct')==='online'&&known(soc)?Math.min(1,Math.max(0,(soc-config.soc_min)/(config.soc_max-config.soc_min))):null;
   const available=known(config.battery_usable_kwh)&&fraction!==null?config.battery_usable_kwh*fraction:null;
   return {alert,available,fraction,flow:fresh?(charging?'charging':discharging?'discharging':'idle'):'unknown'};
 }

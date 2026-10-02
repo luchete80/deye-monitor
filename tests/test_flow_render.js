@@ -34,6 +34,8 @@ assert.match(script,/gaugePercent/);
 assert.match(script,/dashboardConfig/);
 assert.match(script,/setInterval\(\(\)=>loadHistory\(false\),HISTORY_REFRESH_MS\)/);
 assert.doesNotMatch(html,/id="(?:solar|grid|load)-current"/);
+assert.doesNotMatch(html,/Capacidad:|id="solar-bottom"|id="battery-(?:top|bottom)"|Rem:/);
+assert.match(html,/id="battery-value"[^>]*>Sin dato<\/span> <span class="metric-unit">kWh<\/span>/);
 assert.match(script,/batteryFlowState/);
 assert.match(script,/'soc_pct'/);
 assert.match(script,/renderFlow/);

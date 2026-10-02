@@ -86,12 +86,10 @@ for(const soc of [24,25,26,94,95,96])for(const power of [-1000,0,1000]){
  assert.equal(dashboard.batteryDetails({...state,field_freshness:{}},cfg,power).alert,false);
 }
 const middle={battery:{soc_pct:60,power_w:1000},field_freshness:{battery:{soc_pct:true,power_w:true}},connectivity:online};
-assert.equal(dashboard.batteryDetails(middle,cfg,1000).available,3.5);
-assert.equal(dashboard.batteryDetails(middle,cfg,1000).hours,3.5);
-assert.equal(dashboard.batteryDetails({...middle,battery:{soc_pct:60,power_w:0}},cfg,0).hours,null);
+assert.equal(dashboard.batteryDetails(middle,cfg).available,3.5);
+assert.equal(dashboard.batteryDetails(middle,cfg).fraction,0.5);
 assert.equal(dashboard.homeDayScale(6,cfg),6);
 assert.equal(dashboard.homeDayScale(6.1,cfg),12);
 assert.equal(dashboard.homeDayScale(13,cfg),18);
-assert.equal(dashboard.durationText(null),'Rem: —');
 assert.equal(dashboard.temperatureChartOptions('',500,300).series[1].spanGaps,false);
 console.log('dashboard logic ok');
