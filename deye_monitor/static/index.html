@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Deye Monitor</title>
   <link rel="stylesheet" href="/static/uPlot.min.css?v=6">
-  <link rel="stylesheet" href="/static/style.css?v=26">
+  <link rel="stylesheet" href="/static/style.css?v=27">
   <link rel="stylesheet" href="/static/config.css?v=7">
 </head>
 <body>
@@ -37,23 +37,39 @@
             <path class="metric-gauge__track" d="M 23.23 96.77 A 52 52 0 1 1 96.77 96.77" pathLength="100"></path>
             <path class="metric-gauge__progress" d="M 23.23 96.77 A 52 52 0 1 1 96.77 96.77" pathLength="100"></path>
           </svg>
-          <p class="metric-value"><span id="solar-value">Sin dato</span> <span class="metric-unit">W</span></p>
+			<p class="metric-value">
+			  <span class="metric-primary">
+				<span id="solar-value">-</span>
+				<span class="metric-unit">W</span>
+			  </span>
+			  <span id="solar-today" class="metric-secondary">Hoy:<br>-</span>
+			</p>
         </div>
-        <p id="solar-top" class="metric-detail metric-detail--top">Sin dato</p>
         <h2>Sol</h2>
       </article>
-      <article class="metric-card metric-card--grid" data-metric="grid">
-        <div class="metric-gauge" data-gauge="grid" role="img" aria-label="Red: Sin dato">
-          <svg class="metric-gauge__svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
-            <path class="metric-gauge__track" d="M 23.23 96.77 A 52 52 0 1 1 96.77 96.77" pathLength="100"></path>
-            <path class="metric-gauge__progress" d="M 23.23 96.77 A 52 52 0 1 1 96.77 96.77" pathLength="100"></path>
-          </svg>
-          <p class="metric-value"><span id="grid-value">Sin dato</span> <span class="metric-unit">W</span></p>
-        </div>
-        <p id="grid-top" class="metric-detail metric-detail--top">Sin dato</p>
-        <p id="grid-bottom" class="metric-detail metric-detail--bottom">Sin dato</p>
-        <h2>Red</h2>
-      </article>
+		<article class="metric-card metric-card--grid" data-metric="grid">
+		  <div class="metric-gauge" data-gauge="grid" role="img" aria-label="Red: Sin dato">
+			<svg class="metric-gauge__svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
+			  <path class="metric-gauge__track" d="M 23.23 96.77 A 52 52 0 1 1 96.77 96.77" pathLength="100"></path>
+			  <path class="metric-gauge__progress" d="M 23.23 96.77 A 52 52 0 1 1 96.77 96.77" pathLength="100"></path>
+			</svg>
+
+			<p class="metric-value">
+			  <span class="metric-primary">
+				<span id="grid-value">-</span>
+				<span class="metric-unit">W</span>
+			  </span>
+
+			  <span id="grid-top" class="metric-secondary">- V</span>
+
+			  <span class="metric-secondary">
+				Hoy:<br><span id="grid-today">-</span>
+			  </span>
+			</p>
+		  </div>
+
+		  <h2>Red</h2>
+		</article>
       <article class="metric-card metric-card--battery" data-metric="battery">
         <div class="metric-gauge" data-gauge="battery" role="img" aria-label="Bat: Sin dato">
           <svg class="metric-gauge__svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
@@ -66,18 +82,25 @@
         </div>
         <h2>Bat</h2>
       </article>
-      <article class="metric-card metric-card--load" data-metric="load">
-        <div class="metric-gauge" data-gauge="load" role="img" aria-label="Casa: Sin dato">
-          <svg class="metric-gauge__svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
-            <path class="metric-gauge__track" d="M 23.23 96.77 A 52 52 0 1 1 96.77 96.77" pathLength="100"></path>
-            <path class="metric-gauge__progress" d="M 23.23 96.77 A 52 52 0 1 1 96.77 96.77" pathLength="100"></path>
-          </svg>
-          <p class="metric-value"><span id="load-value">Sin dato</span> <span class="metric-unit">W</span></p>
-        </div>
-        <p id="load-top" class="metric-detail metric-detail--top">Sin dato</p>
-        <p id="load-bottom" class="metric-detail metric-detail--bottom">Sin dato</p>
-        <h2>Casa</h2>
-      </article>
+		<article class="metric-card metric-card--load" data-metric="load">
+		  <div class="metric-gauge" data-gauge="load" role="img" aria-label="Casa: Sin dato">
+			<svg class="metric-gauge__svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
+			  <path class="metric-gauge__track" d="M 23.23 96.77 A 52 52 0 1 1 96.77 96.77" pathLength="100"></path>
+			  <path class="metric-gauge__progress" d="M 23.23 96.77 A 52 52 0 1 1 96.77 96.77" pathLength="100"></path>
+			</svg>
+
+			<p class="metric-value">
+			  <span class="metric-primary">
+				<span id="load-value">-</span>
+				<span class="metric-unit">W</span>
+			  </span>
+			  <span id="load-top" class="metric-secondary">Hoy: -</span>
+			</p>
+		  </div>
+
+		  <p id="load-bottom" class="metric-detail metric-detail--bottom">Sin dato</p>
+		  <h2>Casa</h2>
+		</article>
       </section>
     </div>
     <div class="temperature-cards" aria-label="Temperaturas ambiente">

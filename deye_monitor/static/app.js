@@ -135,7 +135,7 @@ function renderMetrics(snapshot){
   }
   if(!dashboardConfig)return;
   const cfg=dashboardConfig;
-  put('solar-top',`Hoy: ${energyText(energySummary?.solar_day)}`);
+put('solar-today', `Hoy:\n${known(energySummary?.solar_day?.kwh) ? number(energySummary.solar_day.kwh,'kWh') : '-'}`);
   const voltageState=metricState(snapshot,'grid','voltage_v');
   const absent=voltageState==='online'&&snapshot.grid.voltage_v<cfg.grid_absent_below_v;
   const grid=document.querySelector('[data-metric="grid"]');

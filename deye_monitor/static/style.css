@@ -97,3 +97,17 @@ button[hidden]{display:none}
 .metric-detail{font-size:.85em}
 .metric-value--battery .metric-primary{font-size:1.2em}
 .metric-value--battery .metric-unit{font-size:.48em}
+
+.metric-card--solar .metric-value,
+.metric-card--grid .metric-value,
+.metric-card--load .metric-value {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    gap: .15rem;
+}
+
+.metric-card--solar .metric-secondary,
+.metric-card--grid .metric-secondary,
+.metric-card--load .metric-secondary {
+    text-align: center;
+}
