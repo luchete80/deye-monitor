@@ -187,3 +187,56 @@ los fixtures de red hay que configurar explícitamente
 `DEYE_TOPIC_GRID_POWER=ac/grid_power_unvalidated` y una convención de signo;
 esa configuración sigue siendo una hipótesis sintética. Son entradas de
 desarrollo y tests, no una captura física de Delivery 0.
+
+### Tablero y acumulados de energía (plan Luna)
+
+Los máximos de Sol, Red y Casa se configuran en `.env` con
+`DEYE_GAUGE_SOLAR_MAX_W`, `DEYE_GAUGE_GRID_MAX_W` y `DEYE_GAUGE_LOAD_MAX_W`.
+Si el máximo solar queda vacío, usa `DEYE_SOLAR_CAPACITY_W` (valor inicial
+6000 W, ajustar a la instalación real). Reiniciar el servicio después de editar.
+El centro de Casa sigue mostrando potencia; la barra del consumo diario usa
+6 kWh, luego 12 kWh y después múltiplos de 6, configurables en `.env`.
+
+Configurar `DEYE_BATTERY_USABLE_KWH` con la capacidad útil **entre** los límites
+`DEYE_BATTERY_SOC_MIN_PCT=25` y `DEYE_BATTERY_SOC_MAX_PCT=95`. Sin capacidad
+configurada no se calcula energía ni tiempo restante. Los kWh disponibles se
+calculan proporcionalmente al SOC entre esos límites; la duración es estimada
+con potencia suavizada y no supone pérdidas/rendimientos desconocidos.
+La alerta inferior aparece con SOC ≤ mínimo si no carga, y la superior con
+SOC ≥ máximo si carga. Requieren SOC y potencia frescos y conectividad válida.
+`DEYE_ALERT_BEEP_ENABLED=true` ofrece un botón para activar/silenciar el sonido
+por sesión; nunca suena hasta que el usuario lo habilita.
+
+`DEYE_BILLING_DAY` debe contener el día real de facturación (1–31). Si queda
+vacío, Red pide configurarlo. En meses cortos se usa el último día del mes.
+Red acumula importaciones, separadas de exportaciones. `DEYE_TIMEZONE` define
+los días, meses y ciclos; inicialmente `America/Argentina/Buenos_Aires`.
+`DEYE_GRID_ABSENT_BELOW_V=10` considera ausencia de tensión sólo cuando la
+lectura de tensión es fresca. Lecturas desconocidas/vencidas no indican corte.
+
+SQLite guarda agregados diarios en `energy_days` y bases del contador mensual
+reiniciable en `energy_resets`, independientemente de la retención del historial.
+Cada métrica se integra por separado; no hace falta SOC para acumular Casa.
+Se integra la parte positiva de potencia con intervalos cortos y frescos,
+separando días locales y cruces por cero. Los contadores diarios de compra/venta
+del equipo corrigen la estimación entre lecturas válidas, con control de saltos
+imposibles y reinicios. No se integra a través de huecos de datos o reinicios del
+monitor. Los períodos con cobertura insuficiente aparecen como `parcial`.
+La cobertura es del muestreo observado, no una garantía de precisión del equipo.
+
+Casa muestra hoy, mes calendario actual y mes calendario anterior cerrado.
+El botón de reset reinicia un contador separado del total calendario; no borra
+historial ni altera el total de Red. La base y fecha del reset sobreviven al
+reinicio y el contador comienza un nuevo mes automáticamente.
+No se reconstruyen meses pasados a partir de las 24 horas de datos existentes.
+Los períodos aún sin mediciones aparecen como “Sin historial suficiente”.
+
+API agregada:
+
+- `GET /api/dashboard-config`: configuración pública sin credenciales.
+- `GET /api/energy`: acumulados, límites de períodos y cobertura.
+- `POST /api/energy/home/reset` con cuerpo JSON `{}`: reinicia el contador mensual de Casa.
+
+Los plots usan `[ahora - 24 h, ahora]`, con horas y fechas locales. No cargan
+datos demo automáticamente ante ausencia de datos reales. Los huecos de
+medición se muestran como cortes y no se dibujan muestras futuras.

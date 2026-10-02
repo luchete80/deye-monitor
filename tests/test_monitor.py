@@ -237,8 +237,8 @@ def test_delivery_two_flow_assets_and_scenarios():
         assert label in page
     assert "Potencia · hoy · 0–24 h" not in page
     assert "Temperatura ambiente · últimas 24 h" not in page
-    assert 'class="central-info"' in page
-    assert ">Inv</span>" in page
+    assert 'class="central-info"' not in page
+    assert ">Inv</span>" not in page
     assert "energy-diagram" not in page
     assert "range=24h" in script
     assert "scale:'battery'" in script

@@ -75,5 +75,23 @@ assert.equal(fixedRange[1]-fixedRange[0],24*60*60);
 assert.deepEqual(dashboard.positiveNonZero(0),null);
 assert.deepEqual(dashboard.positiveNonZero(-78),null);
 assert.deepEqual(dashboard.positiveNonZero(722),722);
-assert.deepEqual(dashboard.chartOptions('x',500,300).axes[0].values(null,[0,1,2,3,4,5,6]),['0 h','4 h','8 h','12 h','16 h','20 h','24 h']);
+const window24=dashboard.chartOptions('x',500,300).scales.x.range();
+assert.equal(window24[1]-window24[0],86400);
+assert.match(dashboard.chartOptions('x',500,300).axes[0].values(null,[1767312000])[0],/\d{2}:\d{2}/);
+const cfg={soc_min:25,soc_max:95,battery_usable_kwh:7,home_day_scale_kwh:6,home_day_scale_next_kwh:12};
+for(const soc of [24,25,26,94,95,96])for(const power of [-1000,0,1000]){
+ const state={battery:{soc_pct:soc,power_w:power},field_freshness:{battery:{soc_pct:true,power_w:true}},connectivity:online};
+ const detail=dashboard.batteryDetails(state,cfg,power);
+ assert.equal(detail.alert,(soc<=25&&power>=0)||(soc>=95&&power<0));
+ assert.equal(dashboard.batteryDetails({...state,field_freshness:{}},cfg,power).alert,false);
+}
+const middle={battery:{soc_pct:60,power_w:1000},field_freshness:{battery:{soc_pct:true,power_w:true}},connectivity:online};
+assert.equal(dashboard.batteryDetails(middle,cfg,1000).available,3.5);
+assert.equal(dashboard.batteryDetails(middle,cfg,1000).hours,3.5);
+assert.equal(dashboard.batteryDetails({...middle,battery:{soc_pct:60,power_w:0}},cfg,0).hours,null);
+assert.equal(dashboard.homeDayScale(6,cfg),6);
+assert.equal(dashboard.homeDayScale(6.1,cfg),12);
+assert.equal(dashboard.homeDayScale(13,cfg),18);
+assert.equal(dashboard.durationText(null),'Rem: —');
+assert.equal(dashboard.temperatureChartOptions('',500,300).series[1].spanGaps,false);
 console.log('dashboard logic ok');

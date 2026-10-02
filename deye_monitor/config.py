@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 import math
 import os
 from dotenv import load_dotenv
+from zoneinfo import ZoneInfo
 
 
 VALID_DATA_SOURCES = {"mqtt", "simulated"}
@@ -39,7 +40,49 @@ class Config:
     history_retention_hours: float = 24
     mqtt_absolute_topics: dict[str, str] = field(default_factory=dict)
 
+    gauge_solar_max_w: float | None = None
+    gauge_grid_max_w: float = 6000
+    gauge_load_max_w: float = 6000
+    home_day_scale_kwh: float = 6
+    home_day_scale_next_kwh: float = 12
+    solar_capacity_w: float = 6000
+    battery_usable_kwh: float | None = None
+    battery_soc_min_pct: float = 25
+    battery_soc_max_pct: float = 95
+    billing_day: int | None = None
+    timezone: str = "America/Argentina/Buenos_Aires"
+    grid_absent_below_v: float = 10
+    alert_beep_enabled: bool = False
+
+    def public_dashboard(self) -> dict:
+        return {
+            "gauge_max_w": {"solar": self.gauge_solar_max_w or self.solar_capacity_w,
+                            "grid": self.gauge_grid_max_w, "load": self.gauge_load_max_w},
+            "home_day_scale_kwh": self.home_day_scale_kwh,
+            "home_day_scale_next_kwh": self.home_day_scale_next_kwh,
+            "solar_capacity_w": self.solar_capacity_w,
+            "battery_usable_kwh": self.battery_usable_kwh,
+            "soc_min": self.battery_soc_min_pct, "soc_max": self.battery_soc_max_pct,
+            "billing_day": self.billing_day, "timezone": self.timezone,
+            "grid_absent_below_v": self.grid_absent_below_v,
+            "beep_enabled": self.alert_beep_enabled,
+        }
+
     def __post_init__(self) -> None:
+        for name in ("gauge_solar_max_w", "gauge_grid_max_w", "gauge_load_max_w",
+                     "home_day_scale_kwh", "home_day_scale_next_kwh", "solar_capacity_w", "battery_usable_kwh"):
+            value = getattr(self, name)
+            if value is not None and (not math.isfinite(value) or value <= 0):
+                raise ValueError(f"{name} must be finite and positive")
+        if not 0 <= self.battery_soc_min_pct < self.battery_soc_max_pct <= 100:
+            raise ValueError("Battery SOC requires 0 <= minimum < maximum <= 100")
+        if self.home_day_scale_next_kwh <= self.home_day_scale_kwh:
+            raise ValueError("Next home scale must exceed initial scale")
+        if self.billing_day is not None and not 1 <= self.billing_day <= 31:
+            raise ValueError("Billing day must be between 1 and 31")
+        if not math.isfinite(self.grid_absent_below_v) or self.grid_absent_below_v < 0:
+            raise ValueError("Grid absence threshold must be finite and nonnegative")
+        ZoneInfo(self.timezone)
         if self.data_source not in VALID_DATA_SOURCES:
             raise ValueError(
                 f"DEYE_DATA_SOURCE must be one of {sorted(VALID_DATA_SOURCES)}, got {self.data_source!r}"
@@ -82,6 +125,19 @@ class Config:
             "load.current_a": _value("DEYE_TOPIC_LOAD_CURRENT", "ac/l1/current"),
         }
         return cls(
+            gauge_solar_max_w=float(_value("DEYE_GAUGE_SOLAR_MAX_W")) if _value("DEYE_GAUGE_SOLAR_MAX_W") else None,
+            gauge_grid_max_w=float(_value("DEYE_GAUGE_GRID_MAX_W", "6000")),
+            gauge_load_max_w=float(_value("DEYE_GAUGE_LOAD_MAX_W", "6000")),
+            home_day_scale_kwh=float(_value("DEYE_HOME_DAY_SCALE_KWH", "6")),
+            home_day_scale_next_kwh=float(_value("DEYE_HOME_DAY_SCALE_NEXT_KWH", "12")),
+            solar_capacity_w=float(_value("DEYE_SOLAR_CAPACITY_W", "6000")),
+            battery_usable_kwh=float(_value("DEYE_BATTERY_USABLE_KWH")) if _value("DEYE_BATTERY_USABLE_KWH") else None,
+            battery_soc_min_pct=float(_value("DEYE_BATTERY_SOC_MIN_PCT", "25")),
+            battery_soc_max_pct=float(_value("DEYE_BATTERY_SOC_MAX_PCT", "95")),
+            billing_day=int(_value("DEYE_BILLING_DAY")) if _value("DEYE_BILLING_DAY") else None,
+            timezone=_value("DEYE_TIMEZONE", "America/Argentina/Buenos_Aires"),
+            grid_absent_below_v=float(_value("DEYE_GRID_ABSENT_BELOW_V", "10")),
+            alert_beep_enabled=_value("DEYE_ALERT_BEEP_ENABLED", "false").lower() == "true",
             host=_value("DEYE_HOST", "127.0.0.1"), port=int(_value("DEYE_PORT", "5000")),
             data_source=_value("DEYE_DATA_SOURCE", "mqtt").lower(),
             mqtt_host=_value("DEYE_MQTT_HOST", "localhost"), mqtt_port=int(_value("DEYE_MQTT_PORT", "1883")),

@@ -2,7 +2,6 @@ const known=value=>typeof value==='number'&&Number.isFinite(value);
 const lookup=(state,path)=>path.split('.').reduce((value,key)=>value?.[key],state);
 const number=(value,unit='W')=>value===null||value===undefined?'Sin dato':`${Number(value).toLocaleString('es-AR',{maximumFractionDigits:2})} ${unit}`;
 const valueText=value=>value===null||value===undefined?'Sin dato':Number(value).toLocaleString('es-AR',{maximumFractionDigits:2});
-const currentText=value=>known(value)?`${Number(value).toLocaleString('es-AR',{maximumFractionDigits:2})} A`:'Sin dato';
 
 function relativeAge(timestamp){
   if(!timestamp)return 'Sin datos';
@@ -22,8 +21,6 @@ function batteryFlowState(value){
   if(value>0)return 'discharging';
   return 'idle';
 }
-const GAUGE_MAX_W={solar:6000,grid:6000,battery:6000,load:6000};
-const GAUGE_MAX={solar:6000,grid:6000,battery:100,load:6000};
 function gaugePercent(value,maximum,absolute=false){
   if(!known(value)||!known(maximum)||maximum<=0)return null;
   const magnitude=absolute?Math.abs(value):Math.max(0,value);
@@ -101,35 +98,66 @@ function renderFlow(snapshot){
   });
 }
 
+let dashboardConfig=null, energySummary=null, lastSnapshot=null, previousAlert=false, audioContext=null;
+
+function homeDayScale(kwh,config){
+  const first=config.home_day_scale_kwh,next=config.home_day_scale_next_kwh;
+  return !known(kwh)||kwh<=first?first:kwh<=next?next:Math.ceil(kwh/first)*first;
+}
+function batteryDetails(snapshot,config){
+  const soc=snapshot.battery?.soc_pct,raw=snapshot.battery?.power_w;
+  const fresh=metricState(snapshot,'battery','soc_pct')==='online'&&metricState(snapshot,'battery','power_w')==='online';
+  const deadband=snapshot.flow?.deadband_w??30;
+  const charging=fresh&&raw < -deadband,discharging=fresh&&raw > deadband;
+  const alert=fresh&&((soc<=config.soc_min&&!charging)||(soc>=config.soc_max&&charging));
+  const fraction=known(soc)?Math.min(1,Math.max(0,(soc-config.soc_min)/(config.soc_max-config.soc_min))):null;
+  const available=known(config.battery_usable_kwh)&&fraction!==null?config.battery_usable_kwh*fraction:null;
+  return {alert,available,fraction,flow:fresh?(charging?'charging':discharging?'discharging':'idle'):'unknown'};
+}
+function energyText(period){
+  return known(period?.kwh)?`${number(period.kwh,'kWh')}${period.complete?'':' · parcial'}`:'Sin historial suficiente';
+}
+function put(id,text){const element=document.querySelector(`#${id}`);if(element)element.textContent=text}
 function renderMetrics(snapshot){
-  const metrics=[
-    {group:'solar',field:'total_power_w',unit:'W',valueId:'solar-value',currentId:'solar-current',absolute:false},
-    {group:'grid',field:'power_w',unit:'W',valueId:'grid-value',currentField:'estimated_current_a',currentId:'grid-current',absolute:true},
-    {group:'battery',field:'soc_pct',unit:'%',valueId:'battery-value',powerField:'power_w',powerId:'battery-power',currentField:'current_a',currentId:'battery-current',absolute:false},
-    {group:'load',field:'total_power_w',unit:'W',valueId:'load-value',currentField:'current_a',currentId:'load-current',absolute:false},
-  ];
-  metrics.forEach(({group,field,unit,valueId,powerField,powerId,currentId,currentField,absolute})=>{
-    const state=metricState(snapshot,group,field),card=document.querySelector(`[data-metric="${group}"]`),status=document.querySelector(`#${group}-status`),value=lookup(snapshot,`${group}.${field}`);
+  lastSnapshot=snapshot;
+  const batteryDetail=dashboardConfig?batteryDetails(snapshot,dashboardConfig):{available:null,fraction:null,alert:false,flow:'unknown'};
+  for(const [group,field,unit] of [['solar','total_power_w','W'],['grid','power_w','W'],['battery','soc_pct','kWh'],['load','total_power_w','W']]){
+    const state=metricState(snapshot,group,field),value=lookup(snapshot,`${group}.${field}`);
+    const card=document.querySelector(`[data-metric="${group}"]`),gauge=document.querySelector(`[data-gauge="${group}"]`);
     if(card)card.dataset.state=state;
-    if(card&&group==='battery')card.dataset.batteryFlow=batteryFlowState(lookup(snapshot,`battery.${powerField}`));
-    if(status)status.textContent=stateLabel(state);
-    const element=document.querySelector(`#${valueId}`);
-    if(element)element.textContent=valueText(value);
-    const powerElement=powerId&&document.querySelector(`#${powerId}`);
-    if(powerElement)powerElement.textContent=number(lookup(snapshot,`${group}.${powerField}`),'W');
-    const currentElement=document.querySelector(`#${currentId}`);
-    const currentLabel=group==='solar'?solarCurrentText(snapshot):currentText(lookup(snapshot,`${group}.${currentField}`));
-    const currentState=group==='solar'?solarCurrentState(snapshot):metricState(snapshot,group,currentField);
-    if(currentElement)currentElement.textContent=currentLabel;
-    if(card)card.dataset.currentState=currentState;
-    const gauge=document.querySelector(`[data-gauge="${group}"]`),progress=gauge?.querySelector('.metric-gauge__progress');
-    const percent=gaugePercent(value,(group==='battery'?GAUGE_MAX:GAUGE_MAX_W)[group],absolute);
+    const shownValue=group==='battery'?batteryDetail.available:value;
+    put(`${group}-value`,valueText(shownValue));
+    const maximum=group==='battery'?dashboardConfig?.battery_usable_kwh:dashboardConfig?.gauge_max_w[group];
+    const percent=group==='battery'?gaugePercent(batteryDetail.available,maximum):gaugePercent(value,maximum,group==='grid');
+    const progress=gauge?.querySelector('.metric-gauge__progress');
     if(progress)progress.style.strokeDashoffset=String(100-(percent??0));
-    if(gauge){
-      gauge.dataset.percent=percent===null?'':String(percent);
-      gauge.setAttribute('aria-label',`${group==='load'?'Casa':group==='solar'?'Sol':group==='battery'?'Bat':'Red'}: ${valueText(value)} ${unit} · Corriente: ${currentLabel} · ${stateLabel(state)}`);
-    }
-  });
+    if(gauge){gauge.dataset.percent=percent===null?'':String(percent);gauge.setAttribute('aria-label',`${group}: ${number(shownValue,unit)} · ${stateLabel(state)}`)}
+  }
+  if(!dashboardConfig)return;
+  const cfg=dashboardConfig;
+  put('solar-top',`Hoy: ${energyText(energySummary?.solar_day)}`);
+  const voltageState=metricState(snapshot,'grid','voltage_v');
+  const absent=voltageState==='online'&&snapshot.grid.voltage_v<cfg.grid_absent_below_v;
+  const grid=document.querySelector('[data-metric="grid"]');
+  if(grid)grid.dataset.absent=String(absent);
+  put('grid-top',absent?'Sin tensión':voltageState==='online'?number(snapshot.grid.voltage_v,'V'):'Tensión: sin dato');
+  put('grid-bottom',cfg.billing_day===null?'Configurar día de facturación':`Ciclo: ${energyText(energySummary?.grid_billing)}`);
+  const daily=energySummary?.home_day;
+  put('load-top',`Hoy: ${energyText(daily)}`);
+  put('load-bottom',`Mes: ${energyText(energySummary?.home_month)}`);
+  const home=document.querySelector('[data-metric="load"]');
+  if(home){home.dataset.energyScale=String(homeDayScale(daily?.kwh,cfg));const top=document.querySelector('#load-top');if(top){top.style.setProperty('--day-progress',`${gaugePercent(daily?.kwh,homeDayScale(daily?.kwh,cfg))??0}%`);top.title=`Escala diaria: ${homeDayScale(daily?.kwh,cfg)} kWh`;}}
+  const detail=batteryDetail;
+  const battery=document.querySelector('[data-metric="battery"]');
+  if(battery){battery.dataset.batteryFlow=detail.flow;battery.dataset.alert=String(detail.alert)}
+  if(detail.alert&&!previousAlert&&audioContext){
+    const tone=audioContext.createOscillator(),gain=audioContext.createGain();
+    tone.connect(gain);gain.connect(audioContext.destination);gain.gain.value=.08;tone.frequency.value=880;tone.start();tone.stop(audioContext.currentTime+.15);
+  }
+  previousAlert=detail.alert;
+  put('home-last-month',`Mes anterior: ${energyText(energySummary?.home_last_month)}`);
+  const counter=energySummary?.home_counter;
+  put('home-counter',`Contador mensual: ${number(counter?.kwh,'kWh')}${counter?.reset_at?` · desde ${new Date(counter.reset_at).toLocaleString('es-AR',{timeZone:cfg.timezone})}`:''}`);
 }
 
 function renderAmbientTemperature(snapshot){
@@ -149,35 +177,35 @@ function renderAmbientTemperature(snapshot){
   }
 }
 
-function solarCurrentValues(snapshot){
-  return [lookup(snapshot,'solar.pv1_current_a'),lookup(snapshot,'solar.pv2_current_a')];
-}
-
-function solarCurrentText(snapshot){
-  const [pv1,pv2]=solarCurrentValues(snapshot);
-  return known(pv1)&&known(pv2)?`PV1 ${currentText(pv1)} · PV2 ${currentText(pv2)}`:'Sin dato';
-}
-
-function solarCurrentState(snapshot){
-  const [pv1,pv2]=solarCurrentValues(snapshot);
-  if(!known(pv1)||!known(pv2))return 'unknown';
-  const states=[metricState(snapshot,'solar','pv1_current_a'),metricState(snapshot,'solar','pv2_current_a')];
-  return states.includes('offline')?'offline':states.includes('stale')?'stale':'online';
-}
-
 function render(snapshot){
   document.querySelectorAll('[data-path]').forEach(element=>element.textContent=number(lookup(snapshot,element.dataset.path),element.dataset.unit));
   renderMetrics(snapshot);
   renderAmbientTemperature(snapshot);
   renderFlow(snapshot);
   const connectivity=snapshot.connectivity||{},connection=document.querySelector('#connection');
-  connection.textContent=snapshot.flow?.simulated?'Fuente: simulada':`Broker: ${connectivity.broker} · Servicio: ${connectivity.service} · Logger: ${connectivity.logger}`;
+  connection.textContent=snapshot.flow?.simulated?'Simulado':connectivity.stale?'Datos antiguos / sin conexión':'Conectado';
   connection.className=connectivity.stale?'stale':'';
   document.querySelector('#age').textContent=`Última métrica: ${relativeAge(snapshot.data_observed_at)}${connectivity.stale?' (datos antiguos)':''}`;
 }
 
 async function initial(){
-  try{render(await(await fetch('/api/state')).json())}
+  try{
+    dashboardConfig=await fetchJson('/api/dashboard-config','No se pudo cargar la configuración');
+    const button=document.querySelector('#enable-beep');
+    button.hidden=!dashboardConfig.beep_enabled;
+    button.addEventListener('click',async()=>{
+      if(audioContext){await audioContext.close();audioContext=null;button.textContent='Activar sonido';return;}
+      audioContext=new (window.AudioContext||window.webkitAudioContext)();await audioContext.resume();button.textContent='Silenciar';
+    });
+    document.querySelector('#reset-home').addEventListener('click',async()=>{
+      try{
+        const response=await fetch('/api/energy/home/reset',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+        if(!response.ok)throw new Error('No se pudo reiniciar el contador');
+        energySummary=await response.json();if(lastSnapshot)renderMetrics(lastSnapshot);put('energy-status','Contador reiniciado');
+      }catch(error){put('energy-status',error.message)}
+    });
+    render(await fetchJson('/api/state','No se pudo obtener el estado'));
+  }
   catch(_){document.querySelector('#connection').textContent='No se pudo obtener el estado'}
 }
 
@@ -250,6 +278,11 @@ function rollingDayRange(now=Date.now()){
   return [end-24*60*60,end];
 }
 
+function localHourLabel(time){
+  const date=new Date(time*1000),zone=dashboardConfig?.timezone||'America/Argentina/Buenos_Aires';
+  return date.toLocaleTimeString('es-AR',{timeZone:zone,hour:'2-digit',minute:'2-digit',hour12:false})+'\n'+date.toLocaleDateString('es-AR',{timeZone:zone,day:'2-digit',month:'2-digit'});
+}
+
 function rollingDaySplits(){
   const [start]=rollingDayRange();
   return [0,4,8,12,16,20,24].map(hour=>start+hour*60*60);
@@ -260,7 +293,7 @@ function chartOptions(title,width,height){
   return {
     title,width,height,ms:1,
     scales:{
-      x:{time:true,range:()=>todayRange()},
+      x:{time:true,range:()=>rollingDayRange()},
       y:{auto:true},battery:{range:[0,100]}
     },
     series:[{},
@@ -270,7 +303,7 @@ function chartOptions(title,width,height){
       {label:'Consumo total',scale:'y',stroke:load,width:2}
     ],
     axes:[
-      {scale:'x',stroke:'#fff',ticks:{stroke:'#fff'},grid:{stroke:'#ffffff22'},splits:()=>dayHourSplits(),values:(_plot,splits)=>splits.map((_,index)=>`${index*4} h`)},
+      {scale:'x',size:40,font:'10px system-ui',stroke:'#fff',ticks:{stroke:'#fff'},grid:{stroke:'#ffffff22'},splits:()=>rollingDaySplits(),values:(_plot,splits)=>splits.map(localHourLabel)},
       {scale:'y',label:'Potencia (W)',stroke:'#fff',ticks:{stroke:'#fff'},grid:{stroke:'#ffffff22'}},
       {scale:'battery',label:'Carga batería (%)',side:1,stroke:'#fff',ticks:{stroke:'#fff'},grid:{stroke:'#ffffff22'}}
     ]
@@ -280,13 +313,13 @@ function chartOptions(title,width,height){
 function temperatureChartOptions(title,width,height){
   return {
     title,width,height,ms:1,
-    scales:{x:{time:true,range:()=>rollingDayRange()},y:{range:[0,100]}},
+    scales:{x:{time:true,range:()=>rollingDayRange()},y:{auto:true}},
     series:[{},
-      {label:'Temperatura ambiente',scale:'y',stroke:'#f5c451',width:2,spanGaps:true,points:{show:true,size:4}},
-      {label:'Temperatura ambiente 2',scale:'y',stroke:'#55b9ed',width:2,spanGaps:true,points:{show:true,size:4}},
+      {label:'Temperatura ambiente',scale:'y',stroke:'#f5c451',width:2,spanGaps:false,points:{show:true,size:4}},
+      {label:'Temperatura ambiente 2',scale:'y',stroke:'#55b9ed',width:2,spanGaps:false,points:{show:true,size:4}},
     ],
     axes:[
-      {scale:'x',stroke:'#fff',ticks:{stroke:'#fff'},grid:{stroke:'#ffffff22'},splits:()=>rollingDaySplits(),values:(_plot,splits)=>splits.map((_,index)=>`${index*4-24} h`)},
+      {scale:'x',size:40,font:'10px system-ui',stroke:'#fff',ticks:{stroke:'#fff'},grid:{stroke:'#ffffff22'},splits:()=>rollingDaySplits(),values:(_plot,splits)=>splits.map(localHourLabel)},
       {scale:'y',label:'Temperatura (°C)',stroke:'#fff',ticks:{stroke:'#fff'},grid:{stroke:'#ffffff22'}},
     ],
   };
@@ -296,11 +329,6 @@ function renderHistory(samples){
   if(typeof uPlot==='undefined')return;
   const nextSamples=samples||[];
   const container=document.querySelector('#power-chart');
-  if(!nextSamples.length){
-    // Keep the last valid plot visible during a transient empty response.
-    if(!powerPlot)historySamples=[];
-    return;
-  }
   historySamples=nextSamples;
   const width=Math.max(1,container.clientWidth||600),height=Math.max(80,container.clientHeight||chartHeight()),data=historyData(historySamples);
   if(powerPlot){
@@ -315,10 +343,6 @@ function renderTemperatureHistory(samples){
   if(typeof uPlot==='undefined')return;
   const nextSamples=samples||[];
   const container=document.querySelector('#temperature-chart');
-  if(!nextSamples.length){
-    if(!temperaturePlot)temperatureSamples=[];
-    return;
-  }
   temperatureSamples=nextSamples;
   const width=Math.max(1,container.clientWidth||500),height=Math.max(80,container.clientHeight||chartHeight()),data=temperatureData(temperatureSamples);
   if(temperaturePlot){
@@ -345,13 +369,9 @@ async function loadPowerHistory(initial){
   if(initial)status.textContent='Cargando historial…';
   try{
     let payload=await fetchJson('/api/history?range=24h','No se pudo cargar el historial de potencia');
-    if(payload.samples.length<2){
-      payload=await fetchJson('/api/demo/history?kind=power','No se pudo cargar el historial demo de potencia');
-    }
-    const hadSamples=historySamples.length>0;
     renderHistory(payload.samples);
-    if(payload.samples.length)status.textContent=payload.demo?`${payload.samples.length.toLocaleString('es-AR')} muestras · datos demo`:`${payload.samples.length.toLocaleString('es-AR')} muestras completas`;
-    else if(!hadSamples)status.textContent='Aún no hay muestras completas para este rango.';
+    if(payload.samples.length)status.textContent=payload.demo?'Datos demo':'';
+    else status.textContent='Sin historial de potencia en las últimas 24 h.';
   }catch(error){
     if(initial||!historySamples.length)status.textContent=error.message;
   }
@@ -362,13 +382,9 @@ async function loadTemperatureHistory(initial){
   if(initial)status.textContent='Cargando historial de temperatura…';
   try{
     let payload=await fetchJson('/api/history/temperature?range=24h','No se pudo cargar el historial de temperatura');
-    if(!payload.samples.length){
-      payload=await fetchJson('/api/demo/history?kind=temperature','No se pudo cargar el historial demo de temperatura');
-    }
-    const hadSamples=temperatureSamples.length>0;
     renderTemperatureHistory(payload.samples);
-    if(payload.samples.length)status.textContent=payload.demo?`${payload.samples.length.toLocaleString('es-AR')} lecturas · datos demo`:`${payload.samples.filter(sample=>known(sample.ambient_c)||known(sample.ambient2_c)).length.toLocaleString('es-AR')} lecturas en las últimas 24 h`;
-    else if(!hadSamples)status.textContent='Todavía no hay lecturas de temperatura para las últimas 24 h.';
+    if(payload.samples.length)status.textContent=payload.demo?'Datos demo':'';
+    else status.textContent='Sin historial de temperatura en las últimas 24 h.';
   }catch(error){
     if(initial||!temperatureSamples.length)status.textContent=error.message;
   }
@@ -378,9 +394,11 @@ async function loadHistory(initial=false){
   if(historyRefreshInFlight)return;
   historyRefreshInFlight=true;
   try{
-    await Promise.all([loadPowerHistory(initial),loadTemperatureHistory(initial)]);
+    await Promise.all([loadPowerHistory(initial),loadTemperatureHistory(initial),loadEnergy()]);
   }finally{historyRefreshInFlight=false}
 }
+
+async function loadEnergy(){try{energySummary=await fetchJson('/api/energy','No se pudo cargar energía');if(lastSnapshot)renderMetrics(lastSnapshot)}catch(error){put('energy-status',error.message)}}
 
 function startHistoryRefresh(){
   if(historyRefreshTimer)return;
@@ -418,4 +436,4 @@ if(typeof document!=='undefined'){
   else window.addEventListener('resize',resizePlot);
 }
 
-if(typeof module!=='undefined')module.exports={known,lookup,number,valueText,positivePower,nonZero,positiveNonZero,batteryFlowState,gaugePercent,metricState,historyData,temperatureData,todayRange,dayHourSplits,rollingDayRange,rollingDaySplits,chartOptions,temperatureChartOptions,FlowLogic,chartHeight};
+if(typeof module!=='undefined')module.exports={batteryDetails,homeDayScale,known,lookup,number,valueText,positivePower,nonZero,positiveNonZero,batteryFlowState,gaugePercent,metricState,historyData,temperatureData,todayRange,dayHourSplits,rollingDayRange,rollingDaySplits,chartOptions,temperatureChartOptions,FlowLogic,chartHeight};

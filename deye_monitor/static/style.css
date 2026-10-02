@@ -61,3 +61,39 @@ body{max-width:none;margin:0;padding:0;background:#111820;overflow:hidden}
 .ambient-card--second{border-color:#55b9ed}
 .ambient-card--second h2,.ambient-card--second .ambient-reading{color:#55b9ed}
 @media (max-width:700px){.temperature-cards{grid-template-rows:repeat(2,minmax(9rem,auto))}}
+/* Tablero: valores centrales y detalles fuera del arco. */
+.dashboard-shell{grid-template-rows:minmax(0,68fr) auto minmax(0,32fr) auto;gap:.3rem}
+.dashboard-main{grid-row:1}.energy-summary{grid-row:2}.history-dashboard{grid-row:3}.dashboard-header{grid-row:4;gap:.5rem;font-size:.75em;min-height:0}
+.dashboard-header p{margin:0}.dashboard-header #age{margin-left:auto}
+.energy-summary{display:flex;gap:.65rem;align-items:center;flex-wrap:wrap;font-size:.8em;color:var(--muted)}
+button{font:inherit;color:#fff;background:#243341;border:1px solid #65798a;border-radius:4px;padding:.2rem .4rem;cursor:pointer}
+button[hidden]{display:none}
+.metric-card{padding:1.25rem 0 1.5rem;justify-content:flex-start}
+.metric-card:nth-child(even){justify-content:flex-end}
+.metric-gauge{height:auto;width:100%;max-height:100%}
+.metric-gauge .metric-value{font-size:clamp(1.3rem,2.5vw,2rem);color:#fff;padding:0 .55rem;flex-wrap:nowrap}
+.metric-value--battery .metric-primary{font-size:1em}
+.metric-detail{position:absolute;left:0;right:0;margin:0;text-align:center;font-size:.9em;line-height:1.15;color:#e8edf2;font-variant-numeric:tabular-nums}
+.metric-detail--top{top:0}.metric-detail--bottom{bottom:0}
+.metric-card h2{font-size:1.5em;bottom:1.5rem}
+.metric-card[data-absent=true] h2{text-decoration:line-through;color:#ff9e9e}
+#load-top{background:linear-gradient(to right,#f3c34f33 var(--day-progress,0%),transparent 0);border-radius:3px}
+.metric-card[data-alert=true] .metric-primary{animation:soc-alert .8s steps(2,start) infinite}
+@keyframes soc-alert{50%{opacity:.25}}
+.history p:empty{display:none}.history .chart{margin:0}.u-legend{font-size:.7rem}
+@media (prefers-reduced-motion:reduce){.metric-card[data-alert=true] .metric-primary{animation:none;color:#ff9e9e}}
+@media (max-width:700px){.dashboard-shell{grid-template-rows:auto auto auto auto}.dashboard-flow{width:100%;max-width:none;aspect-ratio:auto;min-height:400px}.metric-gauge{width:100%;max-width:200px}.metric-gauge .metric-value{font-size:1.8rem}.metric-detail{font-size:.8em}.dashboard-header #age{margin-left:0}}
+.metric-card{container-type:size}
+.metric-gauge{width:min(100cqw,100cqh);height:min(100cqw,100cqh);max-height:none;flex:none}
+.metric-gauge .metric-value{font-size:clamp(1rem,16cqh,2rem)}
+.metric-card h2{bottom:1.35rem;font-size:1.2em}
+.metric-grid{row-gap:1rem}
+.metric-card{--gauge-size:min(100cqw,100cqh)}
+.metric-detail{width:var(--gauge-size);right:auto}
+.metric-card:nth-child(even) .metric-detail{left:auto;right:0}
+.metric-card h2{left:calc(var(--gauge-size)/2)}
+.metric-card:nth-child(even) h2{left:auto;right:calc(var(--gauge-size)/2);transform:translateX(50%)}
+.metric-gauge .metric-value{font-size:clamp(1.45rem,20cqh,2.2rem)}
+.metric-detail{font-size:.85em}
+.metric-value--battery .metric-primary{font-size:1.2em}
+.metric-value--battery .metric-unit{font-size:.48em}

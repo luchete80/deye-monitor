@@ -138,7 +138,7 @@ class HistoryStore:
         with self._lock, self._connect() as connection:
             rows = connection.execute(
                 "SELECT captured_at, pv_power_w, home_power_w, battery_power_w, grid_power_w, soc_pct "
-                "FROM snapshots WHERE captured_at >= ? ORDER BY captured_at", (cutoff,)
+                "FROM snapshots WHERE captured_at >= ? AND captured_at <= ? ORDER BY captured_at", (cutoff, timestamp(now))
             ).fetchall()
         return [dict(row) for row in rows]
 
@@ -195,7 +195,8 @@ class HistoryStore:
 
 
 class SnapshotRecorder:
-    def __init__(self, state, history: HistoryStore, interval_seconds: float):
+    def __init__(self, state, history: HistoryStore, interval_seconds: float, energy=None):
+        self.energy = energy
         self.state, self.history, self.interval = state, history, interval_seconds
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
@@ -209,7 +210,10 @@ class SnapshotRecorder:
         if self._thread: self._thread.join(timeout=self.interval + 1)
 
     def record_once(self) -> bool:
-        return self.history.record(self.state.snapshot())
+        snapshot = self.state.snapshot()
+        if self.energy is not None:
+            self.energy.record(snapshot)
+        return self.history.record(snapshot)
 
     def _run(self) -> None:
         while not self._stop.wait(self.interval):

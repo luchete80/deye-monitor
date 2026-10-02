@@ -12,6 +12,7 @@ from .mqtt_client import MQTTClient
 from .simulator import FixtureSimulator
 from .state import StateStore
 from .history import HistoryStore, SnapshotRecorder
+from .energy import EnergyStore
 
 
 DUMMY_HISTORY_DIR = Path(__file__).resolve().parent.parent / "fixtures"
@@ -78,11 +79,12 @@ def create_app(config: Config | None = None, start_source: bool = True) -> Flask
         config.battery_power_sign, config.mqtt_absolute_topics,
     )
     history = HistoryStore(config.history_db_path, config.history_retention_hours)
-    app.config.update(DEYE_CONFIG=config, DEYE_STATE=state, DEYE_HISTORY=history)
+    energy = EnergyStore(config)
+    app.config.update(DEYE_CONFIG=config, DEYE_STATE=state, DEYE_HISTORY=history, DEYE_ENERGY=energy)
     if start_source:
         source = FixtureSimulator(config.fixture, config.simulated_interval_seconds, adapter, state) if config.data_source == "simulated" else MQTTClient(config, adapter, state)
         source.start(); app.extensions["deye_source"] = source
-        recorder = SnapshotRecorder(state, history, config.history_interval_seconds)
+        recorder = SnapshotRecorder(state, history, config.history_interval_seconds, energy)
         recorder.start(); app.extensions["deye_history_recorder"] = recorder
 
     @app.get("/")
@@ -92,6 +94,15 @@ def create_app(config: Config | None = None, start_source: bool = True) -> Flask
         data = state.snapshot(); return jsonify({"ok": True, "broker": data["connectivity"]["broker"], "stale": data["connectivity"]["stale"]})
     @app.get("/api/state")
     def api_state(): return jsonify(state.snapshot())
+    @app.get("/api/dashboard-config")
+    def api_dashboard_config(): return jsonify(config.public_dashboard())
+    @app.get("/api/energy")
+    def api_energy(): return jsonify(energy.summary())
+    @app.post("/api/energy/home/reset")
+    def api_energy_reset():
+        if not request.is_json:
+            return jsonify({"error": "JSON request required"}), 415
+        return jsonify(energy.reset_home())
     @app.get("/api/history")
     def api_history():
         range_name = request.args.get("range", "24h")
