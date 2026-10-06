@@ -122,17 +122,17 @@ function renderMetrics(snapshot){
   lastSnapshot=snapshot;
   const batteryDetail=dashboardConfig?batteryDetails(snapshot,dashboardConfig):{available:null,fraction:null,alert:false,flow:'unknown'};
   if(known(batteryDetail.available))lastBatteryAvailable=batteryDetail.available;
-  for(const [group,field,unit] of [['solar','total_power_w','W'],['grid','power_w','W'],['battery','soc_pct','kWh'],['load','total_power_w','W']]){
+  for(const [group,field,unit] of [['solar','total_power_w','W'],['grid','power_w','W'],['battery','power_w','W'],['load','total_power_w','W']]){
     const state=metricState(snapshot,group,field),value=lookup(snapshot,`${group}.${field}`);
     const card=document.querySelector(`[data-metric="${group}"]`),gauge=document.querySelector(`[data-gauge="${group}"]`);
     if(card)card.dataset.state=state;
     const shownValue=group==='battery'?(known(batteryDetail.available)?batteryDetail.available:lastBatteryAvailable):value;
     put(`${group}-value`,valueText(shownValue));
-    const maximum=group==='battery'?dashboardConfig?.battery_usable_kwh:dashboardConfig?.gauge_max_w[group];
-    const percent=group==='battery'?gaugePercent(shownValue,maximum):gaugePercent(value,maximum,group==='grid');
+    const maximum=dashboardConfig?.gauge_max_w[group];
+    const percent=gaugePercent(value,maximum,group==='grid'||group==='battery');
     const progress=gauge?.querySelector('.metric-gauge__progress');
     if(progress)progress.style.strokeDashoffset=String(100-(percent??0));
-    if(gauge){gauge.dataset.percent=percent===null?'':String(percent);gauge.setAttribute('aria-label',`${group}: ${number(shownValue,unit)} · ${stateLabel(state)}`)}
+    if(gauge){gauge.dataset.percent=percent===null?'':String(percent);gauge.setAttribute('aria-label',`${group}: ${number(value,unit)} · ${stateLabel(state)}`)}
   }
   if(!dashboardConfig)return;
   const cfg=dashboardConfig;

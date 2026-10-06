@@ -42,6 +42,7 @@ class Config:
 
     gauge_solar_max_w: float | None = None
     gauge_grid_max_w: float = 6000
+    gauge_battery_max_w: float = 6000
     gauge_load_max_w: float = 6000
     home_day_scale_kwh: float = 6
     home_day_scale_next_kwh: float = 12
@@ -57,7 +58,8 @@ class Config:
     def public_dashboard(self) -> dict:
         return {
             "gauge_max_w": {"solar": self.gauge_solar_max_w or self.solar_capacity_w,
-                            "grid": self.gauge_grid_max_w, "load": self.gauge_load_max_w},
+                            "grid": self.gauge_grid_max_w, "battery": self.gauge_battery_max_w,
+                            "load": self.gauge_load_max_w},
             "home_day_scale_kwh": self.home_day_scale_kwh,
             "home_day_scale_next_kwh": self.home_day_scale_next_kwh,
             "solar_capacity_w": self.solar_capacity_w,
@@ -69,7 +71,7 @@ class Config:
         }
 
     def __post_init__(self) -> None:
-        for name in ("gauge_solar_max_w", "gauge_grid_max_w", "gauge_load_max_w",
+        for name in ("gauge_solar_max_w", "gauge_grid_max_w", "gauge_battery_max_w", "gauge_load_max_w",
                      "home_day_scale_kwh", "home_day_scale_next_kwh", "solar_capacity_w", "battery_usable_kwh"):
             value = getattr(self, name)
             if value is not None and (not math.isfinite(value) or value <= 0):
@@ -127,6 +129,7 @@ class Config:
         return cls(
             gauge_solar_max_w=float(_value("DEYE_GAUGE_SOLAR_MAX_W")) if _value("DEYE_GAUGE_SOLAR_MAX_W") else None,
             gauge_grid_max_w=float(_value("DEYE_GAUGE_GRID_MAX_W", "6000")),
+            gauge_battery_max_w=float(_value("DEYE_GAUGE_BATTERY_MAX_W", "6000")),
             gauge_load_max_w=float(_value("DEYE_GAUGE_LOAD_MAX_W", "6000")),
             home_day_scale_kwh=float(_value("DEYE_HOME_DAY_SCALE_KWH", "6")),
             home_day_scale_next_kwh=float(_value("DEYE_HOME_DAY_SCALE_NEXT_KWH", "12")),

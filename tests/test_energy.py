@@ -97,11 +97,13 @@ def test_config_validation_public_api_and_reset(tmp_path):
     for kwargs in ({'battery_soc_min_pct': 95}, {'battery_usable_kwh': -1}, {'billing_day': 32}, {'solar_capacity_w': float('nan')}, {'home_day_scale_next_kwh': 5}):
         with pytest.raises(ValueError):
             config(**kwargs)
-    cfg = config(history_db_path=str(tmp_path / 'api.sqlite3'), solar_capacity_w=8000, mqtt_password='secret')
+    cfg = config(history_db_path=str(tmp_path / 'api.sqlite3'), solar_capacity_w=8000,
+                 gauge_battery_max_w=7200, mqtt_password='secret')
     app = create_app(cfg, start_source=False)
     client = app.test_client()
     public = client.get('/api/dashboard-config').json
     assert public['gauge_max_w']['solar'] == 8000
+    assert public['gauge_max_w']['battery'] == 7200
     assert 'secret' not in str(public)
     assert client.get('/api/energy').json['grid_billing'] is None
     assert client.post('/api/energy/home/reset').status_code == 415

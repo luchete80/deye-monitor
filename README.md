@@ -190,8 +190,9 @@ desarrollo y tests, no una captura física de Delivery 0.
 
 ### Tablero y acumulados de energía (plan Luna)
 
-Los máximos de Sol, Red y Casa se configuran en `.env` con
-`DEYE_GAUGE_SOLAR_MAX_W`, `DEYE_GAUGE_GRID_MAX_W` y `DEYE_GAUGE_LOAD_MAX_W`.
+Los máximos de Sol, Red, Batería y Casa se configuran en `.env` con
+`DEYE_GAUGE_SOLAR_MAX_W`, `DEYE_GAUGE_GRID_MAX_W`,
+`DEYE_GAUGE_BATTERY_MAX_W` y `DEYE_GAUGE_LOAD_MAX_W`.
 Si el máximo solar queda vacío, usa `DEYE_SOLAR_CAPACITY_W` (valor inicial
 6000 W, ajustar a la instalación real). Reiniciar el servicio después de editar.
 El centro de Casa sigue mostrando potencia; la barra del consumo diario usa
