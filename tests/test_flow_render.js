@@ -5,7 +5,7 @@ const html=fs.readFileSync('deye_monitor/static/index.html','utf8');
 const script=fs.readFileSync('deye_monitor/static/app.js','utf8');
 const htmlIds=new Set([...html.matchAll(/\bid="([^"]+)"/g)].map(match=>`#${match[1]}`));
 
-for(const id of ['#solar-value','#grid-value','#battery-value','#load-value','#power-chart','#history-status','#connection','#age'])assert.ok(htmlIds.has(id),`Missing ${id}`);
+for(const id of ['#solar-value','#grid-value','#battery-value','#battery-power','#load-value','#power-chart','#history-status','#connection','#age'])assert.ok(htmlIds.has(id),`Missing ${id}`);
 assert.equal((html.match(/class="metric-gauge"/g)||[]).length,4);
 assert.match(html,/id="dashboard-flow-arrows"/);
 assert.doesNotMatch(html,/class="central-info"/);
@@ -17,6 +17,7 @@ for(const group of ['solar','grid','battery','load']){
   assert.match(html,new RegExp(`data-gauge="${group}"[\\s\\S]*?metric-gauge__track`));
   assert.match(html,new RegExp(`data-gauge="${group}"[\\s\\S]*?metric-gauge__progress`));
 }
+assert.match(html,/data-gauge="battery"[\s\S]*?metric-gauge__battery-inner-track[\s\S]*?metric-gauge__battery-inner-progress/);
 for(const label of ['Sol','Red','Bat','Casa'])assert.match(html,new RegExp(label));
 assert.doesNotMatch(html,/Potencia · hoy · 0–24 h|Temperatura ambiente · últimas 24 h/);
 assert.doesNotMatch(html,/<h1>Deye Monitor<\/h1>/);
@@ -35,7 +36,8 @@ assert.match(script,/dashboardConfig/);
 assert.match(script,/setInterval\(\(\)=>loadHistory\(false\),HISTORY_REFRESH_MS\)/);
 assert.doesNotMatch(html,/id="(?:solar|grid|load)-current"/);
 assert.doesNotMatch(html,/Capacidad:|id="solar-bottom"|id="battery-(?:top|bottom)"|Rem:/);
-assert.match(html,/id="battery-value"[^>]*>Sin dato<\/span> <span class="metric-unit">kWh<\/span>/);
+assert.match(html,/id="battery-power"[^>]*>Sin dato<\/span> <span class="metric-unit">W<\/span>/);
+assert.match(html,/id="battery-value"[^>]*>Sin dato<\/span> kWh disponibles/);
 assert.match(script,/batteryFlowState/);
 assert.match(script,/'soc_pct'/);
 assert.match(script,/renderFlow/);

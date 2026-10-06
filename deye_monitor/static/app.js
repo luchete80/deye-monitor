@@ -126,13 +126,25 @@ function renderMetrics(snapshot){
     const state=metricState(snapshot,group,field),value=lookup(snapshot,`${group}.${field}`);
     const card=document.querySelector(`[data-metric="${group}"]`),gauge=document.querySelector(`[data-gauge="${group}"]`);
     if(card)card.dataset.state=state;
-    const shownValue=group==='battery'?(known(batteryDetail.available)?batteryDetail.available:lastBatteryAvailable):value;
-    put(`${group}-value`,valueText(shownValue));
+    if(group==='battery'){
+      const shownAvailable=known(batteryDetail.available)?batteryDetail.available:lastBatteryAvailable;
+      put('battery-value',valueText(shownAvailable));
+      put('battery-power',valueText(value));
+    }else put(`${group}-value`,valueText(value));
     const maximum=dashboardConfig?.gauge_max_w[group];
     const percent=gaugePercent(value,maximum,group==='grid'||group==='battery');
     const progress=gauge?.querySelector('.metric-gauge__progress');
     if(progress)progress.style.strokeDashoffset=String(100-(percent??0));
-    if(gauge){gauge.dataset.percent=percent===null?'':String(percent);gauge.setAttribute('aria-label',`${group}: ${number(value,unit)} · ${stateLabel(state)}`)}
+    if(group==='battery'){
+      const innerProgress=gauge?.querySelector('.metric-gauge__battery-inner-progress');
+      const chargeFraction=metricState(snapshot,'battery','soc_pct')==='online'?batteryDetail.fraction:null;
+      if(innerProgress)innerProgress.style.strokeDashoffset=String(100-(chargeFraction===null?0:chargeFraction*100));
+      if(gauge){
+        gauge.dataset.chargeFraction=chargeFraction===null?'':String(chargeFraction);
+        gauge.setAttribute('aria-label',`${group}: ${number(value,unit)} · carga útil ${chargeFraction===null?'Sin dato':number(chargeFraction*100,'%')} · ${stateLabel(state)}`);
+      }
+    }
+    if(gauge){gauge.dataset.percent=percent===null?'':String(percent);if(group!=='battery')gauge.setAttribute('aria-label',`${group}: ${number(value,unit)} · ${stateLabel(state)}`)}
   }
   if(!dashboardConfig)return;
   const cfg=dashboardConfig;

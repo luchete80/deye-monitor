@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Deye Monitor</title>
   <link rel="stylesheet" href="/static/uPlot.min.css?v=6">
-  <link rel="stylesheet" href="/static/style.css?v=28">
+  <link rel="stylesheet" href="/static/style.css?v=29">
   <link rel="stylesheet" href="/static/config.css?v=7">
 </head>
 <body>
@@ -75,9 +75,12 @@
           <svg class="metric-gauge__svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
             <path class="metric-gauge__track" d="M 23.23 96.77 A 52 52 0 1 1 96.77 96.77" pathLength="100"></path>
             <path class="metric-gauge__progress" d="M 23.23 96.77 A 52 52 0 1 1 96.77 96.77" pathLength="100"></path>
+            <path class="metric-gauge__battery-inner-track" d="M 29.6 90.4 A 43 43 0 1 1 90.4 90.4" pathLength="100"></path>
+            <path class="metric-gauge__battery-inner-progress" d="M 29.6 90.4 A 43 43 0 1 1 90.4 90.4" pathLength="100"></path>
           </svg>
           <p class="metric-value metric-value--battery">
-            <span class="metric-primary"><span id="battery-value">Sin dato</span> <span class="metric-unit">kWh</span></span>
+            <span class="metric-primary"><span id="battery-power">Sin dato</span> <span class="metric-unit">W</span></span>
+            <span class="metric-secondary"><span id="battery-value">Sin dato</span> kWh disponibles</span>
           </p>
         </div>
         <h2>Bat</h2>
@@ -134,6 +137,6 @@
     </section>
   </main>
   <script src="/static/uPlot.iife.min.js?v=6"></script>
-  <script src="/static/app.js?v=15"></script>
+  <script src="/static/app.js?v=16"></script>
 </body>
 </html>

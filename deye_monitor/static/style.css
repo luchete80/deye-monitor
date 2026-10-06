@@ -28,6 +28,9 @@ body{max-width:none;margin:0;padding:0;background:#111820;overflow:hidden}
 .metric-gauge__track,.metric-gauge__progress{fill:none;stroke-width:10;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:100;transform-origin:60px 60px}
 .metric-gauge__track{stroke:var(--metric-color);opacity:.22}
 .metric-gauge__progress{stroke:var(--metric-color);stroke-dashoffset:100;transition:stroke-dashoffset .35s ease,opacity .2s ease}
+.metric-gauge__battery-inner-track,.metric-gauge__battery-inner-progress{fill:none;stroke-width:4;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:100;transform-origin:60px 60px}
+.metric-gauge__battery-inner-track{stroke:var(--metric-color);opacity:.18}
+.metric-gauge__battery-inner-progress{stroke:var(--metric-color);stroke-dashoffset:100;transition:stroke-dashoffset .35s ease,opacity .2s ease}
 .metric-gauge .metric-value{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;align-content:center;flex-wrap:wrap;gap:.2rem;margin:0;padding:0 1rem;text-align:center;line-height:1.15;color:var(--metric-color);font-size:1.8em;overflow-wrap:anywhere}
 .metric-gauge .metric-unit{font-size:.55em}
 .metric-value--battery{flex-direction:column;gap:.15rem}
@@ -100,6 +103,8 @@ button[hidden]{display:none}
 .metric-detail{font-size:.85em}
 .metric-value--battery .metric-primary{font-size:1.2em}
 .metric-value--battery .metric-unit{font-size:.48em}
+.metric-value--battery #battery-power{font-size:1em}
+.metric-value--battery .metric-secondary{font-size:.4em}
 
 .metric-card--solar .metric-value,
 .metric-card--grid .metric-value,
