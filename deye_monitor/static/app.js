@@ -195,10 +195,7 @@ function render(snapshot){
   renderMetrics(snapshot);
   renderAmbientTemperature(snapshot);
   renderFlow(snapshot);
-  const connectivity=snapshot.connectivity||{},connection=document.querySelector('#connection');
-  connection.textContent=snapshot.flow?.simulated?'Simulado':connectivity.stale?'Datos antiguos / sin conexión':'Conectado';
-  connection.className=connectivity.stale?'stale':'';
-  document.querySelector('#age').textContent=`Última métrica: ${relativeAge(snapshot.data_observed_at)}${connectivity.stale?' (datos antiguos)':''}`;
+
 }
 
 async function initial(){
@@ -219,13 +216,13 @@ async function initial(){
     });
     render(await fetchJson('/api/state','No se pudo obtener el estado'));
   }
-  catch(_){document.querySelector('#connection').textContent='No se pudo obtener el estado'}
+  catch(_){console.error('No se pudo obtener el estado')}
 }
 
 function connect(){
   const source=new EventSource('/events');
   source.addEventListener('state',event=>render(JSON.parse(event.data)));
-  source.onerror=()=>{document.querySelector('#connection').textContent='Reconectando actualizaciones…'};
+  source.onerror=()=>{console.warn('Reconectando actualizaciones…')};
 }
 
 let powerPlot;
@@ -326,7 +323,7 @@ function chartOptions(title,width,height){
 function temperatureChartOptions(title,width,height){
   return {
     title,width,height,ms:1,
-    scales:{x:{time:true,range:()=>rollingDayRange()},y:{auto:true}},
+    scales:{x:{time:true,range:()=>rollingDayRange()},y:{range:[0,100]}},
     series:[{},
       {label:'Temperatura ambiente',scale:'y',stroke:'#f5c451',width:2,spanGaps:false,points:{show:true,size:4}},
       {label:'Temperatura ambiente 2',scale:'y',stroke:'#55b9ed',width:2,spanGaps:false,points:{show:true,size:4}},

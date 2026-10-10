@@ -5,7 +5,7 @@ const html=fs.readFileSync('deye_monitor/static/index.html','utf8');
 const script=fs.readFileSync('deye_monitor/static/app.js','utf8');
 const htmlIds=new Set([...html.matchAll(/\bid="([^"]+)"/g)].map(match=>`#${match[1]}`));
 
-for(const id of ['#solar-value','#grid-value','#battery-value','#battery-power','#load-value','#power-chart','#history-status','#connection','#age'])assert.ok(htmlIds.has(id),`Missing ${id}`);
+for(const id of ['#solar-value','#grid-value','#battery-value','#battery-power','#load-value','#power-chart','#history-status'])assert.ok(htmlIds.has(id),`Missing ${id}`);
 assert.equal((html.match(/class="metric-gauge"/g)||[]).length,4);
 assert.match(html,/id="dashboard-flow-arrows"/);
 assert.doesNotMatch(html,/class="central-info"/);
