@@ -15,7 +15,7 @@ RELAY_PIN = 27
 OFF_DELAY = 120
 
 # Cambiar a False si el relé se activa con HIGH
-RELAY_ACTIVE_LOW = True
+RELAY_ACTIVE_LOW = False
 
 # Intervalo de consulta
 POLL_INTERVAL = 0.1
