@@ -74,23 +74,23 @@ function renderFlow(snapshot){
   const source=path=>lookup(snapshot,path);
   const fresh=path=>lookup(snapshot,`field_freshness.${path}`)===true;
   const flows=[
-    ['pv','solar.total_power_w','Sol → centro'],
-    ['grid','grid.power_w','Red → centro'],
-    ['battery','battery.power_w','centro → Bat'],
-    ['load','load.total_power_w','centro → Casa'],
+    ['pv','solar.total_power_w','Sol → Casa'],
+    ['grid','grid.power_w','Red → Casa'],
+    ['battery','battery.power_w','Casa → Batería'],
   ];
   flows.forEach(([id,path,forwardLabel])=>{
     const value=source(path);
     const result=FlowLogic.state(id,value,deadband,fresh(path),connectivity,simulated);
     const pathDirection=FlowLogic.pathDirection(id,result.direction);
     let label=forwardLabel;
-    if(id==='grid'&&result.direction<0)label='centro → Red';
-    if(id==='battery'&&result.direction>0)label='Bat → centro';
+    if(id==='grid'&&result.direction<0)label='Casa → Red';
+    if(id==='battery'&&result.direction>0)label='Batería → Casa';
     setFlow(id,value,result,pathDirection,label);
   });
 }
 
-let dashboardConfig=null, energySummary=null, lastSnapshot=null, previousAlert=false, audioContext=null, lastBatteryAvailable=null;
+let dashboardConfig=null, energySummary=null, lastSnapshot=null, previousAlert=false, audioContext=null;
+const dashboardValue=value=>known(value)?valueText(value):'-';
 
 function homeDayScale(kwh,config){
   const first=config.home_day_scale_kwh,next=config.home_day_scale_next_kwh;
@@ -113,30 +113,26 @@ function put(id,text){const element=document.querySelector(`#${id}`);if(element)
 function renderMetrics(snapshot){
   lastSnapshot=snapshot;
   const batteryDetail=dashboardConfig?batteryDetails(snapshot,dashboardConfig):{available:null,fraction:null,alert:false,flow:'unknown'};
-  if(known(batteryDetail.available))lastBatteryAvailable=batteryDetail.available;
   for(const [group,field,unit] of [['solar','total_power_w','W'],['grid','power_w','W'],['battery','power_w','W'],['load','total_power_w','W']]){
     const state=metricState(snapshot,group,field),value=lookup(snapshot,`${group}.${field}`);
     const card=document.querySelector(`[data-metric="${group}"]`),gauge=document.querySelector(`[data-gauge="${group}"]`);
     if(card)card.dataset.state=state;
     if(group==='battery'){
-      const shownAvailable=known(batteryDetail.available)?batteryDetail.available:lastBatteryAvailable;
-      put('battery-value',valueText(shownAvailable));
-      put('battery-power',valueText(value));
-    }else put(`${group}-value`,valueText(value));
-    const maximum=dashboardConfig?.gauge_max_w[group];
-    const percent=gaugePercent(value,maximum,group==='grid'||group==='battery');
-    const progress=gauge?.querySelector('.metric-gauge__progress');
-    if(progress)progress.style.strokeDashoffset=String(100-(percent??0));
+      const soc=snapshot.battery?.soc_pct;
+      put('battery-value',dashboardValue(batteryDetail.available));
+      put('battery-soc',dashboardValue(soc));
+      put('battery-power',dashboardValue(value));
+    }else put(`${group}-value`,dashboardValue(value));
     if(group==='battery'){
-      const innerProgress=gauge?.querySelector('.metric-gauge__battery-inner-progress');
       const chargeFraction=metricState(snapshot,'battery','soc_pct')==='online'?batteryDetail.fraction:null;
-      if(innerProgress)innerProgress.style.strokeDashoffset=String(100-(chargeFraction===null?0:chargeFraction*100));
       if(gauge){
         gauge.dataset.chargeFraction=chargeFraction===null?'':String(chargeFraction);
-        gauge.setAttribute('aria-label',`${group}: ${number(value,unit)} · carga útil ${chargeFraction===null?'Sin dato':number(chargeFraction*100,'%')} · ${stateLabel(state)}`);
+        const fill=gauge.querySelector('.battery-fill');
+        if(fill)fill.style.width=chargeFraction===null?'0%':`${chargeFraction*100}%`;
+        gauge.setAttribute('aria-label',`Batería: ${dashboardValue(snapshot.battery?.soc_pct)} % · ${dashboardValue(batteryDetail.available)} kWh · ${stateLabel(state)}`);
       }
     }
-    if(gauge){gauge.dataset.percent=percent===null?'':String(percent);if(group!=='battery')gauge.setAttribute('aria-label',`${group}: ${number(value,unit)} · ${stateLabel(state)}`)}
+    if(gauge&&group!=='battery')gauge.setAttribute('aria-label',`${group}: ${dashboardValue(value)} ${unit} · ${stateLabel(state)}`);
   }
   if(!dashboardConfig)return;
   const cfg=dashboardConfig;
@@ -150,8 +146,6 @@ put('solar-today', `Hoy:\n${known(energySummary?.solar_day?.kwh) ? number(energy
   const daily=energySummary?.home_day;
   put('load-top',`Hoy: ${energyText(daily)}`);
   put('load-bottom',`Mes: ${energyText(energySummary?.home_month)}`);
-  const home=document.querySelector('[data-metric="load"]');
-  if(home){home.dataset.energyScale=String(homeDayScale(daily?.kwh,cfg));const top=document.querySelector('#load-top');if(top){top.style.setProperty('--day-progress',`${gaugePercent(daily?.kwh,homeDayScale(daily?.kwh,cfg))??0}%`);top.title=`Escala diaria: ${homeDayScale(daily?.kwh,cfg)} kWh`;}}
   const detail=batteryDetail;
   const battery=document.querySelector('[data-metric="battery"]');
   if(battery){battery.dataset.batteryFlow=detail.flow;battery.dataset.alert=String(detail.alert)}
