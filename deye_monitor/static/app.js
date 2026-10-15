@@ -110,6 +110,18 @@ function energyText(period){
   return known(period?.kwh)?`${number(period.kwh,'kWh')}${period.complete?'':''}`:'Sin historial suficiente';
 }
 function put(id,text){const element=document.querySelector(`#${id}`);if(element)element.textContent=text}
+function renderStationDetails(snapshot){
+  const power=(group,field)=>metricState(snapshot,group,field)==='online'?dashboardValue(lookup(snapshot,`${group}.${field}`)):'-';
+  const current=(group,field)=>metricState(snapshot,group,field)==='online'?dashboardValue(lookup(snapshot,`${group}.${field}`)):'-';
+  const pv1w=power('solar','pv1_power_w'),pv1a=current('solar','pv1_current_a');
+  const pv2w=power('solar','pv2_power_w'),pv2a=current('solar','pv2_current_a');
+  put('solar-details',`PV1: ${pv1w} W · ${pv1a} A\nPV2: ${pv2w} W · ${pv2a} A`);
+  put('grid-current',`Corriente estimada: ${current('grid','estimated_current_a')} A`);
+  put('load-current',`Corriente: ${current('load','current_a')} A`);
+  put('battery-current-visible',current('battery','current_a'));
+  put('battery-power-visible',power('battery','power_w'));
+  put('battery-current',current('battery','current_a'));
+}
 function renderMetrics(snapshot){
   lastSnapshot=snapshot;
   const batteryDetail=dashboardConfig?batteryDetails(snapshot,dashboardConfig):{available:null,fraction:null,alert:false,flow:'unknown'};
@@ -134,6 +146,7 @@ function renderMetrics(snapshot){
     }
     if(gauge&&group!=='battery')gauge.setAttribute('aria-label',`${group}: ${dashboardValue(value)} ${unit} · ${stateLabel(state)}`);
   }
+  renderStationDetails(snapshot);
   if(!dashboardConfig)return;
   const cfg=dashboardConfig;
 put('solar-today', `Hoy:\n${known(energySummary?.solar_day?.kwh) ? number(energySummary.solar_day.kwh,'kWh') : '-'}`);
@@ -368,4 +381,4 @@ if(typeof document!=='undefined'){
   else window.addEventListener('resize',resizePlot);
 }
 
-if(typeof module!=='undefined')module.exports={batteryDetails,homeDayScale,known,lookup,number,valueText,batteryFlowState,gaugePercent,metricState,temperatureData,rollingDayRange,rollingDaySplits,temperatureChartOptions,FlowLogic,chartHeight,fetchJson,runGuarded};
+if(typeof module!=='undefined')module.exports={batteryDetails,homeDayScale,known,lookup,number,valueText,batteryFlowState,gaugePercent,metricState,temperatureData,rollingDayRange,rollingDaySplits,temperatureChartOptions,FlowLogic,chartHeight,fetchJson,runGuarded,renderStationDetails};

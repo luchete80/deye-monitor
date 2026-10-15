@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Deye Monitor</title>
   <link rel="stylesheet" href="/static/uPlot.min.css?v=6">
-  <link rel="stylesheet" href="/static/style.css?v=34">
+  <link rel="stylesheet" href="/static/style.css?v=36">
   <link rel="stylesheet" href="/static/config.css?v=7">
 </head>
 <body>
@@ -15,30 +15,8 @@
       <details class="dashboard-details">
         <summary>Más datos</summary>
         <div class="dashboard-details__panel">
-          <div class="temperature-cards" aria-label="Temperaturas ambiente e historial">
-            <article class="ambient-card" data-ambient-temperature data-state="unknown" aria-labelledby="ambient-title">
-              <h2 id="ambient-title">Temperatura ambiente</h2>
-              <p id="ambient-status" class="ambient-status" aria-live="polite">Sin dato</p>
-              <p class="ambient-reading"><span id="ambient-value">Sin dato</span> <span class="ambient-unit">°C</span></p>
-            </article>
-            <article class="ambient-card ambient-card--second" data-ambient-temperature2 data-state="unknown" aria-labelledby="ambient2-title">
-              <h2 id="ambient2-title">Temperatura ambiente 2</h2>
-              <p id="ambient2-status" class="ambient-status" aria-live="polite">Sin dato</p>
-              <p class="ambient-reading"><span id="ambient2-value">Sin dato</span> <span class="ambient-unit">°C</span></p>
-            </article>
-            <section class="history history--temperature" aria-label="Historial de temperatura ambiente">
-              <p id="temperature-history-status" aria-live="polite">Cargando historial de temperatura…</p>
-              <div id="temperature-chart" class="chart" aria-label="Temperaturas ambiente 1 y 2 en grados Celsius durante las últimas 24 horas"></div>
-            </section>
-          </div>
           <section class="detail-metrics" aria-label="Otros datos de energía">
-            <span id="solar-today">Hoy: -</span>
-            <span>Red: <span id="grid-top">-</span></span>
-            <span>Energía de red hoy: <span id="grid-today">-</span></span>
             <span id="grid-bottom">Ciclo: -</span>
-            <span>Casa: <span id="load-top">Hoy: -</span></span>
-            <span id="load-bottom">Mes: -</span>
-            <span>Batería: <span id="battery-power">-</span> W</span>
           </section>
           <section class="energy-summary" aria-label="Consumo de Casa">
             <span id="home-last-month">Último mes: sin historial suficiente</span>
@@ -71,7 +49,11 @@
               <svg class="metric-gauge__svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
                 <path class="metric-gauge__track" d="M 23.23 96.77 A 52 52 0 1 1 96.77 96.77"></path>
               </svg>
-              <p class="metric-value"><span class="metric-primary"><span id="solar-value">-</span><span class="metric-unit"> W</span></span></p>
+              <p class="metric-value">
+                <span class="metric-primary"><span id="solar-value">-</span><span class="metric-unit"> W</span></span>
+                <span class="metric-secondary" id="solar-details">PV1: - W · - A<br>PV2: - W · - A</span>
+                <span class="metric-secondary" id="solar-today">Hoy: -</span>
+              </p>
             </div>
             <h2>Sol</h2>
           </article>
@@ -81,7 +63,13 @@
               <svg class="metric-gauge__svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
                 <path class="metric-gauge__track" d="M 23.23 96.77 A 52 52 0 1 1 96.77 96.77"></path>
               </svg>
-              <p class="metric-value"><span class="metric-primary"><span id="grid-value">-</span><span class="metric-unit"> W</span></span></p>
+              <p class="metric-value">
+                <span class="metric-primary"><span id="grid-value">-</span><span class="metric-unit"> W</span></span>
+                <span class="metric-secondary" id="grid-top">Tensión: -</span>
+                <span class="metric-secondary" id="grid-current">Corriente estimada: - A</span>
+                <span class="metric-secondary">Hoy: <span id="grid-today">-</span></span>
+                <span class="metric-secondary" id="grid-bottom">Ciclo: -</span>
+              </p>
             </div>
             <h2>Red</h2>
           </article>
@@ -92,7 +80,12 @@
                 <defs><linearGradient id="house-gradient" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#f5e841"></stop><stop offset=".55" stop-color="#d9ed42"></stop><stop offset="1" stop-color="#56b978"></stop></linearGradient></defs>
                 <path class="metric-gauge__track" d="M 23.23 96.77 A 52 52 0 1 1 96.77 96.77"></path>
               </svg>
-              <p class="metric-value"><span class="metric-primary"><span id="load-value">-</span><span class="metric-unit"> W</span></span></p>
+              <p class="metric-value">
+                <span class="metric-primary"><span id="load-value">-</span><span class="metric-unit"> W</span></span>
+                <span class="metric-secondary" id="load-current">Corriente: - A</span>
+                <span class="metric-secondary" id="load-top">Hoy: -</span>
+                <span class="metric-secondary" id="load-bottom">Mes: -</span>
+              </p>
             </div>
             <h2>Casa</h2>
           </article>
@@ -102,6 +95,7 @@
               <div class="battery-shell" aria-hidden="true"><div class="battery-fill"></div></div>
               <div class="battery-labels">
                 <span class="battery-soc"><span id="battery-soc">-</span><span class="metric-unit"> %</span></span>
+                <span class="battery-power-current"><span id="battery-power">-</span> W · <span id="battery-current">-</span> A</span>
                 <span class="battery-available"><span id="battery-value">-</span> kWh</span>
               </div>
             </div>
@@ -109,10 +103,26 @@
           </article>
         </section>
       </div>
+      <div class="temperature-cards" aria-label="Temperaturas ambiente e historial">
+        <article class="ambient-card" data-ambient-temperature data-state="unknown" aria-labelledby="ambient-title">
+          <h2 id="ambient-title">Temperatura ambiente</h2>
+          <p id="ambient-status" class="ambient-status" aria-live="polite">Sin dato</p>
+          <p class="ambient-reading"><span id="ambient-value">Sin dato</span> <span class="ambient-unit">°C</span></p>
+        </article>
+        <article class="ambient-card ambient-card--second" data-ambient-temperature2 data-state="unknown" aria-labelledby="ambient2-title">
+          <h2 id="ambient2-title">Temperatura ambiente 2</h2>
+          <p id="ambient2-status" class="ambient-status" aria-live="polite">Sin dato</p>
+          <p class="ambient-reading"><span id="ambient2-value">Sin dato</span> <span class="ambient-unit">°C</span></p>
+        </article>
+        <section class="history history--temperature" aria-label="Historial de temperatura ambiente">
+          <p id="temperature-history-status" aria-live="polite">Cargando historial de temperatura…</p>
+          <div id="temperature-chart" class="chart" aria-label="Temperaturas ambiente 1 y 2 en grados Celsius durante las últimas 24 horas"></div>
+        </section>
+      </div>
     </section>
     <footer class="dashboard-footer" aria-hidden="true"></footer>
   </main>
   <script src="/static/uPlot.iife.min.js?v=6"></script>
-  <script src="/static/app.js?v=20"></script>
+  <script src="/static/app.js?v=21"></script>
 </body>
 </html>
