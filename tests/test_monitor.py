@@ -172,15 +172,17 @@ def test_http_api_sse_and_page():
     page = client.get("/")
     assert page.status_code == 200
     assert b'class="metric-grid"' in page.data
-    assert b'id="power-chart"' in page.data
+    assert b'id="power-chart"' not in page.data
+    assert b'id="temperature-chart"' in page.data
     solar_page = client.get("/solar")
     assert solar_page.status_code == 200
     assert "Generación solar".encode() in solar_page.data
     assert b'href="/"' in solar_page.data
-    assert b'href="/solar"' in page.data
+    assert b'href="/static/solar.html"' in page.data
     assert client.get("/static/style.css").status_code == 200
     assert client.get("/static/config.css").status_code == 200
     assert client.get("/static/app.js").status_code == 200
+    assert client.get("/static/solar.html").status_code == 200
     assert client.get("/static/solar.js").status_code == 200
     assert client.get("/static/uPlot.iife.min.js").status_code == 200
     assert client.get("/static/uPlot.min.css").status_code == 200
@@ -259,7 +261,7 @@ def test_sse_client_keeps_native_reconnect_enabled():
 
 
 def test_frontend_node_checks_are_part_of_pytest():
-    for test in ("tests/test_flow_logic.js", "tests/test_flow_render.js"):
+    for test in ("tests/test_flow_logic.js", "tests/test_flow_render.js", "tests/test_solar_chart.js", "tests/test_solar_runtime.js"):
         subprocess.run(["node", test], check=True, capture_output=True, text=True)
 
 
@@ -274,7 +276,9 @@ def test_delivery_two_flow_assets_and_scenarios():
     assert ">Inv</span>" not in page
     assert "energy-diagram" not in page
     assert "range=24h" in script
-    assert "scale:'battery'" in script
+    assert "scale:'battery'" not in script
+    assert 'id="power-chart"' not in page
+    assert 'href="/static/solar.html"' in page
     for name in ("pv_load", "grid_import", "grid_export", "battery_charge", "battery_discharge", "deadband", "stale", "offline"):
         assert "messages" in json.loads(open(f"fixtures/flow/{name}.json", encoding="utf-8").read())
 

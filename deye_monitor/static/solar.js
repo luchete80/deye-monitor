@@ -32,6 +32,8 @@ if(typeof document!=='undefined')(() => {
   }
   function draw(rows){
     samples=rows||[];
+    if(!samples.length){if(plot)plot.setData([[],[]]);return}
+    if(typeof uPlot==='undefined')throw new Error('No se pudo cargar el gráfico solar. Recargá la página.');
     const width=Math.max(1,container.clientWidth||800),height=Math.max(180,container.clientHeight||360),data=chartData(samples);
     const options={title:'',width,height,ms:1,scales:{x:{time:true,range:rollingRange},y:{auto:true}},series:[{},
       {label:'Generación solar',scale:'y',stroke:'#48c774',width:2,spanGaps:false,points:{show:true,size:3}},
@@ -47,13 +49,16 @@ if(typeof document!=='undefined')(() => {
     const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),REQUEST_TIMEOUT_MS);
     try{
       const response=await fetch('/api/history?range=24h',{signal:controller.signal});
+      const contentType=response.headers.get('content-type')||'';
+      if(!contentType.includes('application/json'))throw new Error(`El servicio respondió ${response.status} sin datos JSON. Reiniciá el servicio.`);
       const payload=await response.json();
       if(!response.ok)throw new Error(payload.error||'No se pudo cargar el historial solar');
+      if(!Array.isArray(payload.samples))throw new Error('El servicio no devolvió el historial solar esperado. Reiniciá el servicio.');
       draw(payload.samples);
       status.textContent=samples.length?'':'Sin historial solar en las últimas 24 h.';
     }catch(error){
       const message=error.name==='AbortError'?'La consulta de historial solar agotó el tiempo de espera.':error.message;
-      if(!samples.length)status.textContent=message;
+      status.textContent=message;
     }finally{clearTimeout(timeout);inFlight=false}
   }
   function resize(){if(plot)plot.setSize({width:Math.max(1,container.clientWidth||800),height:Math.max(180,container.clientHeight||360)})}

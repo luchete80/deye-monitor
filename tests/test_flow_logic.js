@@ -1,11 +1,6 @@
 const assert=require('node:assert/strict');
 const dashboard=require('../deye_monitor/static/app.js');
 
-assert.equal(dashboard.positivePower(720),720);
-assert.equal(dashboard.positivePower(-540),0);
-assert.equal(dashboard.positivePower(0),0);
-assert.equal(dashboard.positivePower(null),null);
-assert.equal(dashboard.positivePower(undefined),null);
 assert.equal(dashboard.batteryFlowState(250),'discharging');
 assert.equal(dashboard.batteryFlowState(-250),'charging');
 assert.equal(dashboard.batteryFlowState(0),'idle');
@@ -41,43 +36,8 @@ assert.equal(dashboard.metricState({...snapshot,connectivity:{...online,logger:'
 assert.equal(dashboard.metricState({...snapshot,field_freshness:{...snapshot.field_freshness,grid:{power_w:false}}},'grid','power_w'),'stale');
 assert.equal(dashboard.metricState({...snapshot,grid:{power_w:null}},'grid','power_w'),'unknown');
 
-const data=dashboard.historyData([
-  {captured_at:'2026-01-01T00:00:00Z',pv_power_w:100,grid_power_w:-40,battery_power_w:-20,home_power_w:80,soc_pct:50},
-  {captured_at:'2026-01-01T00:00:20Z',pv_power_w:200,grid_power_w:50,battery_power_w:30,home_power_w:90,soc_pct:51},
-]);
-assert.deepEqual(data[1],[100,null,200]);
-assert.deepEqual(data[2],[null,null,50]);
-assert.deepEqual(data[3],[50,null,51]);
-assert.deepEqual(data[4],[80,null,90]);
-
-const zeroReading=dashboard.historyData([
-  {captured_at:'2026-01-01T00:00:00Z',pv_power_w:0,grid_power_w:0,battery_power_w:0,home_power_w:0,soc_pct:0},
-]);
-for(let column=1;column<zeroReading.length;column++)assert.deepEqual(zeroReading[column],[null]);
-
-const fiveMinuteData=dashboard.historyData([
-  {captured_at:'2026-01-01T00:00:00Z',pv_power_w:100,grid_power_w:10,battery_power_w:20,home_power_w:80},
-  {captured_at:'2026-01-01T00:05:00Z',pv_power_w:200,grid_power_w:20,battery_power_w:30,home_power_w:90},
-  {captured_at:'2026-01-01T00:10:00Z',pv_power_w:300,grid_power_w:30,battery_power_w:40,home_power_w:100},
-]);
-assert.deepEqual(fiveMinuteData[1],[100,200,300]);
-
-const fiveMinuteGap=dashboard.historyData([
-  {captured_at:'2026-01-01T00:00:00Z',pv_power_w:100,grid_power_w:10,battery_power_w:20,home_power_w:80},
-  {captured_at:'2026-01-01T00:05:00Z',pv_power_w:200,grid_power_w:20,battery_power_w:30,home_power_w:90},
-  {captured_at:'2026-01-01T00:15:00Z',pv_power_w:300,grid_power_w:30,battery_power_w:40,home_power_w:100},
-]);
-assert.deepEqual(fiveMinuteGap[1],[100,200,null,300]);
-assert.equal(dashboard.chartOptions('x',500,300).axes[2].scale,'battery');
-assert.deepEqual(dashboard.chartOptions('x',500,300).scales.battery.range,[0,100]);
-const fixedRange=dashboard.todayRange(new Date(2026,0,2,12).getTime());
-assert.equal(fixedRange[1]-fixedRange[0],24*60*60);
-assert.deepEqual(dashboard.positiveNonZero(0),null);
-assert.deepEqual(dashboard.positiveNonZero(-78),null);
-assert.deepEqual(dashboard.positiveNonZero(722),722);
-const window24=dashboard.chartOptions('x',500,300).scales.x.range();
+const window24=dashboard.temperatureChartOptions('x',500,300).scales.x.range();
 assert.equal(window24[1]-window24[0],86400);
-assert.match(dashboard.chartOptions('x',500,300).axes[0].values(null,[1767312000])[0],/\d{2}:\d{2}/);
 const cfg={soc_min:25,soc_max:95,battery_usable_kwh:7,home_day_scale_kwh:6,home_day_scale_next_kwh:12};
 for(const soc of [24,25,26,94,95,96])for(const power of [-1000,0,1000]){
  const state={battery:{soc_pct:soc,power_w:power},field_freshness:{battery:{soc_pct:true,power_w:true}},connectivity:online};

@@ -19,10 +19,10 @@ body{max-width:none;margin:0;padding:0;background:#111820;overflow:hidden}
 .metric-card--solar{--metric-color:var(--solar)}.metric-card--grid{--metric-color:var(--grid)}.metric-card--battery{--metric-color:var(--battery)}.metric-card--load{--metric-color:var(--load)}
 .metric-status{margin:.2rem 0;color:var(--muted);font-size:.85rem}.metric-card[data-state=stale] .metric-status{color:#f5c451}.metric-card[data-state=offline] .metric-status{color:#ff9e9e}.metric-card[data-state=unknown] .metric-status{color:var(--muted)}
 .metric-value{margin:.8rem 0;font-size:1.7rem;font-weight:700;color:var(--metric-color);font-variant-numeric:tabular-nums}.metric-unit{font-size:.85rem;font-weight:400}.metric-card dl{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.45rem;margin:0;color:var(--muted);font-size:.85rem}.metric-card dd{margin:0;color:#e8edf2;text-align:right;overflow-wrap:anywhere}
-.history-dashboard{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.55rem;min-width:0;min-height:0}
+.history-dashboard{display:grid;grid-template-columns:minmax(0,1fr);gap:.55rem;min-width:0;min-height:0}
 .history{box-sizing:border-box;min-width:0;min-height:0;margin:0;padding:0;background:transparent;border-radius:0;display:flex;flex-direction:column;overflow:hidden}.history .section-heading{display:flex;align-items:center;justify-content:space-between;gap:1rem}.history .section-heading h2{font-size:1em}.history .chart{box-sizing:border-box;width:100%;min-width:0;min-height:0;flex:1;margin:.15rem 0 0;overflow:hidden}.history #history-status,.history #temperature-history-status{margin:.1rem 0;color:var(--muted);font-size:.85em}
 .uplot{font-family:system-ui,sans-serif;max-width:100%;color:#fff}.u-title,.u-legend{color:#fff}.u-legend{font-size:.85rem}
-@media (max-width:700px){body{padding:.65rem;overflow:auto}.dashboard-shell{width:100%;height:auto;min-height:100svh;grid-template-rows:auto auto auto;overflow:visible}.dashboard-main{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(80vw,auto) auto}.dashboard-flow{width:min(100%,82vw);height:auto;max-width:420px;aspect-ratio:1/1}.ambient-card{min-height:9rem}.history-dashboard{grid-template-columns:minmax(0,1fr);grid-template-rows:repeat(2,minmax(220px,auto))}.metric-grid{gap:.65rem}.metric-card{padding:.75rem}.metric-value{font-size:1.35rem}.metric-card dl{font-size:.78rem}.history .chart{overflow:auto}}
+@media (max-width:700px){body{padding:.65rem;overflow:auto}.dashboard-shell{width:100%;height:auto;min-height:100svh;grid-template-rows:auto auto auto;overflow:visible}.dashboard-main{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(80vw,auto) auto}.dashboard-flow{width:min(100%,82vw);height:auto;max-width:420px;aspect-ratio:1/1}.ambient-card{min-height:9rem}.history-dashboard{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(220px,auto)}.metric-grid{gap:.65rem}.metric-card{padding:.75rem}.metric-value{font-size:1.35rem}.metric-card dl{font-size:.78rem}.history .chart{overflow:auto}}
 .metric-gauge{position:relative;flex:0 1 auto;min-width:0;min-height:0;height:100%;width:auto;max-width:100%;aspect-ratio:1;margin:0;display:grid;place-items:center;color:var(--metric-color)}
 .metric-gauge__svg{display:block;width:100%;height:100%;overflow:visible}
 .metric-gauge__track,.metric-gauge__progress{fill:none;stroke-width:10;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:100;transform-origin:60px 60px}
@@ -57,7 +57,8 @@ body{max-width:none;margin:0;padding:0;background:#111820;overflow:hidden}
 @media (max-width:700px){.metric-grid{gap:.65rem}.metric-card{padding:0}.metric-gauge .metric-value{font-size:1.7em;padding:0 .7rem}.flow-line{stroke-width:1.4}}
 @media (max-height:700px){.dashboard-header p{margin:0;font-size:.68rem}.metric-card h2{font-size:2rem}.metric-status{display:none}.history .section-heading h2{font-size:.95rem}.history #history-status{font-size:.68rem}.u-title{font-size:12px}.u-axis,.u-legend{font-size:10px}}
 .ambient-card[data-state=online] .ambient-status{color:#8ee6aa}
-.temperature-cards{display:grid;grid-template-rows:repeat(2,minmax(0,1fr));gap:.55rem;min-width:0;min-height:0}
+.temperature-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:minmax(0,1fr) minmax(0,1fr);gap:.55rem;min-width:0;min-height:0}
+.temperature-cards .history--temperature{grid-column:1 / -1;min-height:0}
 .temperature-cards .ambient-card{padding:.5rem}
 .temperature-cards .ambient-card h2{font-size:clamp(.9rem,1.6vw,1.4rem)}
 .temperature-cards .ambient-reading{font-size:clamp(1.8rem,4vw,3.8rem)}
@@ -65,8 +66,8 @@ body{max-width:none;margin:0;padding:0;background:#111820;overflow:hidden}
 .ambient-card--second h2,.ambient-card--second .ambient-reading{color:#55b9ed}
 @media (max-width:700px){.temperature-cards{grid-template-rows:repeat(2,minmax(9rem,auto))}}
 /* Tablero: valores centrales y detalles fuera del arco. */
-.dashboard-shell{grid-template-rows:minmax(0,68fr) auto minmax(0,32fr) auto;gap:.3rem}
-.dashboard-main{grid-row:1}.energy-summary{grid-row:2}.history-dashboard{grid-row:3}.dashboard-header{grid-row:4;gap:.5rem;font-size:.75em;min-height:0}
+.dashboard-shell{grid-template-rows:minmax(0,1fr) auto auto;gap:.3rem}
+.dashboard-main{grid-row:1}.energy-summary{grid-row:2}.dashboard-header{grid-row:3;gap:.5rem;font-size:.75em;min-height:0}
 .dashboard-header p{margin:0}.dashboard-header #age{margin-left:auto}
 .energy-summary{display:flex;gap:.65rem;align-items:center;justify-content:flex-end;flex-wrap:wrap;text-align:right;font-size:.8em;color:var(--muted)}
 button{font:inherit;color:#fff;background:#243341;border:1px solid #65798a;border-radius:4px;padding:.2rem .4rem;cursor:pointer}
@@ -88,7 +89,7 @@ button[hidden]{display:none}
 @keyframes soc-alert{50%{opacity:.25}}
 .history p:empty{display:none}.history .chart{margin:0}.u-legend{font-size:.7rem}
 @media (prefers-reduced-motion:reduce){.metric-card[data-alert=true] .metric-primary{animation:none;color:#ff9e9e}}
-@media (max-width:700px){.dashboard-shell{grid-template-rows:auto auto auto auto}.dashboard-flow{width:100%;max-width:none;aspect-ratio:auto;min-height:400px}.metric-gauge{width:100%;max-width:200px}.metric-gauge .metric-value{font-size:1.8rem}.metric-detail{font-size:.8em}.dashboard-header #age{margin-left:0}}
+@media (max-width:700px){.dashboard-shell{grid-template-rows:auto auto auto}.dashboard-flow{width:100%;max-width:none;aspect-ratio:auto;min-height:400px}.metric-gauge{width:100%;max-width:200px}.metric-gauge .metric-value{font-size:1.8rem}.metric-detail{font-size:.8em}.dashboard-header #age{margin-left:0}.temperature-cards{grid-template-rows:minmax(9rem,auto) minmax(220px,auto)}}
 .metric-card{container-type:size}
 .metric-gauge{width:min(100cqw,100cqh);height:min(100cqw,100cqh);max-height:none;flex:none}
 .metric-gauge .metric-value{font-size:clamp(1rem,16cqh,2rem)}

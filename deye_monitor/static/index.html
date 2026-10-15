@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Deye Monitor</title>
   <link rel="stylesheet" href="/static/uPlot.min.css?v=6">
-  <link rel="stylesheet" href="/static/style.css?v=31">
+  <link rel="stylesheet" href="/static/style.css?v=33">
   <link rel="stylesheet" href="/static/config.css?v=7">
 </head>
 <body>
   <main class="dashboard-shell">
     <footer class="dashboard-header">
       <button id="enable-beep" hidden>Activar sonido</button>
-      <a class="solar-chart-link" href="/solar">Gráfico solar</a>
+      <a class="solar-chart-link" href="/static/solar.html">Gráfico solar</a>
     </footer>
     <section class="dashboard-main" aria-label="Sol, Red, Bat, Casa y temperatura ambiente">
     <div class="dashboard-flow">
@@ -105,7 +105,7 @@
 		</article>
       </section>
     </div>
-    <div class="temperature-cards" aria-label="Temperaturas ambiente">
+    <div class="temperature-cards" aria-label="Temperaturas ambiente e historial">
     <article class="ambient-card" data-ambient-temperature data-state="unknown" aria-labelledby="ambient-title">
       <h2 id="ambient-title">Temperatura ambiente</h2>
       <p id="ambient-status" class="ambient-status" aria-live="polite">Sin dato</p>
@@ -116,6 +116,10 @@
       <p id="ambient2-status" class="ambient-status" aria-live="polite">Sin dato</p>
       <p class="ambient-reading"><span id="ambient2-value">Sin dato</span> <span class="ambient-unit">°C</span></p>
     </article>
+    <section class="history history--temperature" aria-label="Historial de temperatura ambiente">
+      <p id="temperature-history-status" aria-live="polite">Cargando historial de temperatura…</p>
+      <div id="temperature-chart" class="chart" aria-label="Temperaturas ambiente 1 y 2 en grados Celsius durante las últimas 24 horas"></div>
+    </section>
     </div>
     </section>
     <section class="energy-summary" aria-label="Consumo de Casa">
@@ -124,18 +128,8 @@
       <button id="reset-home">Reset contador mensual Casa</button>
       <span id="energy-status" aria-live="polite"></span>
     </section>
-    <section class="history-dashboard" aria-label="Historial de las últimas 24 horas">
-      <section class="history history--power" aria-label="Historial de potencia">
-        <p id="history-status" aria-live="polite">Cargando historial…</p>
-        <div id="power-chart" class="chart" aria-label="Consumo de Red, carga de batería y consumo de las últimas 24 horas"></div>
-      </section>
-      <section class="history history--temperature" aria-label="Historial de temperatura ambiente">
-        <p id="temperature-history-status" aria-live="polite">Cargando historial de temperatura…</p>
-        <div id="temperature-chart" class="chart" aria-label="Temperaturas ambiente 1 y 2 en grados Celsius durante las últimas 24 horas"></div>
-      </section>
-    </section>
   </main>
   <script src="/static/uPlot.iife.min.js?v=6"></script>
-  <script src="/static/app.js?v=18"></script>
+  <script src="/static/app.js?v=19"></script>
 </body>
 </html>
