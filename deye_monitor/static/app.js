@@ -209,12 +209,12 @@ async function initial(){
     });
     document.querySelector('#reset-home').addEventListener('click',async()=>{
       try{
-        const response=await fetch('/api/energy/home/reset',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
-        if(!response.ok)throw new Error('No se pudo reiniciar el contador');
-        energySummary=await response.json();if(lastSnapshot)renderMetrics(lastSnapshot);put('energy-status','Contador reiniciado');
+        energySummary=await fetchJson('/api/energy/home/reset','No se pudo reiniciar el contador',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+        if(lastSnapshot)renderMetrics(lastSnapshot);put('energy-status','Contador reiniciado');
       }catch(error){put('energy-status',error.message)}
     });
     render(await fetchJson('/api/state','No se pudo obtener el estado'));
+    await loadEnergy();
   }
   catch(_){console.error('No se pudo obtener el estado')}
 }
@@ -231,7 +231,17 @@ let historySamples=[];
 let temperatureSamples=[];
 let historyRefreshTimer;
 let historyRefreshInFlight=false;
-const HISTORY_REFRESH_MS=5000;
+const HISTORY_REFRESH_MS=30000;
+let energyRefreshTimer;
+let energyRefreshInFlight=false;
+const ENERGY_REFRESH_MS=5000;
+
+async function runGuarded(readInFlight,writeInFlight,operation){
+  if(readInFlight())return;
+  writeInFlight(true);
+  try{return await operation()}
+  finally{writeInFlight(false)}
+}
 
 function chartHeight(viewportHeight){
   const height=Number.isFinite(viewportHeight)?viewportHeight:typeof window!=='undefined'?window.innerHeight:900;
@@ -299,7 +309,7 @@ function rollingDaySplits(){
 }
 
 function chartOptions(title,width,height){
-  const solar=chartColor('--solar','#48c774'),grid=chartColor('--grid','#b279ff'),battery=chartColor('--battery','#55b9ed'),load=chartColor('--load','#f3c34f');
+  const grid=chartColor('--grid','#b279ff'),battery=chartColor('--battery','#55b9ed'),load=chartColor('--load','#f3c34f');
   return {
     title,width,height,ms:1,
     scales:{
@@ -307,7 +317,6 @@ function chartOptions(title,width,height){
       y:{auto:true},battery:{range:[0,100]}
     },
     series:[{},
-      {label:'Generación',scale:'y',stroke:solar,width:2},
       {label:'Consumo de Red',scale:'y',stroke:grid,width:2},
       {label:'Carga de batería',scale:'battery',stroke:battery,width:2},
       {label:'Consumo total',scale:'y',stroke:load,width:2}
@@ -340,7 +349,9 @@ function renderHistory(samples){
   const nextSamples=samples||[];
   const container=document.querySelector('#power-chart');
   historySamples=nextSamples;
-  const width=Math.max(1,container.clientWidth||600),height=Math.max(80,container.clientHeight||chartHeight()),data=historyData(historySamples);
+  const allData=historyData(historySamples);
+  const data=[allData[0],allData[2],allData[3],allData[4]];
+  const width=Math.max(1,container.clientWidth||600),height=Math.max(80,container.clientHeight||chartHeight());
   if(powerPlot){
     powerPlot.setData(data);
     powerPlot.setSize({width,height});
@@ -363,15 +374,22 @@ function renderTemperatureHistory(samples){
   temperaturePlot=new uPlot(temperatureChartOptions('',width,height),data,container);
 }
 
-async function fetchJson(url,description){
-  const response=await fetch(url);
-  const contentType=response.headers.get('content-type')||'';
-  if(!contentType.includes('application/json')){
-    throw new Error(`${description}: respuesta ${response.status} no válida. Reiniciá el servicio.`);
-  }
-  const payload=await response.json();
-  if(!response.ok)throw new Error(payload.error||description);
-  return payload;
+async function fetchJson(url,description,options={}){
+  const controller=new AbortController();
+  const timeout=setTimeout(()=>controller.abort(),10000);
+  try{
+    const response=await fetch(url,{...options,signal:controller.signal});
+    const contentType=response.headers.get('content-type')||'';
+    if(!contentType.includes('application/json')){
+      throw new Error(`${description}: respuesta ${response.status} no válida. Reiniciá el servicio.`);
+    }
+    const payload=await response.json();
+    if(!response.ok)throw new Error(payload.error||description);
+    return payload;
+  }catch(error){
+    if(error.name==='AbortError')throw new Error(`${description}: tiempo de espera agotado.`);
+    throw error;
+  }finally{clearTimeout(timeout)}
 }
 
 async function loadPowerHistory(initial){
@@ -401,14 +419,23 @@ async function loadTemperatureHistory(initial){
 }
 
 async function loadHistory(initial=false){
-  if(historyRefreshInFlight)return;
-  historyRefreshInFlight=true;
-  try{
-    await Promise.all([loadPowerHistory(initial),loadTemperatureHistory(initial),loadEnergy()]);
-  }finally{historyRefreshInFlight=false}
+  return runGuarded(()=>historyRefreshInFlight,value=>{historyRefreshInFlight=value},async()=>{
+    await Promise.all([loadPowerHistory(initial),loadTemperatureHistory(initial)]);
+  });
 }
 
-async function loadEnergy(){try{energySummary=await fetchJson('/api/energy','No se pudo cargar energía');if(lastSnapshot)renderMetrics(lastSnapshot)}catch(error){put('energy-status',error.message)}}
+async function loadEnergy(){
+  return runGuarded(()=>energyRefreshInFlight,value=>{energyRefreshInFlight=value},async()=>{
+    try{energySummary=await fetchJson('/api/energy','No se pudo cargar energía');if(lastSnapshot)renderMetrics(lastSnapshot)}
+    catch(error){put('energy-status',error.message)}
+  });
+}
+
+function startEnergyRefresh(){
+  if(energyRefreshTimer)return;
+  loadEnergy();
+  energyRefreshTimer=setInterval(loadEnergy,ENERGY_REFRESH_MS);
+}
 
 function startHistoryRefresh(){
   if(historyRefreshTimer)return;
@@ -431,12 +458,15 @@ if(typeof document!=='undefined'){
   initial();
   connect();
   startHistoryRefresh();
+  startEnergyRefresh();
   document.addEventListener('visibilitychange',()=>{
     if(document.visibilityState==='visible')loadHistory(false);
   });
   window.addEventListener('beforeunload',()=>{
     if(historyRefreshTimer)clearInterval(historyRefreshTimer);
+    if(energyRefreshTimer)clearInterval(energyRefreshTimer);
     historyRefreshTimer=null;
+    energyRefreshTimer=null;
   },{once:true});
   if(typeof ResizeObserver!=='undefined'){
     const historyResizeObserver=new ResizeObserver(resizePlot);
@@ -446,4 +476,4 @@ if(typeof document!=='undefined'){
   else window.addEventListener('resize',resizePlot);
 }
 
-if(typeof module!=='undefined')module.exports={batteryDetails,homeDayScale,known,lookup,number,valueText,positivePower,nonZero,positiveNonZero,batteryFlowState,gaugePercent,metricState,historyData,temperatureData,todayRange,dayHourSplits,rollingDayRange,rollingDaySplits,chartOptions,temperatureChartOptions,FlowLogic,chartHeight};
+if(typeof module!=='undefined')module.exports={batteryDetails,homeDayScale,known,lookup,number,valueText,positivePower,nonZero,positiveNonZero,batteryFlowState,gaugePercent,metricState,historyData,temperatureData,todayRange,dayHourSplits,rollingDayRange,rollingDaySplits,chartOptions,temperatureChartOptions,FlowLogic,chartHeight,fetchJson,runGuarded};

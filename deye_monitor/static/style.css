@@ -140,4 +140,5 @@ button[hidden]{display:none}
 }
 
 
-.dashboard-header:not(:has(button:not([hidden]))){display:none}
+.dashboard-header:not(:has(button:not([hidden]),.solar-chart-link)){display:none}
+.solar-chart-link{color:#8ee6aa;background:#243341;border:1px solid #65798a;border-radius:4px;padding:.2rem .4rem;text-decoration:none}

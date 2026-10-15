@@ -19,6 +19,9 @@ Para ejecutarlo en primer plano y ver su salida directamente:
 cd ~/deye-test
 sudo docker run --rm \
   --network host \
+  --log-driver json-file \
+  --log-opt max-size=10m \
+  --log-opt max-file=3 \
   --env-file config.env \
   ghcr.io/kbialek/deye-inverter-mqtt
 ```
@@ -51,6 +54,54 @@ python -m deye_monitor
 Abrir `http://127.0.0.1:5000`. El modo `simulated` reproduce el fixture elegido por `DEYE_FIXTURE`, en un hilo distinto del cliente MQTT. El modo `mqtt` usa paho-mqtt y reconecta con `connect_async`/`loop_start`; sus callbacks sólo adaptan el mensaje y actualizan el estado protegido por lock.
 
 Para pruebas: `pytest`.
+
+## Ejecución persistente en Raspberry Pi
+
+`deye-monitor.service.example` muestra cómo ejecutar el monitor como servicio
+systemd y volver a iniciarlo si el proceso termina por error. Antes de instalarlo,
+ajustar `User`, `WorkingDirectory`, `EnvironmentFile` y `ExecStart` a la cuenta,
+la ubicación del checkout y el entorno virtual de cada Raspberry. Luego copiarlo
+a `/etc/systemd/system/deye-monitor.service`, ejecutar
+`sudo systemctl daemon-reload`, `sudo systemctl enable --now deye-monitor` y
+consultar errores de arranque y fallbacks de `stderr` con
+`sudo journalctl -u deye-monitor`. Los mensajes Python normales se guardan en
+`DEYE_LOG_PATH` (por defecto `data/deye-monitor.log`).
+
+La plantilla no se instaló ni se activó en ninguna Raspberry. Si se adopta,
+evitar iniciar una segunda copia: quitar de `inicia.sh` la línea
+`python -m deye_monitor &` o dejar de ejecutar ese script para arrancar el
+monitor. Mantener ambos lanzadores puede provocar que uno choque con el puerto
+5000 mientras systemd intenta reiniciarlo.
+
+`Restart=on-failure` recupera un proceso que termina; no detecta un proceso
+bloqueado ni reinicia la Raspberry. Para diagnosticar un bloqueo completo hay
+que comprobar por separado el estado del sistema, espacio libre, memoria y
+temperatura de la Raspberry. Tras recuperar acceso, revisar:
+
+```sh
+free -h
+df -h
+sudo journalctl -b -1 -k --no-pager | tail -n 200
+sudo journalctl -u deye-monitor -b -1 --no-pager
+vcgencmd get_throttled
+vcgencmd measure_temp
+```
+
+`journalctl -b -1` consulta el arranque anterior cuando journald conserva esos
+registros. `get_throttled` ayuda a detectar subtensión y limitación térmica; la
+temperatura muestra el estado actual. La aplicación escribe sus mensajes Python
+en `data/deye-monitor.log`, con rotación de 10 MiB y hasta tres respaldos
+(hasta unos 40 MiB en total). `DEYE_LOG_PATH` en el entorno o `.env` permite
+elegir otra ubicación; las rutas relativas parten del directorio de trabajo y
+el usuario del servicio debe poder escribirlas. Si el archivo no se puede
+abrir, los mensajes van a `stderr` y quedan en el journal.
+
+El contenedor `deye-mqtt` creado por `configura.sh` limita sus logs JSON de Docker
+a 10 MiB por archivo y tres archivos. Estas opciones se aplican al crear un
+contenedor nuevo. `configura.sh` detiene y elimina el contenedor existente antes
+de crearlo, así que ejecutar el script causa una interrupción breve; revisar la
+ruta externa de `config.env` antes de hacerlo. No se requiere tocar los datos de
+configuración para que Docker rote sus logs.
 
 ## API
 
@@ -118,6 +169,11 @@ bloque central del inversor. El conjunto 2×2 conserva una proporción cuadrada 
 se centra dentro del ancho configurado para que las tarjetas no se ensanchen y las
 flechas mantengan su posición relativa. El plot sí usa todo el ancho disponible.
 En móvil la columna pasa a ocupar todo el ancho.
+
+Los gráficos consultan el historial cada 30 segundos y el resumen de energía
+mantiene su actualización independiente cada 5 segundos. “Generación solar” se
+abre por el botón “Gráfico solar” en una página aparte, con su propio historial
+de PV y enlace para volver al tablero.
 
 El plot consulta el historial de 24 horas, pero su eje de tiempo queda fijo al
 día calendario local actual, desde las 0 hasta las 24 h, con marcas horarias

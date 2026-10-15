@@ -89,6 +89,8 @@ def create_app(config: Config | None = None, start_source: bool = True) -> Flask
 
     @app.get("/")
     def index(): return send_from_directory(Path(app.static_folder), "index.html")
+    @app.get("/solar")
+    def solar_chart(): return send_from_directory(Path(app.static_folder), "solar.html")
     @app.get("/health")
     def health():
         data = state.snapshot(); return jsonify({"ok": True, "broker": data["connectivity"]["broker"], "stale": data["connectivity"]["stale"]})

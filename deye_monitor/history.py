@@ -3,8 +3,10 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import math
+import logging
 import sqlite3
 import threading
+import time
 
 
 SCHEMA_VERSION = 3
@@ -200,6 +202,8 @@ class SnapshotRecorder:
         self.state, self.history, self.interval = state, history, interval_seconds
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
+        self.log = logging.getLogger(__name__)
+        self._last_error_log: float | None = None
 
     def start(self) -> None:
         self._thread = threading.Thread(target=self._run, daemon=True, name="deye-history-recorder")
@@ -217,4 +221,12 @@ class SnapshotRecorder:
 
     def _run(self) -> None:
         while not self._stop.wait(self.interval):
-            self.record_once()
+            try:
+                self.record_once()
+            except Exception:
+                # A transient SQLite lock or I/O error must not permanently kill
+                # the daemon thread; the next interval can retry the transaction.
+                now = time.monotonic()
+                if self._last_error_log is None or now - self._last_error_log >= 60:
+                    self.log.exception("History recording failed; will retry next interval")
+                    self._last_error_log = now

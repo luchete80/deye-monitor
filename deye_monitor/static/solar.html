@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Historial solar · Deye Monitor</title>
+  <link rel="stylesheet" href="/static/uPlot.min.css?v=6">
+  <link rel="stylesheet" href="/static/solar.css?v=1">
+</head>
+<body>
+  <main>
+    <header>
+      <a href="/" aria-label="Volver al tablero">← Volver al tablero</a>
+      <h1>Generación solar</h1>
+    </header>
+    <p id="solar-history-status" aria-live="polite">Cargando historial solar…</p>
+    <div id="solar-history-chart" aria-label="Potencia solar durante las últimas 24 horas"></div>
+  </main>
+  <script src="/static/uPlot.iife.min.js?v=6"></script>
+  <script src="/static/solar.js?v=1"></script>
+</body>
+</html>

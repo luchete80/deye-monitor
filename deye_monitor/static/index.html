@@ -5,13 +5,14 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Deye Monitor</title>
   <link rel="stylesheet" href="/static/uPlot.min.css?v=6">
-  <link rel="stylesheet" href="/static/style.css?v=30">
+  <link rel="stylesheet" href="/static/style.css?v=31">
   <link rel="stylesheet" href="/static/config.css?v=7">
 </head>
 <body>
   <main class="dashboard-shell">
     <footer class="dashboard-header">
       <button id="enable-beep" hidden>Activar sonido</button>
+      <a class="solar-chart-link" href="/solar">Gráfico solar</a>
     </footer>
     <section class="dashboard-main" aria-label="Sol, Red, Bat, Casa y temperatura ambiente">
     <div class="dashboard-flow">
@@ -126,7 +127,7 @@
     <section class="history-dashboard" aria-label="Historial de las últimas 24 horas">
       <section class="history history--power" aria-label="Historial de potencia">
         <p id="history-status" aria-live="polite">Cargando historial…</p>
-        <div id="power-chart" class="chart" aria-label="Generación, consumo de Red, carga de batería y consumo de las últimas 24 horas"></div>
+        <div id="power-chart" class="chart" aria-label="Consumo de Red, carga de batería y consumo de las últimas 24 horas"></div>
       </section>
       <section class="history history--temperature" aria-label="Historial de temperatura ambiente">
         <p id="temperature-history-status" aria-live="polite">Cargando historial de temperatura…</p>
@@ -135,6 +136,6 @@
     </section>
   </main>
   <script src="/static/uPlot.iife.min.js?v=6"></script>
-  <script src="/static/app.js?v=17"></script>
+  <script src="/static/app.js?v=18"></script>
 </body>
 </html>

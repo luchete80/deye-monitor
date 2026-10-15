@@ -1,0 +1,16 @@
+[Unit]
+Description=Deye Monitor
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/deye-monitor
+EnvironmentFile=-/home/pi/deye-monitor/.env
+ExecStart=/home/pi/deye-monitor/.venv/bin/python -u -m deye_monitor
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

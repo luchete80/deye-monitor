@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, timezone
 import json
 import subprocess
+import threading
 import pytest
 
 from deye_monitor.adapter import SG03LP1Adapter, parse_payload, parse_status
@@ -9,7 +10,7 @@ from deye_monitor.config import Config
 from deye_monitor.mqtt_client import MQTTClient
 from deye_monitor.simulator import FixtureSimulator
 from deye_monitor.state import StateStore
-from deye_monitor.history import HistoryStore
+from deye_monitor.history import HistoryStore, SnapshotRecorder
 
 
 def config(**kwargs):
@@ -172,9 +173,15 @@ def test_http_api_sse_and_page():
     assert page.status_code == 200
     assert b'class="metric-grid"' in page.data
     assert b'id="power-chart"' in page.data
+    solar_page = client.get("/solar")
+    assert solar_page.status_code == 200
+    assert "Generación solar".encode() in solar_page.data
+    assert b'href="/"' in solar_page.data
+    assert b'href="/solar"' in page.data
     assert client.get("/static/style.css").status_code == 200
     assert client.get("/static/config.css").status_code == 200
     assert client.get("/static/app.js").status_code == 200
+    assert client.get("/static/solar.js").status_code == 200
     assert client.get("/static/uPlot.iife.min.js").status_code == 200
     assert client.get("/static/uPlot.min.css").status_code == 200
     assert client.get("/health").json["ok"] is True
@@ -215,6 +222,32 @@ def test_history_is_versioned_complete_bounded_and_persistent(tmp_path):
     assert len(reopened.query("24h", now)) == 1
     reopened.prune(now + timedelta(hours=24, seconds=1))
     assert reopened.query("24h", now + timedelta(hours=24, seconds=1)) == []
+
+
+def test_snapshot_recorder_retries_after_transient_storage_failure(tmp_path, caplog):
+    history = HistoryStore(str(tmp_path / "recorder.sqlite3"))
+    state = StateStore(10)
+    recorder = SnapshotRecorder(state, history, .01)
+    saved = threading.Event()
+    attempts = 0
+
+    def record(snapshot):
+        nonlocal attempts
+        attempts += 1
+        if attempts == 1:
+            raise OSError("temporary storage failure")
+        saved.set()
+        return True
+
+    history.record = record
+    recorder.start()
+    try:
+        assert saved.wait(1)
+    finally:
+        recorder.stop()
+
+    assert attempts >= 2
+    assert "History recording failed; will retry next interval" in caplog.text
 
 
 def test_sse_client_keeps_native_reconnect_enabled():

@@ -21,6 +21,9 @@ sudo docker run -d \
     --name deye-mqtt \
     --restart unless-stopped \
     --network host \
+    --log-driver json-file \
+    --log-opt max-size=10m \
+    --log-opt max-file=3 \
     --env-file "$CONFIG_FILE" \
     ghcr.io/kbialek/deye-inverter-mqtt:latest
 
