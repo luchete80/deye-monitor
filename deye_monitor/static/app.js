@@ -118,8 +118,6 @@ function renderStationDetails(snapshot){
   put('solar-details',`PV1: ${pv1w} W · ${pv1a} A\nPV2: ${pv2w} W · ${pv2a} A`);
   put('grid-current',`Corriente estimada: ${current('grid','estimated_current_a')} A`);
   put('load-current',`Corriente: ${current('load','current_a')} A`);
-  put('battery-current-visible',current('battery','current_a'));
-  put('battery-power-visible',power('battery','power_w'));
   put('battery-current',current('battery','current_a'));
 }
 function renderMetrics(snapshot){
@@ -149,12 +147,15 @@ function renderMetrics(snapshot){
   renderStationDetails(snapshot);
   if(!dashboardConfig)return;
   const cfg=dashboardConfig;
-put('solar-today', `Hoy:\n${known(energySummary?.solar_day?.kwh) ? number(energySummary.solar_day.kwh,'kWh') : '-'}`);
+  put('solar-today', `Hoy: ${known(energySummary?.solar_day?.kwh) ? number(energySummary.solar_day.kwh,'kWh') : '-'}`);
   const voltageState=metricState(snapshot,'grid','voltage_v');
   const absent=voltageState==='online'&&snapshot.grid.voltage_v<cfg.grid_absent_below_v;
   const grid=document.querySelector('[data-metric="grid"]');
   if(grid)grid.dataset.absent=String(absent);
-  put('grid-top',absent?'Sin tensión':voltageState==='online'?number(snapshot.grid.voltage_v,'V'):'Tensión: sin dato');
+  put('grid-top',absent?'Sin tensión':voltageState==='online'?`Tensión: ${number(snapshot.grid.voltage_v,'V')}`:'Tensión: sin dato');
+  const bought=metricState(snapshot,'grid','energy_bought_today_kwh')==='online'?number(snapshot.grid.energy_bought_today_kwh,'kWh'):'-';
+  const sold=metricState(snapshot,'grid','energy_sold_today_kwh')==='online'?number(snapshot.grid.energy_sold_today_kwh,'kWh'):'-';
+  put('grid-today',`Compra: ${bought}\nVenta: ${sold}`);
   put('grid-bottom',cfg.billing_day===null?'Configurar día de facturación':`Ciclo: ${energyText(energySummary?.grid_billing)}`);
   const daily=energySummary?.home_day;
   put('load-top',`Hoy: ${energyText(daily)}`);
