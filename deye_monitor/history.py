@@ -144,6 +144,18 @@ class HistoryStore:
             ).fetchall()
         return [dict(row) for row in rows]
 
+    def query_battery_window(self, minutes: float, now: datetime | None = None) -> list[dict]:
+        """Return timestamped battery power samples for a short runtime estimate."""
+        now = now or self.clock()
+        cutoff = timestamp(now - timedelta(minutes=minutes))
+        with self._lock, self._connect() as connection:
+            rows = connection.execute(
+                "SELECT captured_at, battery_power_w, soc_pct FROM snapshots "
+                "WHERE captured_at >= ? AND captured_at <= ? ORDER BY captured_at",
+                (cutoff, timestamp(now)),
+            ).fetchall()
+        return [dict(row) for row in rows]
+
     @staticmethod
     def _validate_range(range_name: str) -> int:
         if range_name not in RANGES:

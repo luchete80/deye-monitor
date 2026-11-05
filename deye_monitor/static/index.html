@@ -38,7 +38,7 @@
           </defs>
           <path id="flow-pv" class="flow-line idle" d="M 26 24 H 36 Q 39 24 39 27 V 39 Q 39 42 42 42 H 45"></path>
           <path id="flow-grid" class="flow-line idle" d="M 74 24 H 64 Q 61 24 61 27 V 39 Q 61 42 58 42 H 55"></path>
-          <path id="flow-battery" class="flow-line idle" d="M 50 91 V 78 Q 50 75 50 72"></path>
+          <path id="flow-battery" class="flow-line idle" d="M 50 91 V 78 Q 50 75 50 72 V 70"></path>
         </svg>
         <section class="metric-grid" aria-label="Estado energético actual">
           <article class="metric-card metric-card--solar" data-metric="solar">
@@ -89,12 +89,22 @@
 
           <article class="metric-card metric-card--battery" data-metric="battery">
             <div class="battery-display" data-gauge="battery" role="img" aria-label="Batería: -">
-              <div class="battery-shell" aria-hidden="true"><div class="battery-fill"></div></div>
-              <div class="battery-labels">
-                <span class="battery-soc"><span id="battery-soc">-</span><span class="metric-unit"> %</span></span>
-                <span class="battery-power-current"><span id="battery-power">-</span> W · <span id="battery-current">-</span> A</span>
-                <span class="battery-available"><span id="battery-value">-</span> kWh</span>
+              <div class="battery-shell" aria-hidden="true"><div class="battery-fill"><span class="battery-segment"></span><span class="battery-segment"></span><span class="battery-segment"></span><span class="battery-segment"></span><span class="battery-segment"></span><span class="battery-segment"></span><span class="battery-segment"></span><span class="battery-segment"></span><span class="battery-segment"></span><span class="battery-segment"></span></div></div>
+              <div class="battery-side battery-side--left">
+                <span class="battery-readings">
+                  <span class="battery-soc"><span id="battery-soc">-</span><span class="metric-unit"> %</span></span>
+                  <span class="battery-available"><span id="battery-value">-</span><span class="metric-unit"> kWh</span></span>
+                </span>
               </div>
+              <div class="battery-side battery-side--right">
+                <span class="battery-runtime" id="battery-runtime">-</span>
+                <span class="battery-power-current"><span id="battery-power">-</span> W · <span id="battery-current">-</span> A</span>
+              </div>
+            </div>
+            <div class="battery-power-gauge" role="img" aria-label="Potencia de batería: sin dato">
+              <div class="battery-power-directions" aria-hidden="true"><span></span><span id="battery-power-status">Sin dato</span><span></span></div>
+              <div class="battery-power-track" aria-hidden="true"><div class="battery-power-fill"></div></div>
+              <div class="battery-power-scale" aria-hidden="true"><span id="battery-scale-min">−</span><span id="battery-scale-charge">−</span><span>0 W</span><span id="battery-scale-discharge">−</span><span id="battery-scale-max">−</span></div>
             </div>
             <h2>Batería</h2>
           </article>

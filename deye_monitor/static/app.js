@@ -89,7 +89,7 @@ function renderFlow(snapshot){
   });
 }
 
-let dashboardConfig=null, energySummary=null, lastSnapshot=null, previousAlert=false, audioContext=null;
+let dashboardConfig=null, energySummary=null, batteryRuntimeSamples=[], lastSnapshot=null, previousAlert=false, audioContext=null;
 const dashboardValue=value=>known(value)?valueText(value):'-';
 
 function homeDayScale(kwh,config){
@@ -104,7 +104,23 @@ function batteryDetails(snapshot,config){
   const alert=fresh&&((soc<=config.soc_min&&!charging)||(soc>=config.soc_max&&charging));
   const fraction=metricState(snapshot,'battery','soc_pct')==='online'&&known(soc)?Math.min(1,Math.max(0,(soc-config.soc_min)/(config.soc_max-config.soc_min))):null;
   const available=known(config.battery_usable_kwh)&&fraction!==null?config.battery_usable_kwh*fraction:null;
-  return {alert,available,fraction,flow:fresh?(charging?'charging':discharging?'discharging':'idle'):'unknown'};
+  const remainingHours=discharging&&available!==null?available*1000/raw:null;
+  return {alert,available,fraction,remainingHours,flow:fresh?(charging?'charging':discharging?'discharging':'idle'):'unknown'};
+}
+function estimateBatteryRuntime(availableKwh,samples,windowMinutes,deadband=30){
+  if(!known(availableKwh)||availableKwh<=0||!Array.isArray(samples)||samples.length<2||!known(windowMinutes)||windowMinutes<=0)return null;
+  const rows=samples.map(row=>({time:Date.parse(row.captured_at),power:Number(row.battery_power_w)}))
+    .filter(row=>Number.isFinite(row.time)&&Number.isFinite(row.power)).sort((a,b)=>a.time-b.time);
+  if(rows.length<2)return null;
+  const start=rows[0].time,end=rows[rows.length-1].time,elapsed=(end-start)/60000;
+  if(elapsed<windowMinutes*.75)return null;
+  let dischargedWh=0;
+  for(let i=1;i<rows.length;i++){
+    const hours=(rows[i].time-rows[i-1].time)/3600000;
+    const avg=(rows[i].power+rows[i-1].power)/2;
+    dischargedWh+=Math.max(0,avg-deadband)*hours;
+  }
+  return dischargedWh>0?availableKwh/(dischargedWh/elapsed*60/1000):null;
 }
 function energyText(period){
   return known(period?.kwh)?`${number(period.kwh,'kWh')}${period.complete?'':''}`:'Sin historial suficiente';
@@ -123,6 +139,7 @@ function renderStationDetails(snapshot){
 function renderMetrics(snapshot){
   lastSnapshot=snapshot;
   const batteryDetail=dashboardConfig?batteryDetails(snapshot,dashboardConfig):{available:null,fraction:null,alert:false,flow:'unknown'};
+  batteryDetail.remainingHours=estimateBatteryRuntime(batteryDetail.available,batteryRuntimeSamples,dashboardConfig?.battery_runtime_window_minutes??10,snapshot.flow?.deadband_w??30);
   for(const [group,field,unit] of [['solar','total_power_w','W'],['grid','power_w','W'],['battery','power_w','W'],['load','total_power_w','W']]){
     const state=metricState(snapshot,group,field),value=lookup(snapshot,`${group}.${field}`);
     const card=document.querySelector(`[data-metric="${group}"]`),gauge=document.querySelector(`[data-gauge="${group}"]`);
@@ -130,19 +147,41 @@ function renderMetrics(snapshot){
     if(group==='battery'){
       const soc=snapshot.battery?.soc_pct;
       put('battery-value',dashboardValue(batteryDetail.available));
+      const hours=batteryDetail.remainingHours;
+      const minutes=known(hours)?Math.floor(hours*60):null;
+      put('battery-runtime',known(hours)?`${hours.toFixed(1)} h`:'');
       put('battery-soc',dashboardValue(soc));
       put('battery-power',dashboardValue(value));
     }else put(`${group}-value`,dashboardValue(value));
     if(group==='battery'){
-      const chargeFraction=metricState(snapshot,'battery','soc_pct')==='online'?batteryDetail.fraction:null;
+      const chargeFraction=metricState(snapshot,'battery','soc_pct')==='online'?Math.min(1,Math.max(0,snapshot.battery.soc_pct/100)):null;
       if(gauge){
         gauge.dataset.chargeFraction=chargeFraction===null?'':String(chargeFraction);
-        const fill=gauge.querySelector('.battery-fill');
-        if(fill)fill.style.width=chargeFraction===null?'0%':`${chargeFraction*100}%`;
+        gauge.querySelectorAll('.battery-segment').forEach((segment,index)=>{
+          segment.classList.toggle('active',chargeFraction!==null&&index<Math.round(chargeFraction*10));
+        });
         gauge.setAttribute('aria-label',`Batería: ${dashboardValue(snapshot.battery?.soc_pct)} % · ${dashboardValue(batteryDetail.available)} kWh · ${stateLabel(state)}`);
       }
     }
     if(gauge&&group!=='battery')gauge.setAttribute('aria-label',`${group}: ${dashboardValue(value)} ${unit} · ${stateLabel(state)}`);
+  }
+  const powerGauge=document.querySelector('.battery-power-gauge');
+  if(powerGauge){
+    const maximum=dashboardConfig?.gauge_max_w?.battery??6000;
+    const raw=snapshot.battery?.power_w;
+    const online=metricState(snapshot,'battery','power_w')==='online';
+    const direction=online?batteryFlowState(raw):'unknown';
+    const width=online?gaugePercent(raw,maximum,true)/2:0;
+    powerGauge.dataset.direction=direction;
+    const fill=powerGauge.querySelector('.battery-power-fill');
+    if(fill){fill.style.width=`${width}%`;fill.style.left=`${direction==='discharging'?50-width:50}%`}
+    put('battery-scale-min',number(maximum));
+    put('battery-scale-charge',number(maximum/2));
+    put('battery-scale-discharge',number(-maximum/2));
+    put('battery-scale-max',number(-maximum));
+    const label={charging:'Cargando',discharging:'Descargando',idle:'En reposo',unknown:'Sin dato'}[direction];
+    put('battery-power-status',label);
+    powerGauge.setAttribute('aria-label',`Potencia de batería: ${label}${online?` · ${number(raw)}`:''} · escala de ${number(-maximum)} a ${number(maximum)}`);
   }
   renderStationDetails(snapshot);
   if(!dashboardConfig)return;
@@ -154,8 +193,7 @@ function renderMetrics(snapshot){
   if(grid)grid.dataset.absent=String(absent);
   put('grid-top',absent?'Sin tensión':voltageState==='online'?`Tensión: ${number(snapshot.grid.voltage_v,'V')}`:'Tensión: sin dato');
   const bought=metricState(snapshot,'grid','energy_bought_today_kwh')==='online'?number(snapshot.grid.energy_bought_today_kwh,'kWh'):'-';
-  const sold=metricState(snapshot,'grid','energy_sold_today_kwh')==='online'?number(snapshot.grid.energy_sold_today_kwh,'kWh'):'-';
-  put('grid-today',`Compra: ${bought}\nVenta: ${sold}`);
+  put('grid-today',`Compra: ${bought}`);
   put('grid-bottom',cfg.billing_day===null?'Configurar día de facturación':`Ciclo: ${energyText(energySummary?.grid_billing)}`);
   const daily=energySummary?.home_day;
   put('load-top',`Hoy: ${energyText(daily)}`);
@@ -201,6 +239,7 @@ function render(snapshot){
 async function initial(){
   try{
     dashboardConfig=await fetchJson('/api/dashboard-config','No se pudo cargar la configuración');
+    await loadBatteryRuntimeHistory();
     const button=document.querySelector('#enable-beep');
     button.hidden=!dashboardConfig.beep_enabled;
     button.addEventListener('click',async()=>{
@@ -214,9 +253,18 @@ async function initial(){
       }catch(error){put('energy-status',error.message)}
     });
     render(await fetchJson('/api/state','No se pudo obtener el estado'));
+    setInterval(loadBatteryRuntimeHistory,5000);
     await loadEnergy();
   }
   catch(_){console.error('No se pudo obtener el estado')}
+}
+
+async function loadBatteryRuntimeHistory(){
+  try{
+    const data=await fetchJson('/api/history/battery-runtime','No se pudo cargar el historial reciente de batería');
+    batteryRuntimeSamples=data.samples||[];
+    if(lastSnapshot)renderMetrics(lastSnapshot);
+  }catch(_){batteryRuntimeSamples=[];if(lastSnapshot)renderMetrics(lastSnapshot)}
 }
 
 function connect(){
@@ -382,4 +430,4 @@ if(typeof document!=='undefined'){
   else window.addEventListener('resize',resizePlot);
 }
 
-if(typeof module!=='undefined')module.exports={batteryDetails,homeDayScale,known,lookup,number,valueText,batteryFlowState,gaugePercent,metricState,temperatureData,rollingDayRange,rollingDaySplits,temperatureChartOptions,FlowLogic,chartHeight,fetchJson,runGuarded,renderStationDetails};
+if(typeof module!=='undefined')module.exports={batteryDetails,estimateBatteryRuntime,homeDayScale,known,lookup,number,valueText,batteryFlowState,gaugePercent,metricState,temperatureData,rollingDayRange,rollingDaySplits,temperatureChartOptions,FlowLogic,chartHeight,fetchJson,runGuarded,renderStationDetails};

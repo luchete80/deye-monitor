@@ -1,0 +1,51 @@
+{
+  "note": "Synthetic discharge demo: 65% SOC, 4 kWh available, 2400 W discharge, about 1 h 40 min remaining.",
+  "repeat": true,
+  "messages": [
+    {
+      "topic": "deye/status",
+      "payload": "online",
+      "delay": 0.2
+    },
+    {
+      "topic": "deye/logger_status",
+      "payload": "online",
+      "delay": 0.2
+    },
+    {
+      "topic": "deye/dc/pv1/power",
+      "payload": 1800,
+      "delay": 0.2
+    },
+    {
+      "topic": "deye/dc/pv2/power",
+      "payload": 950,
+      "delay": 0.2
+    },
+    {
+      "topic": "deye/ac/l1/voltage",
+      "payload": 231,
+      "delay": 0.2
+    },
+    {
+      "topic": "deye/ac/total_power",
+      "payload": 5150,
+      "delay": 0.2
+    },
+    {
+      "topic": "deye/battery/soc",
+      "payload": 65,
+      "delay": 0.2
+    },
+    {
+      "topic": "deye/battery/power",
+      "payload": 2400,
+      "delay": 0.2
+    },
+    {
+      "topic": "deye/battery/current",
+      "payload": 48,
+      "delay": 0.2
+    }
+  ]
+}

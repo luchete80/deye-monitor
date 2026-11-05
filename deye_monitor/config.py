@@ -50,6 +50,7 @@ class Config:
     battery_usable_kwh: float | None = None
     battery_soc_min_pct: float = 25
     battery_soc_max_pct: float = 95
+    battery_runtime_window_minutes: float = 10
     billing_day: int | None = None
     timezone: str = "America/Argentina/Buenos_Aires"
     grid_absent_below_v: float = 10
@@ -65,6 +66,7 @@ class Config:
             "solar_capacity_w": self.solar_capacity_w,
             "battery_usable_kwh": self.battery_usable_kwh,
             "soc_min": self.battery_soc_min_pct, "soc_max": self.battery_soc_max_pct,
+            "battery_runtime_window_minutes": self.battery_runtime_window_minutes,
             "billing_day": self.billing_day, "timezone": self.timezone,
             "grid_absent_below_v": self.grid_absent_below_v,
             "beep_enabled": self.alert_beep_enabled,
@@ -78,6 +80,8 @@ class Config:
                 raise ValueError(f"{name} must be finite and positive")
         if not 0 <= self.battery_soc_min_pct < self.battery_soc_max_pct <= 100:
             raise ValueError("Battery SOC requires 0 <= minimum < maximum <= 100")
+        if not math.isfinite(self.battery_runtime_window_minutes) or self.battery_runtime_window_minutes <= 0:
+            raise ValueError("Battery runtime window must be finite and positive")
         if self.home_day_scale_next_kwh <= self.home_day_scale_kwh:
             raise ValueError("Next home scale must exceed initial scale")
         if self.billing_day is not None and not 1 <= self.billing_day <= 31:
@@ -137,6 +141,7 @@ class Config:
             battery_usable_kwh=float(_value("DEYE_BATTERY_USABLE_KWH")) if _value("DEYE_BATTERY_USABLE_KWH") else None,
             battery_soc_min_pct=float(_value("DEYE_BATTERY_SOC_MIN_PCT", "25")),
             battery_soc_max_pct=float(_value("DEYE_BATTERY_SOC_MAX_PCT", "95")),
+            battery_runtime_window_minutes=float(_value("DEYE_BATTERY_RUNTIME_WINDOW_MINUTES", "10")),
             billing_day=int(_value("DEYE_BILLING_DAY")) if _value("DEYE_BILLING_DAY") else None,
             timezone=_value("DEYE_TIMEZONE", "America/Argentina/Buenos_Aires"),
             grid_absent_below_v=float(_value("DEYE_GRID_ABSENT_BELOW_V", "10")),

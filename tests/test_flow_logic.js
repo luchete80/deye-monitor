@@ -47,6 +47,15 @@ for(const soc of [24,25,26,94,95,96])for(const power of [-1000,0,1000]){
 }
 const middle={battery:{soc_pct:60,power_w:1000},field_freshness:{battery:{soc_pct:true,power_w:true}},connectivity:online};
 assert.equal(dashboard.batteryDetails(middle,cfg).available,3.5);
+assert.equal(dashboard.batteryDetails(middle,cfg).remainingHours,3.5);
+const runtimeSamples=[];
+for(let minute=0;minute<=10;minute+=1)runtimeSamples.push({captured_at:new Date(Date.UTC(2025,0,1,0,minute)).toISOString(),battery_power_w:1000});
+assert.ok(Math.abs(dashboard.estimateBatteryRuntime(5,runtimeSamples,10,0)-5)<1e-9);
+assert.equal(dashboard.estimateBatteryRuntime(5,runtimeSamples.slice(0,5),10,0),null);
+assert.equal(dashboard.estimateBatteryRuntime(5,runtimeSamples,10,1200),null);
+for(const power of [-1000,0,30])assert.equal(dashboard.batteryDetails({...middle,battery:{soc_pct:60,power_w:power}},cfg).remainingHours,null);
+assert.equal(dashboard.batteryDetails({...middle,field_freshness:{}},cfg).remainingHours,null);
+assert.equal(dashboard.batteryDetails(middle,{...cfg,battery_usable_kwh:null}).remainingHours,null);
 assert.equal(dashboard.batteryDetails(middle,cfg).fraction,0.5);
 assert.equal(dashboard.homeDayScale(6,cfg),6);
 assert.equal(dashboard.homeDayScale(6.1,cfg),12);

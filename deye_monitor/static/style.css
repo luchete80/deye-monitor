@@ -46,10 +46,24 @@ button[hidden]{display:none}
 .metric-card--battery h2{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
 .metric-card--battery[data-alert=true] .battery-soc{animation:soc-alert .8s steps(2,start) infinite}
 @keyframes soc-alert{50%{opacity:.25}}
-.battery-display{position:absolute;inset:0;display:flex;align-items:center;color:#f3f8ff}
-.battery-shell{position:relative;width:100%;height:76%;padding:5px;border:5px solid var(--battery);border-radius:16px;box-shadow:0 0 14px #08dce833;overflow:visible;background:#041b3b}
+.battery-display{position:absolute;inset:0 0 38%;display:flex;align-items:center;color:#f3f8ff}
+.battery-shell{position:relative;margin-left:29%;width:36%;height:76%;padding:5px;border:5px solid var(--battery);border-radius:16px;box-shadow:0 0 14px #08dce833;overflow:visible;background:#041b3b}
 .battery-shell::after{content:'';position:absolute;top:22%;right:-14px;width:9px;height:56%;border:4px solid var(--battery);border-left:0;border-radius:0 8px 8px 0;background:#041b3b}
-.battery-fill{height:100%;width:0;border-radius:6px;background:linear-gradient(90deg,#00b9d5,#08dce8);transition:width .35s ease}
+.battery-fill{height:100%;display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:5px}
+.battery-segment{border-radius:3px;background:#0a3151}
+.battery-segment.active{background:linear-gradient(180deg,#08dce8,#00a6bf)}
+.battery-power-gauge{position:absolute;inset:64% 1% 0;color:#c9deef;font-size:clamp(.55rem,1.4cqw,.8rem);font-variant-numeric:tabular-nums;display:flex;flex-direction:column;justify-content:space-between;gap:2px}
+.battery-power-directions{display:flex;justify-content:space-between;line-height:1}
+.battery-power-directions span:first-child{color:#f5c264}
+.battery-power-directions span:last-child{color:#08dce8}
+.battery-power-track{position:relative;min-height:5px;flex:1;max-height:14px;background:#102e4d;border:1px solid #4a6680;border-radius:4px;overflow:hidden}
+.battery-power-track::after{content:'';position:absolute;left:50%;top:0;bottom:0;width:2px;background:#f3f8ff}
+.battery-power-fill{position:absolute;top:0;bottom:0;left:50%;width:0;background:#f5c264;transition:width .35s ease,left .35s ease}
+.battery-power-gauge[data-direction=charging] .battery-power-fill{background:#08dce8}
+.battery-power-scale{display:flex;justify-content:space-between;line-height:1}
+.battery-power-scale span{flex:1;text-align:center}
+.battery-power-scale span:first-child{text-align:left}
+.battery-power-scale span:last-child{text-align:right}
 .battery-labels{position:absolute;inset:0;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 3%;font-size:clamp(1.05rem,2.5vw,2rem);font-weight:750;font-variant-numeric:tabular-nums;text-shadow:0 1px 5px #031631}
 .battery-soc{min-width:25%;text-align:center}
 .battery-power-current{min-width:38%;text-align:center;font-size:.72em;white-space:nowrap}
@@ -114,4 +128,19 @@ button[hidden]{display:none}
   .metric-card h2{font-size:clamp(1.35rem,4.3vh,2rem)}
   .battery-labels{font-size:clamp(1rem,2.5vw,1.6rem)}
 }
-@media(prefers-reduced-motion:reduce){.flow-line.active,.battery-fill,.metric-card--battery[data-alert=true] .battery-soc{animation:none;transition:none}}
+@media(prefers-reduced-motion:reduce){.flow-line.active,.battery-power-fill,.metric-card--battery[data-alert=true] .battery-soc{animation:none;transition:none}}
+
+.battery-side{position:absolute;top:0;bottom:0;display:flex;flex-direction:column;justify-content:center;gap:3px;color:#f3f8ff;font-variant-numeric:tabular-nums;font-size:clamp(.8rem,3.4cqw,1.5rem);font-weight:750}
+.battery-side--left{left:0;width:23%;text-align:center}
+.battery-side--right{right:0;width:27%;text-align:center}
+.battery-readings{display:flex;align-items:baseline;justify-content:center;gap:clamp(4px,.8cqw,10px);white-space:nowrap}
+.battery-side .battery-available{font-size:1.5em;line-height:1.05}
+.battery-side .battery-power-current{font-size:.5em}
+.battery-side .metric-unit{font-size:.65em}
+.battery-shell .battery-fill{gap:clamp(2px,.6cqw,5px)}
+
+.battery-side .battery-soc{font-size:1.5em;line-height:1.05}
+
+.battery-runtime{font-size:1.9em;line-height:1.05;white-space:nowrap}
+.battery-side--right{font-size:clamp(1rem,4cqw,1.75rem)}
+.battery-side--right .battery-power-current{font-size:.62em}

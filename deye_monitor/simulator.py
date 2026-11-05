@@ -21,11 +21,15 @@ class FixtureSimulator:
 
     def _run(self):
         try:
-            messages = json.loads(self.fixture.read_text())["messages"]
-            for message in messages:
-                if self._stop.is_set(): break
-                for adapted in self.adapter.adapt_many(message["topic"], str(message["payload"])):
-                    self.state.update(*adapted)
-                self._stop.wait(message.get("delay", self.interval))
+            fixture = json.loads(self.fixture.read_text())
+            messages = fixture["messages"]
+            while not self._stop.is_set():
+                for message in messages:
+                    if self._stop.is_set(): break
+                    for adapted in self.adapter.adapt_many(message["topic"], str(message["payload"])):
+                        self.state.update(*adapted)
+                    self._stop.wait(message.get("delay", self.interval))
+                if not fixture.get("repeat", False): break
+                if not messages: self._stop.wait(self.interval)
         except (OSError, KeyError, TypeError, json.JSONDecodeError):
             self.log.exception("Fixture simulator stopped: invalid fixture")

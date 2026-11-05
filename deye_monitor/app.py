@@ -4,6 +4,7 @@ import csv
 import json
 import queue
 from datetime import datetime, timedelta
+from datetime import timezone
 from pathlib import Path
 from flask import Flask, Response, jsonify, request, send_from_directory, stream_with_context
 from .adapter import SG03LP1Adapter
@@ -112,6 +113,20 @@ def create_app(config: Config | None = None, start_source: bool = True) -> Flask
             return jsonify({"range": range_name, "samples": history.query(range_name)})
         except ValueError as error:
             return jsonify({"error": str(error)}), 400
+    @app.get("/api/history/battery-runtime")
+    def api_battery_runtime_history():
+        samples = history.query_battery_window(config.battery_runtime_window_minutes)
+        if config.data_source == "simulated" and len(samples) < 2:
+            now = datetime.now(timezone.utc)
+            samples = [
+                {"captured_at": (now - timedelta(minutes=config.battery_runtime_window_minutes * (1 - i / 10))).isoformat(),
+                 "battery_power_w": 2400.0, "soc_pct": 65.0}
+                for i in range(11)
+            ]
+        return jsonify({
+            "window_minutes": config.battery_runtime_window_minutes,
+            "samples": samples,
+        })
     @app.get("/api/history/temperature")
     def api_temperature_history():
         range_name = request.args.get("range", "24h")
