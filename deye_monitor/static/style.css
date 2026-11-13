@@ -70,7 +70,7 @@ button[hidden]{display:none}
 .battery-power-current{min-width:38%;text-align:center;font-size:.72em;white-space:nowrap}
 .battery-available{min-width:25%;text-align:center;white-space:nowrap}
 .flow-arrows{position:absolute;inset:0;z-index:2;width:100%;height:100%;overflow:visible;pointer-events:none}
-.flow-line{fill:none;stroke:#5e7798;stroke-width:1.65;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke;opacity:.52}
+.flow-line{fill:none;stroke:#5e7798;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke;opacity:.52}
 .flow-line.active{stroke:#d1faff;stroke-dasharray:3 2;animation:energy-flow 1s linear infinite;opacity:1}
 .flow-line.reverse{animation-direction:reverse}
 .flow-line.stale{stroke:#f4cf62;stroke-dasharray:2 2;opacity:.85}
