@@ -132,7 +132,6 @@ function renderStationDetails(snapshot){
   const pv1w=power('solar','pv1_power_w'),pv1a=current('solar','pv1_current_a');
   const pv2w=power('solar','pv2_power_w'),pv2a=current('solar','pv2_current_a');
   put('solar-details',`PV1: ${pv1w} W · ${pv1a} A\nPV2: ${pv2w} W · ${pv2a} A`);
-  put('grid-current',`Corriente estimada: ${current('grid','estimated_current_a')} A`);
   put('load-current',`Corriente: ${current('load','current_a')} A`);
   put('battery-current',current('battery','current_a'));
 }
@@ -194,7 +193,7 @@ function renderMetrics(snapshot){
   put('grid-top',absent?'Sin tensión':voltageState==='online'?`Tensión: ${number(snapshot.grid.voltage_v,'V')}`:'Tensión: sin dato');
   const bought=metricState(snapshot,'grid','energy_bought_today_kwh')==='online'?number(snapshot.grid.energy_bought_today_kwh,'kWh'):'-';
   put('grid-today',`Compra: ${bought}`);
-  put('grid-bottom',cfg.billing_day===null?'Configurar día de facturación':`Ciclo: ${energyText(energySummary?.grid_billing)}`);
+  put('grid-bottom',cfg.billing_day===null?'':`Ciclo: ${energyText(energySummary?.grid_billing)}`);
   const daily=energySummary?.home_day;
   put('load-top',`Hoy: ${energyText(daily)}`);
   put('load-bottom',`Mes: ${energyText(energySummary?.home_month)}`);

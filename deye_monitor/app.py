@@ -90,6 +90,10 @@ def create_app(config: Config | None = None, start_source: bool = True) -> Flask
 
     @app.get("/")
     def index(): return send_from_directory(Path(app.static_folder), "index.html")
+
+    @app.get("/images/<path:filename>")
+    def dashboard_image(filename):
+        return send_from_directory(Path(app.root_path).parent / "images", filename)
     @app.get("/solar")
     def solar_chart(): return send_from_directory(Path(app.static_folder), "solar.html")
     @app.get("/health")

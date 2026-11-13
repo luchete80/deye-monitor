@@ -10,23 +10,8 @@
 </head>
 <body>
   <main class="dashboard-shell">
-    <header class="dashboard-header">
-      <button id="enable-beep" hidden>Activar sonido</button>
-      <details class="dashboard-details">
-        <summary>Más datos</summary>
-        <div class="dashboard-details__panel">
-          <section class="energy-summary" aria-label="Consumo de Casa">
-            <span id="home-last-month">Último mes: sin historial suficiente</span>
-            <span id="home-counter">Contador mensual: sin dato</span>
-            <button id="reset-home">Reset contador mensual Casa</button>
-            <span id="energy-status" aria-live="polite"></span>
-          </section>
-        </div>
-      </details>
-      <a class="solar-chart-link" href="/static/solar.html">Gráfico solar</a>
-    </header>
-
     <section class="dashboard-main" aria-label="Sol, Red, Casa y Batería">
+      <img class="dashboard-logo" src="/images/logo.png" alt="Logo">
       <div class="dashboard-flow">
         <svg id="dashboard-flow-arrows" class="flow-arrows" viewBox="0 0 100 100" preserveAspectRatio="none" role="img" aria-labelledby="flow-arrows-title flow-arrows-description">
           <title id="flow-arrows-title">Sentido del flujo energético</title>
@@ -63,7 +48,6 @@
               <p class="metric-value">
                 <span class="metric-primary"><span id="grid-value">-</span><span class="metric-unit"> W</span></span>
                 <span class="metric-secondary" id="grid-top">Tensión: -</span>
-                <span class="metric-secondary" id="grid-current">Corriente estimada: - A</span>
                 <span class="metric-secondary">Hoy: <span id="grid-today">-</span></span>
                 <span class="metric-secondary" id="grid-bottom">Ciclo: -</span>
               </p>
@@ -98,7 +82,7 @@
               </div>
               <div class="battery-side battery-side--right">
                 <span class="battery-runtime" id="battery-runtime">-</span>
-                <span class="battery-power-current"><span id="battery-power">-</span> W · <span id="battery-current">-</span> A</span>
+                <span class="battery-power-current"><span id="battery-power">-</span> W</span>
               </div>
             </div>
             <div class="battery-power-gauge" role="img" aria-label="Potencia de batería: sin dato">
@@ -125,6 +109,21 @@
           <p id="temperature-history-status" aria-live="polite">Cargando historial de temperatura…</p>
           <div id="temperature-chart" class="chart" aria-label="Temperaturas ambiente 1 y 2 en grados Celsius durante las últimas 24 horas"></div>
         </section>
+        <nav class="dashboard-actions" aria-label="Acciones del dashboard">
+          <button id="enable-beep" hidden>Activar sonido</button>
+          <a class="solar-chart-link" href="/static/solar.html">Gráfico solar</a>
+          <details class="dashboard-details">
+            <summary>Más datos</summary>
+            <div class="dashboard-details__panel">
+              <section class="energy-summary" aria-label="Consumo de Casa">
+                <span id="home-last-month">Último mes: sin historial suficiente</span>
+                <span id="home-counter">Contador mensual: sin dato</span>
+                <button id="reset-home">Reset contador mensual Casa</button>
+                <span id="energy-status" aria-live="polite"></span>
+              </section>
+            </div>
+          </details>
+        </nav>
       </div>
     </section>
     <footer class="dashboard-footer" aria-hidden="true"></footer>
