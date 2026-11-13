@@ -120,7 +120,7 @@ def create_app(config: Config | None = None, start_source: bool = True) -> Flask
     @app.get("/api/history/battery-runtime")
     def api_battery_runtime_history():
         samples = history.query_battery_window(config.battery_runtime_window_minutes)
-        if config.data_source == "simulated" and len(samples) < 2:
+        if config.data_source == "simulated":
             now = datetime.now(timezone.utc)
             samples = [
                 {"captured_at": (now - timedelta(minutes=config.battery_runtime_window_minutes * (1 - i / 10))).isoformat(),
