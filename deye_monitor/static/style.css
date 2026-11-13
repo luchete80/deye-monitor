@@ -136,3 +136,8 @@ button[hidden]{display:none}
 .battery-power-gauge{font-size:10px}
 .battery-shell .battery-fill{gap:4px}
 .dashboard-details__panel{left:auto;right:0;top:auto;bottom:calc(100% + 7px);width:380px;max-height:440px}
+
+/* Fondo tenue y nivel proporcional al máximo configurado. */
+.metric-gauge__track{opacity:.18}
+.metric-gauge__level{fill:none;stroke:var(--metric-color);stroke-width:8.5;stroke-linecap:round;stroke-linejoin:round}
+.metric-card--load .metric-gauge__level{stroke:url(#house-gradient);stroke-width:8}

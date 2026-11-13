@@ -162,7 +162,16 @@ function renderMetrics(snapshot){
         gauge.setAttribute('aria-label',`Batería: ${dashboardValue(snapshot.battery?.soc_pct)} % · ${dashboardValue(batteryDetail.available)} kWh · ${stateLabel(state)}`);
       }
     }
-    if(gauge&&group!=='battery')gauge.setAttribute('aria-label',`${group}: ${dashboardValue(value)} ${unit} · ${stateLabel(state)}`);
+    if(gauge&&group!=='battery'){
+      gauge.setAttribute('aria-label',`${group}: ${dashboardValue(value)} ${unit} · ${stateLabel(state)}`);
+      const maximum=dashboardConfig?.gauge_max_w?.[group]??6000;
+      const percent=state==='online'?gaugePercent(value,maximum,true):0;
+      const level=gauge.querySelector('.metric-gauge__level');
+      if(level){
+        level.setAttribute('stroke-dasharray',`${percent} 100`);
+        level.style.visibility=percent>0?'visible':'hidden';
+      }
+    }
   }
   const powerGauge=document.querySelector('.battery-power-gauge');
   if(powerGauge){
