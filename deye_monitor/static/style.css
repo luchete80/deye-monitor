@@ -127,6 +127,9 @@ button[hidden]{display:none}
 .metric-value{gap:2px}
 .metric-primary{font-size:44px}
 .metric-secondary{font-size:14px}
+.metric-card--solar #solar-details{font-size:16px}
+.metric-card--grid .metric-secondary,
+.metric-card--load .metric-secondary{font-size:16px}
 .metric-card h2{font-size:30px}
 .metric-card--load h2{font-size:28px}
 .dashboard-logo{max-width:160px}

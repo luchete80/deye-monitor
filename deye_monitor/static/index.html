@@ -29,8 +29,8 @@
           <article class="metric-card metric-card--solar" data-metric="solar">
             <div class="metric-gauge" data-gauge="solar" role="img" aria-label="Sol: -">
               <svg class="metric-gauge__svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
-                <path class="metric-gauge__track" d="M 23.23 96.77 A 52 52 0 1 1 96.77 96.77"></path>
-                <path class="metric-gauge__level" pathLength="100" stroke-dasharray="0 100" d="M 23.23 96.77 A 52 52 0 1 1 96.77 96.77"></path>
+                <path class="metric-gauge__track" d="M 8 60 A 52 52 0 0 1 112 60"></path>
+                <path class="metric-gauge__level" pathLength="100" stroke-dasharray="0 100" d="M 8 60 A 52 52 0 0 1 112 60"></path>
               </svg>
               <p class="metric-value">
                 <span class="metric-primary"><span id="solar-value">-</span><span class="metric-unit"> W</span></span>
@@ -44,8 +44,8 @@
           <article class="metric-card metric-card--grid" data-metric="grid">
             <div class="metric-gauge" data-gauge="grid" role="img" aria-label="Red: -">
               <svg class="metric-gauge__svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
-                <path class="metric-gauge__track" d="M 23.23 96.77 A 52 52 0 1 1 96.77 96.77"></path>
-                <path class="metric-gauge__level" pathLength="100" stroke-dasharray="0 100" d="M 23.23 96.77 A 52 52 0 1 1 96.77 96.77"></path>
+                <path class="metric-gauge__track" d="M 8 60 A 52 52 0 0 1 112 60"></path>
+                <path class="metric-gauge__level" pathLength="100" stroke-dasharray="0 100" d="M 8 60 A 52 52 0 0 1 112 60"></path>
               </svg>
               <p class="metric-value">
                 <span class="metric-primary"><span id="grid-value">-</span><span class="metric-unit"> W</span></span>
@@ -61,8 +61,8 @@
             <div class="metric-gauge" data-gauge="load" role="img" aria-label="Casa: -">
               <svg class="metric-gauge__svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
                 <defs><linearGradient id="house-gradient" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#f5e841"></stop><stop offset=".55" stop-color="#d9ed42"></stop><stop offset="1" stop-color="#56b978"></stop></linearGradient></defs>
-                <path class="metric-gauge__track" d="M 23.23 96.77 A 52 52 0 1 1 96.77 96.77"></path>
-                <path class="metric-gauge__level" pathLength="100" stroke-dasharray="0 100" d="M 23.23 96.77 A 52 52 0 1 1 96.77 96.77"></path>
+                <path class="metric-gauge__track" d="M 8 60 A 52 52 0 0 1 112 60"></path>
+                <path class="metric-gauge__level" pathLength="100" stroke-dasharray="0 100" d="M 8 60 A 52 52 0 0 1 112 60"></path>
               </svg>
               <p class="metric-value">
                 <span class="metric-primary"><span id="load-value">-</span><span class="metric-unit"> W</span></span>
@@ -114,7 +114,6 @@
         </section>
         <nav class="dashboard-actions" aria-label="Acciones del dashboard">
           <button id="enable-beep" hidden>Activar sonido</button>
-          <a class="solar-chart-link" href="/static/solar.html">Gráfico solar</a>
           <details class="dashboard-details">
             <summary>Más datos</summary>
             <div class="dashboard-details__panel">

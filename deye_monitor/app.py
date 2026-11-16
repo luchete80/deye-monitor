@@ -79,7 +79,8 @@ def create_app(config: Config | None = None, start_source: bool = True) -> Flask
         config.mqtt_prefix, config.topics, config.grid_power_sign,
         config.battery_power_sign, config.mqtt_absolute_topics,
     )
-    history = HistoryStore(config.history_db_path, config.history_retention_hours)
+    # Keep short-lived dashboard series in RAM; raw samples are no longer written to disk.
+    history = HistoryStore(":memory:", config.history_retention_hours)
     energy = EnergyStore(config)
     app.config.update(DEYE_CONFIG=config, DEYE_STATE=state, DEYE_HISTORY=history, DEYE_ENERGY=energy)
     if start_source:
@@ -94,8 +95,6 @@ def create_app(config: Config | None = None, start_source: bool = True) -> Flask
     @app.get("/images/<path:filename>")
     def dashboard_image(filename):
         return send_from_directory(Path(app.root_path).parent / "images", filename)
-    @app.get("/solar")
-    def solar_chart(): return send_from_directory(Path(app.static_folder), "solar.html")
     @app.get("/health")
     def health():
         data = state.snapshot(); return jsonify({"ok": True, "broker": data["connectivity"]["broker"], "stale": data["connectivity"]["stale"]})
@@ -110,13 +109,6 @@ def create_app(config: Config | None = None, start_source: bool = True) -> Flask
         if not request.is_json:
             return jsonify({"error": "JSON request required"}), 415
         return jsonify(energy.reset_home())
-    @app.get("/api/history")
-    def api_history():
-        range_name = request.args.get("range", "24h")
-        try:
-            return jsonify({"range": range_name, "samples": history.query(range_name)})
-        except ValueError as error:
-            return jsonify({"error": str(error)}), 400
     @app.get("/api/history/battery-runtime")
     def api_battery_runtime_history():
         samples = history.query_battery_window(config.battery_runtime_window_minutes)

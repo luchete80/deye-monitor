@@ -174,16 +174,13 @@ def test_http_api_sse_and_page():
     assert b'class="metric-grid"' in page.data
     assert b'id="power-chart"' not in page.data
     assert b'id="temperature-chart"' in page.data
-    solar_page = client.get("/solar")
-    assert solar_page.status_code == 200
-    assert "Generación solar".encode() in solar_page.data
-    assert b'href="/"' in solar_page.data
-    assert b'href="/static/solar.html"' in page.data
+    assert b'href="/static/solar.html"' not in page.data
+    assert client.get("/solar").status_code == 404
     assert client.get("/static/style.css").status_code == 200
     assert client.get("/static/config.css").status_code == 200
     assert client.get("/static/app.js").status_code == 200
-    assert client.get("/static/solar.html").status_code == 200
-    assert client.get("/static/solar.js").status_code == 200
+    assert client.get("/static/solar.html").status_code == 404
+    assert client.get("/static/solar.js").status_code == 404
     assert client.get("/static/uPlot.iife.min.js").status_code == 200
     assert client.get("/static/uPlot.min.css").status_code == 200
     assert client.get("/health").json["ok"] is True
@@ -191,7 +188,7 @@ def test_http_api_sse_and_page():
     assert client.get("/api/state").json["flow"]["deadband_w"] == 30
     assert client.get("/api/state").json["flow"]["simulated"] is True
     assert client.get("/api/state").json["data_observed_at"] is not None
-    assert client.get("/api/history?range=banana").status_code == 400
+    assert client.get("/api/history?range=banana").status_code == 404
     demo_power = client.get("/api/demo/history?kind=power")
     assert demo_power.status_code == 200
     assert demo_power.json["demo"] is True
@@ -224,6 +221,15 @@ def test_history_is_versioned_complete_bounded_and_persistent(tmp_path):
     assert len(reopened.query("24h", now)) == 1
     reopened.prune(now + timedelta(hours=24, seconds=1))
     assert reopened.query("24h", now + timedelta(hours=24, seconds=1)) == []
+
+
+def test_snapshot_recorder_keeps_energy_without_saving_raw_history(tmp_path):
+    app = create_app(config(history_db_path=str(tmp_path / "no-history.sqlite3")), start_source=False)
+    history = app.config["DEYE_HISTORY"]
+    assert history.path == ":memory:"
+    recorder = SnapshotRecorder(app.config["DEYE_STATE"], history, .01, app.config["DEYE_ENERGY"])
+    assert recorder.record_once() is False
+    assert history.query("24h") == []
 
 
 def test_snapshot_recorder_retries_after_transient_storage_failure(tmp_path, caplog):

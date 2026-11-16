@@ -7,7 +7,7 @@ const htmlIds=new Set([...html.matchAll(/\bid="([^"]+)"/g)].map(match=>`#${match
 
 for(const id of ['#solar-value','#grid-value','#battery-value','#battery-power','#load-value','#temperature-chart','#temperature-history-status'])assert.ok(htmlIds.has(id),`Missing ${id}`);
 assert.ok(!htmlIds.has('#power-chart'),'Power chart should not be embedded in the dashboard');
-assert.match(html,/href="\/static\/solar\.html">Gráfico solar<\/a>/);
+assert.doesNotMatch(html,/href="\/static\/solar\.html"/);
 assert.equal((html.match(/class="metric-gauge"/g)||[]).length,4);
 assert.match(html,/id="dashboard-flow-arrows"/);
 assert.doesNotMatch(html,/class="central-info"/);
