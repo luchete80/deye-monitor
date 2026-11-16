@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Deye Monitor</title>
   <link rel="stylesheet" href="/static/uPlot.min.css?v=6">
-  <link rel="stylesheet" href="/static/style.css?v=41">
+  <link rel="stylesheet" href="/static/style.css?v=43">
   <link rel="stylesheet" href="/static/config.css?v=7">
 </head>
 <body>
@@ -72,6 +72,13 @@
               </p>
             </div>
             <h2>Casa</h2>
+            <section class="energy-summary" aria-label="Consumo mensual de Casa">
+              <span id="home-last-month">Mes anterior: sin historial suficiente</span>
+              <span id="home-counter">Contador mensual: sin dato</span>
+              <span id="home-reset-at">Último reset: sin dato</span>
+              <button id="reset-home" type="button">Reset contador mensual</button>
+              <span id="energy-status" aria-live="polite"></span>
+            </section>
           </article>
 
           <article class="metric-card metric-card--battery" data-metric="battery">
@@ -84,7 +91,6 @@
                 </span>
               </div>
               <div class="battery-side battery-side--right">
-                <span class="battery-runtime" id="battery-runtime">-</span>
                 <span class="battery-power-current"><span id="battery-power">-</span> W</span>
               </div>
             </div>
@@ -114,17 +120,6 @@
         </section>
         <nav class="dashboard-actions" aria-label="Acciones del dashboard">
           <button id="enable-beep" hidden>Activar sonido</button>
-          <details class="dashboard-details">
-            <summary>Más datos</summary>
-            <div class="dashboard-details__panel">
-              <section class="energy-summary" aria-label="Consumo de Casa">
-                <span id="home-last-month">Último mes: sin historial suficiente</span>
-                <span id="home-counter">Contador mensual: sin dato</span>
-                <button id="reset-home">Reset contador mensual Casa</button>
-                <span id="energy-status" aria-live="polite"></span>
-              </section>
-            </div>
-          </details>
         </nav>
       </div>
     </section>
@@ -132,6 +127,6 @@
   </main>
   <script src="/static/display.js?v=2"></script>
   <script src="/static/uPlot.iife.min.js?v=6"></script>
-  <script src="/static/app.js?v=23"></script>
+  <script src="/static/app.js?v=25"></script>
 </body>
 </html>

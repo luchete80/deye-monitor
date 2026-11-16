@@ -114,7 +114,6 @@ button[hidden]{display:none}
 
 .battery-side .battery-soc{font-size:1.5em;line-height:1.05}
 
-.battery-runtime{font-size:1.9em;line-height:1.05;white-space:nowrap}
 .battery-side--right{font-size:clamp(1rem,4cqw,1.75rem)}
 .battery-side--right .battery-power-current{font-size:.62em}
 
@@ -139,6 +138,15 @@ button[hidden]{display:none}
 .battery-power-gauge{font-size:10px}
 .battery-shell .battery-fill{gap:4px}
 .dashboard-details__panel{left:auto;right:0;top:auto;bottom:calc(100% + 7px);width:380px;max-height:440px}
+
+/* Consumo y reset asociados visualmente al medidor de Casa. */
+.metric-card--load .energy-summary{position:absolute;z-index:3;top:23%;left:100%;width:150px;display:flex;flex-direction:column;align-items:flex-start;gap:7px;color:#eff6d2;text-align:left;font-size:12px;line-height:1.2;text-shadow:0 1px 4px #031631}
+.metric-card--load .energy-summary button{padding:3px 8px;border-color:#8c9a38;background:#273411;color:#f5ffd0;font-size:13px;text-shadow:none;white-space:nowrap}
+.metric-card--load .energy-summary #energy-status{color:#b8d9a5}
+@media(max-width:700px){
+  .metric-card--load .energy-summary{width:135px;font-size:11px;gap:5px}
+  .metric-card--load .energy-summary button{font-size:12px}
+}
 
 /* Fondo tenue y nivel proporcional al máximo configurado. */
 .metric-gauge__track{opacity:.18}
