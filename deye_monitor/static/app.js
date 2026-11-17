@@ -225,6 +225,17 @@ function render(snapshot){
 
 }
 
+// Agrupa las ráfagas MQTT y dibuja solamente el estado más reciente.
+let renderTimer=null;
+function scheduleRender(snapshot){
+  lastSnapshot=snapshot;
+  if(renderTimer!==null)return;
+  renderTimer=setTimeout(()=>{
+    renderTimer=null;
+    render(lastSnapshot);
+  },1000);
+}
+
 async function initial(){
   try{
     dashboardConfig=await fetchJson('/api/dashboard-config','No se pudo cargar la configuración');
@@ -237,10 +248,10 @@ async function initial(){
     document.querySelector('#reset-home').addEventListener('click',async()=>{
       try{
         energySummary=await fetchJson('/api/energy/home/reset','No se pudo reiniciar el contador',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
-        if(lastSnapshot)renderMetrics(lastSnapshot);put('energy-status','Contador reiniciado');
+        if(lastSnapshot)scheduleRender(lastSnapshot);put('energy-status','Contador reiniciado');
       }catch(error){put('energy-status',error.message)}
     });
-    render(await fetchJson('/api/state','No se pudo obtener el estado'));
+    scheduleRender(await fetchJson('/api/state','No se pudo obtener el estado'));
     await loadEnergy();
   }
   catch(_){console.error('No se pudo obtener el estado')}
@@ -248,7 +259,7 @@ async function initial(){
 
 function connect(){
   const source=new EventSource('/events');
-  source.addEventListener('state',event=>render(JSON.parse(event.data)));
+  source.addEventListener('state',event=>scheduleRender(JSON.parse(event.data)));
   source.onerror=()=>{console.warn('Reconectando actualizaciones…')};
 }
 
@@ -364,7 +375,7 @@ async function loadHistory(initial=false){
 
 async function loadEnergy(){
   return runGuarded(()=>energyRefreshInFlight,value=>{energyRefreshInFlight=value},async()=>{
-    try{energySummary=await fetchJson('/api/energy','No se pudo cargar energía');if(lastSnapshot)renderMetrics(lastSnapshot)}
+    try{energySummary=await fetchJson('/api/energy','No se pudo cargar energía');if(lastSnapshot)scheduleRender(lastSnapshot)}
     catch(error){put('energy-status',error.message)}
   });
 }
@@ -397,6 +408,7 @@ if(typeof document!=='undefined'){
     if(document.visibilityState==='visible')loadHistory(false);
   });
   window.addEventListener('beforeunload',()=>{
+    if(renderTimer!==null)clearTimeout(renderTimer);
     if(historyRefreshTimer)clearInterval(historyRefreshTimer);
     if(energyRefreshTimer)clearInterval(energyRefreshTimer);
     historyRefreshTimer=null;
