@@ -218,6 +218,7 @@ function renderAmbientTemperature(snapshot){
 }
 
 function render(snapshot){
+  renderConnectionStatus();
   document.querySelectorAll('[data-path]').forEach(element=>element.textContent=number(lookup(snapshot,element.dataset.path),element.dataset.unit));
   renderMetrics(snapshot);
   renderAmbientTemperature(snapshot);
@@ -257,10 +258,38 @@ async function initial(){
   catch(_){console.error('No se pudo obtener el estado')}
 }
 
+const SSE_TIMEOUT_MS=30000;
+let serverDisconnected=false;
+
+function renderConnectionStatus(){
+  const connectivity=lastSnapshot?.connectivity;
+  let message='';
+  if(serverDisconnected)message='Sin conexión con el servidor';
+  else if(connectivity?.broker==='disconnected'&&!lastSnapshot.flow?.simulated)message='MQTT desconectado';
+  else if(connectivity?.broker==='connected'&&connectivity.stale)message='Datos del inversor sin actualizar';
+  const status=document.querySelector('#connection-status');
+  if(status&&status.textContent!==message)status.textContent=message;
+}
+
 function connect(){
   const source=new EventSource('/events');
-  source.addEventListener('state',event=>scheduleRender(JSON.parse(event.data)));
-  source.onerror=()=>{console.warn('Reconectando actualizaciones…')};
+  const markDisconnected=()=>{
+    serverDisconnected=true;
+    renderConnectionStatus();
+  };
+  let watchdog=setTimeout(markDisconnected,SSE_TIMEOUT_MS);
+  source.addEventListener('state',event=>{
+    const snapshot=JSON.parse(event.data);
+    clearTimeout(watchdog);
+    watchdog=setTimeout(markDisconnected,SSE_TIMEOUT_MS);
+    serverDisconnected=false;
+    scheduleRender(snapshot);
+  });
+  source.onerror=markDisconnected;
+  return ()=>{
+    clearTimeout(watchdog);
+    source.close();
+  };
 }
 
 let temperaturePlot;
@@ -401,13 +430,14 @@ function resizePlot(){
 
 if(typeof document!=='undefined'){
   initial();
-  connect();
+  const stopConnection=connect();
   startHistoryRefresh();
   startEnergyRefresh();
   document.addEventListener('visibilitychange',()=>{
     if(document.visibilityState==='visible')loadHistory(false);
   });
   window.addEventListener('beforeunload',()=>{
+    stopConnection();
     if(renderTimer!==null)clearTimeout(renderTimer);
     if(historyRefreshTimer)clearInterval(historyRefreshTimer);
     if(energyRefreshTimer)clearInterval(energyRefreshTimer);
