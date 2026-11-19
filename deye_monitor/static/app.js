@@ -74,17 +74,18 @@ function renderFlow(snapshot){
   const source=path=>lookup(snapshot,path);
   const fresh=path=>lookup(snapshot,`field_freshness.${path}`)===true;
   const flows=[
-    ['pv','solar.total_power_w','Sol → Casa'],
-    ['grid','grid.power_w','Red → Casa'],
-    ['battery','battery.power_w','Casa → Batería'],
+    ['pv','solar.total_power_w','Sol → Inversor'],
+    ['grid','grid.power_w','Red → Inversor'],
+    ['battery','battery.power_w','Inversor → Batería'],
+    ['load','load.total_power_w','Inversor → Casa'],
   ];
   flows.forEach(([id,path,forwardLabel])=>{
     const value=source(path);
     const result=FlowLogic.state(id,value,deadband,fresh(path),connectivity,simulated);
     const pathDirection=FlowLogic.pathDirection(id,result.direction);
     let label=forwardLabel;
-    if(id==='grid'&&result.direction<0)label='Casa → Red';
-    if(id==='battery'&&result.direction>0)label='Batería → Casa';
+    if(id==='grid'&&result.direction<0)label='Inversor → Red';
+    if(id==='battery'&&result.direction>0)label='Batería → Inversor';
     setFlow(id,value,result,pathDirection,label);
   });
 }
@@ -136,6 +137,7 @@ function renderMetrics(snapshot){
       const chargeFraction=metricState(snapshot,'battery','soc_pct')==='online'?Math.min(1,Math.max(0,snapshot.battery.soc_pct/100)):null;
       if(gauge){
         gauge.dataset.chargeFraction=chargeFraction===null?'':String(chargeFraction);
+        gauge.querySelector('.metric-gauge__level')?.setAttribute('stroke-dasharray',`${(chargeFraction??0)*100} 100`);
         gauge.querySelectorAll('.battery-segment').forEach((segment,index)=>{
           segment.classList.toggle('active',chargeFraction!==null&&index<Math.round(chargeFraction*10));
         });

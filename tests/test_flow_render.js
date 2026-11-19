@@ -17,13 +17,13 @@ assert.equal((html.match(/class="flow-line/g)||[]).length,4);
 for(const group of ['solar','grid','battery','load']){
   assert.match(html,new RegExp(`data-gauge="${group}"`));
   assert.match(html,new RegExp(`data-gauge="${group}"[\\s\\S]*?metric-gauge__track`));
-  assert.match(html,new RegExp(`data-gauge="${group}"[\\s\\S]*?metric-gauge__progress`));
+  assert.match(html,new RegExp(`data-gauge="${group}"[\\s\\S]*?metric-gauge__level`));
 }
-assert.match(html,/data-gauge="battery"[\s\S]*?metric-gauge__battery-inner-track[\s\S]*?metric-gauge__battery-inner-progress/);
+assert.equal((html.match(/class="battery-segment"/g)||[]).length,10);
 for(const label of ['Sol','Red','Bat','Casa'])assert.match(html,new RegExp(label));
 assert.doesNotMatch(html,/Potencia · hoy · 0–24 h|Temperatura ambiente · últimas 24 h/);
 assert.doesNotMatch(html,/<h1>Deye Monitor<\/h1>/);
-for(const removedLabel of ['Importación (+) / exportación (-)','PV1','PV2','Carga (+) / descarga (-)'])assert.ok(!html.includes(removedLabel),`Unexpected ${removedLabel}`);
+for(const removedLabel of ['Importación (+) / exportación (-)','Carga (+) / descarga (-)'])assert.ok(!html.includes(removedLabel),`Unexpected ${removedLabel}`);
 assert.doesNotMatch(html,/<dl>/);
 assert.doesNotMatch(html,/inverter-value|energy-diagram|history-range|soc-chart/);
 assert.match(html,/uPlot\.iife\.min\.js/);
@@ -33,10 +33,10 @@ assert.match(script,/stroke:'#fff'/);
 assert.match(script,/gaugePercent/);
 assert.match(script,/dashboardConfig/);
 assert.match(script,/setInterval\(\(\)=>loadHistory\(false\),HISTORY_REFRESH_MS\)/);
-assert.doesNotMatch(html,/id="(?:solar|grid|load)-current"/);
+assert.ok(htmlIds.has('#load-current'));
 assert.doesNotMatch(html,/Capacidad:|id="solar-bottom"|id="battery-(?:top|bottom)"|Rem:/);
-assert.match(html,/id="battery-power"[^>]*>Sin dato<\/span> <span class="metric-unit">W<\/span>/);
-assert.match(html,/id="battery-value"[^>]*>Sin dato<\/span> kWh disponibles/);
+assert.match(html,/id="battery-power"[^>]*>-<\/span> W/);
+assert.match(html,/id="battery-value"[^>]*>-<\/span> kWh disponibles/);
 assert.match(script,/batteryFlowState/);
 assert.match(script,/'soc_pct'/);
 assert.match(script,/renderFlow/);
@@ -45,9 +45,9 @@ const styles=fs.readFileSync('deye_monitor/static/style.css','utf8');
 assert.match(styles,/width:min\(100vw,var\(--dashboard-width\)\)/);
 assert.match(styles,/height:min\(100vh,var\(--dashboard-height\)\)/);
 assert.match(styles,/font-size:var\(--dashboard-font-size\)/);
-assert.match(styles,/\.temperature-cards\{[^}]*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
-assert.match(styles,/\.temperature-cards \.history--temperature\{grid-column:1 \/ -1/);
-assert.match(styles,/\.dashboard-flow\{[^}]*width:100%[^}]*max-width:100%[^}]*margin:0 auto/);
+assert.match(styles,/\.temperature-cards\{[^}]*grid-template-columns:minmax\(0,1fr\)/);
+assert.match(styles,/\.history--temperature\{grid-column:1\/-1/);
+assert.match(styles,/\.dashboard-flow\{[^}]*width:100%[^}]*margin:0 auto/);
 const displayConfig=fs.readFileSync('deye_monitor/static/config.css','utf8');
 assert.match(displayConfig,/--dashboard-width:1024px/);
 assert.match(displayConfig,/--dashboard-height:600px/);
@@ -55,3 +55,13 @@ assert.match(displayConfig,/--dashboard-font-size:12px/);
 assert.match(displayConfig,/--dashboard-gauges-width:50%/);
 assert.match(script,/ResizeObserver/);
 console.log('dashboard render assets ok');
+
+// The display scaler must preserve the four orthogonal SVG routes.
+const display=fs.readFileSync('deye_monitor/static/display.js','utf8');
+assert.doesNotMatch(display,/setAttribute\(['"]d['"]/);
+for(const id of ['pv','grid','battery','load']){
+  const path=html.match(new RegExp(`id="flow-${id}"[^>]*d="([^"]+)"`));
+  assert.ok(path,`Missing route ${id}`);
+  assert.match(path[1],/^M [\d.]+ [\d.]+ H [\d.]+ V [\d.]+$/);
+}
+assert.match(styles,/\.dashboard-main\{grid-template-columns:minmax\(0,3fr\) minmax\(0,1fr\)/);

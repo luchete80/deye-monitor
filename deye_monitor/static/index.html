@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Deye Monitor</title>
   <link rel="stylesheet" href="/static/uPlot.min.css?v=6">
-  <link rel="stylesheet" href="/static/style.css?v=44">
+  <link rel="stylesheet" href="/static/style.css?v=46">
   <link rel="stylesheet" href="/static/config.css?v=7">
 </head>
 <body>
@@ -22,9 +22,10 @@
               <path d="M 0 0 L 10 5 L 0 10 z"></path>
             </marker>
           </defs>
-          <path id="flow-pv" class="flow-line idle" d="M 26 24 H 36 Q 39 24 39 27 V 39 Q 39 42 42 42 H 45"></path>
-          <path id="flow-grid" class="flow-line idle" d="M 74 24 H 64 Q 61 24 61 27 V 39 Q 61 42 58 42 H 55"></path>
-          <path id="flow-battery" class="flow-line idle" d="M 50 91 V 78 Q 50 75 50 72 V 70"></path>
+          <path id="flow-pv" class="flow-line idle" d="M 43 24 H 48 V 45"></path>
+          <path id="flow-grid" class="flow-line idle" d="M 57 24 H 52 V 45"></path>
+          <path id="flow-battery" class="flow-line idle" d="M 43 73 H 48 V 55"></path>
+          <path id="flow-load" class="flow-line idle" d="M 57 73 H 52 V 55"></path>
         </svg>
         <section class="metric-grid" aria-label="Estado energético actual">
           <article class="metric-card metric-card--solar" data-metric="solar">
@@ -33,6 +34,7 @@
                 <path class="metric-gauge__track" d="M 8 60 A 52 52 0 0 1 112 60"></path>
                 <path class="metric-gauge__level" pathLength="100" stroke-dasharray="0 100" d="M 8 60 A 52 52 0 0 1 112 60"></path>
               </svg>
+              <svg class="metric-icon metric-icon--solar" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><circle cx="24" cy="24" r="8"></circle><path d="M24 3v6m0 30v6M3 24h6m30 0h6M9 9l4 4m22 22 4 4M9 39l4-4m22-22 4-4"></path></svg>
               <p class="metric-value">
                 <span class="metric-primary"><span id="solar-value">-</span><span class="metric-unit"> W</span></span>
                 <span class="metric-secondary" id="solar-details">PV1: - W · - A<br>PV2: - W · - A</span>
@@ -48,6 +50,7 @@
                 <path class="metric-gauge__track" d="M 8 60 A 52 52 0 0 1 112 60"></path>
                 <path class="metric-gauge__level" pathLength="100" stroke-dasharray="0 100" d="M 8 60 A 52 52 0 0 1 112 60"></path>
               </svg>
+              <svg class="metric-icon metric-icon--grid" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><path d="M21 4h6l11 40M21 4 10 44m0 0h28M17 16h14M13 28h22M8 19v-5l16-6 16 6v5M5 30v-5l19-7 19 7v5M17 16l18 12-25 16m21-28L13 28l25 16"></path></svg>
               <p class="metric-value">
                 <span class="metric-primary"><span id="grid-value">-</span><span class="metric-unit"> W</span></span>
                 <span class="metric-secondary" id="grid-top">Tensión: -</span>
@@ -65,6 +68,7 @@
                 <path class="metric-gauge__track" d="M 8 60 A 52 52 0 0 1 112 60"></path>
                 <path class="metric-gauge__level" pathLength="100" stroke-dasharray="0 100" d="M 8 60 A 52 52 0 0 1 112 60"></path>
               </svg>
+              <svg class="metric-icon metric-icon--load" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><path d="m4 23 20-17 20 17M10 19v24h28V19M29 10V5h6v10M20 43V29h9v14"></path></svg>
               <p class="metric-value">
                 <span class="metric-primary"><span id="load-value">-</span><span class="metric-unit"> W</span></span>
                 <span class="metric-secondary" id="load-current">Corriente: - A</span>
@@ -84,16 +88,18 @@
 
           <article class="metric-card metric-card--battery" data-metric="battery">
             <div class="battery-display" data-gauge="battery" role="img" aria-label="Batería: -">
+              <div class="metric-gauge">
+                <svg class="metric-gauge__svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
+                  <path class="metric-gauge__track" d="M 8 60 A 52 52 0 0 1 112 60"></path>
+                  <path class="metric-gauge__level" pathLength="100" stroke-dasharray="0 100" d="M 8 60 A 52 52 0 0 1 112 60"></path>
+                </svg>
+                <p class="metric-value">
+                  <span class="metric-primary"><span id="battery-soc">-</span><span class="metric-unit"> %</span></span>
+                  <span class="metric-secondary"><span id="battery-value">-</span> kWh disponibles</span>
+                  <span class="metric-secondary"><span id="battery-power">-</span> W</span>
+                </p>
+              </div>
               <div class="battery-shell" aria-hidden="true"><div class="battery-fill"><span class="battery-segment"></span><span class="battery-segment"></span><span class="battery-segment"></span><span class="battery-segment"></span><span class="battery-segment"></span><span class="battery-segment"></span><span class="battery-segment"></span><span class="battery-segment"></span><span class="battery-segment"></span><span class="battery-segment"></span></div></div>
-              <div class="battery-side battery-side--left">
-                <span class="battery-readings">
-                  <span class="battery-soc"><span id="battery-soc">-</span><span class="metric-unit"> %</span></span>
-                  <span class="battery-available"><span id="battery-value">-</span><span class="metric-unit"> kWh</span></span>
-                </span>
-              </div>
-              <div class="battery-side battery-side--right">
-                <span class="battery-power-current"><span id="battery-power">-</span> W</span>
-              </div>
             </div>
             <div class="battery-power-gauge" role="img" aria-label="Potencia de batería: sin dato">
               <div class="battery-power-directions" aria-hidden="true"><span></span><span id="battery-power-status">Sin dato</span><span></span></div>
@@ -126,8 +132,8 @@
     </section>
     <footer class="dashboard-footer" aria-hidden="true"></footer>
   </main>
-  <script src="/static/display.js?v=2"></script>
+  <script src="/static/display.js?v=3"></script>
   <script src="/static/uPlot.iife.min.js?v=6"></script>
-  <script src="/static/app.js?v=26"></script>
+  <script src="/static/app.js?v=27"></script>
 </body>
 </html>
