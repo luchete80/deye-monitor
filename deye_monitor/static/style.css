@@ -42,11 +42,7 @@ button[hidden]{display:none}
 .metric-primary{font-size:clamp(2rem,8cqw,3.7rem);font-weight:750;letter-spacing:-.035em;white-space:nowrap}
 .metric-unit{font-size:.48em;font-weight:650;letter-spacing:0}
 .metric-secondary{display:block;position:static;max-width:100%;margin:0;font-size:clamp(.88rem,2.2cqw,1.15rem);font-weight:650;line-height:1.15;white-space:pre-line;text-shadow:0 1px 4px #031631}
-.metric-card h2{position:absolute;left:50%;bottom:18%;transform:translateX(-50%);margin:0;color:var(--metric-color);font-size:clamp(1.45rem,5cqw,2.7rem);font-weight:700;line-height:1;white-space:nowrap}
-.metric-card--load h2{bottom:16%;font-size:clamp(1.45rem,4.7cqw,2.5rem)}
-.metric-card--solar h2,.metric-card--grid h2{bottom:22%}
-.metric-card--grid[data-absent=true] h2{text-decoration:line-through;color:#ff9e9e}
-.metric-card--battery h2{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+.metric-card h2{position:absolute;width:1px;height:1px;margin:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 .metric-card--battery[data-alert=true] .battery-soc{animation:soc-alert .8s steps(2,start) infinite}
 @keyframes soc-alert{50%{opacity:.25}}
 .battery-display{position:absolute;inset:0 0 38%;display:flex;align-items:center;color:#f3f8ff}
@@ -131,8 +127,6 @@ button[hidden]{display:none}
 .metric-card--solar #solar-details{font-size:16px}
 .metric-card--grid .metric-secondary,
 .metric-card--load .metric-secondary{font-size:16px}
-.metric-card h2{font-size:30px}
-.metric-card--load h2{font-size:28px}
 .dashboard-logo{max-width:160px}
 .ambient-reading{font-size:44px}
 .battery-side{font-size:20px}
@@ -164,11 +158,10 @@ button[hidden]{display:none}
 .metric-card--battery{left:0;bottom:0;width:42%;height:48%}
 .metric-card--load{left:auto;right:0;top:auto;bottom:0;width:42%;height:48%}
 .metric-gauge,.metric-card--load .metric-gauge{width:100%;height:100%;aspect-ratio:auto}
-.metric-gauge__svg{position:absolute;top:0;height:auto;aspect-ratio:1}
+.metric-gauge__svg{position:absolute;top:0;height:69%}
 .metric-value{inset:7% 0 31%;justify-content:center}
 .metric-primary{font-size:38px}
 .metric-secondary,.metric-card--solar #solar-details,.metric-card--grid .metric-secondary,.metric-card--load .metric-secondary{font-size:14px}
-.metric-card h2,.metric-card--load h2,.metric-card--solar h2,.metric-card--grid h2{bottom:19%;font-size:26px}
 .battery-display{inset:0;display:block;color:var(--battery)}
 .battery-display .metric-gauge{height:100%}
 .battery-display .metric-value{inset:7% 0 39%}
@@ -177,7 +170,6 @@ button[hidden]{display:none}
 .battery-power-gauge{inset:85% 7% 0;font-size:10px}
 .metric-card--load .energy-summary{top:auto;bottom:0;left:0;width:100%;gap:2px;font-size:10px;align-items:center;text-align:center}
 .metric-card--load .energy-summary button{font-size:11px;padding:2px 6px}
-.metric-card--load h2{bottom:35%}
 .temperature-cards{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) minmax(0,1fr) minmax(0,1.4fr) auto;gap:8px}
 .ambient-card{padding:8px}
 .ambient-card h2{font-size:16px}
@@ -196,6 +188,4 @@ button[hidden]{display:none}
 .metric-card--solar #solar-details,
 .metric-card--grid .metric-secondary,
 .metric-card--load .metric-secondary{font-size:14px;line-height:1.15}
-.metric-card--solar h2,.metric-card--grid h2{bottom:10%;font-size:24px}
-.metric-card--load h2{top:71%;bottom:auto;font-size:22px;line-height:1}
 .metric-card--load .energy-summary{top:auto;bottom:0;gap:2px;line-height:1.15}
