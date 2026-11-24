@@ -4,66 +4,71 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Deye Monitor</title>
-  <link rel="stylesheet" href="/static/uPlot.min.css?v=6">
-  <link rel="stylesheet" href="/static/style.css?v=47">
+  <link rel="stylesheet" href="/static/style.css?v=48">
   <link rel="stylesheet" href="/static/config.css?v=7">
 </head>
 <body>
   <main class="dashboard-shell">
     <p id="connection-status" class="connection-status" role="status"></p>
     <section class="dashboard-main" aria-label="Sol, Red, Casa y Batería">
-      <img class="dashboard-logo" src="/images/logo.png" alt="Logo">
+      <img class="dashboard-logo" src="/images/logo.png" alt="GreenVolt">
       <div class="dashboard-flow">
         <svg id="dashboard-flow-arrows" class="flow-arrows" viewBox="0 0 100 100" preserveAspectRatio="none" role="img" aria-labelledby="flow-arrows-title flow-arrows-description">
           <title id="flow-arrows-title">Sentido del flujo energético</title>
           <desc id="flow-arrows-description">El sentido de las conexiones se actualiza según las potencias medidas.</desc>
-          <defs>
-            <marker id="flow-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
-              <path d="M 0 0 L 10 5 L 0 10 z"></path>
-            </marker>
-          </defs>
-          <path id="flow-pv" class="flow-line idle" d="M 43 24 H 48 V 45"></path>
-          <path id="flow-grid" class="flow-line idle" d="M 57 24 H 52 V 45"></path>
-          <path id="flow-battery" class="flow-line idle" d="M 43 73 H 48 V 55"></path>
-          <path id="flow-load" class="flow-line idle" d="M 57 73 H 52 V 55"></path>
+          <path class="flow-cable" d="M 38 24 H 48 Q 50 24 50 26 M 62 24 H 52 Q 50 24 50 26 M 38 76 H 48 Q 50 76 50 74 M 62 76 H 52 Q 50 76 50 74 M 50 26 V 74"></path>
+          <path id="flow-trunk" class="flow-line idle" d="M 50 26 V 74"></path>
+          <path id="flow-pv" class="flow-line idle" d="M 38 24 H 48 Q 50 24 50 26"></path>
+          <path id="flow-grid" class="flow-line idle" d="M 62 24 H 52 Q 50 24 50 26"></path>
+          <path id="flow-battery" class="flow-line idle" d="M 38 76 H 48 Q 50 76 50 74"></path>
+          <path id="flow-load" class="flow-line idle" d="M 62 76 H 52 Q 50 76 50 74"></path>
+          <path id="flow-pv-pulse" class="flow-pulse" d="M 38 24 H 48 Q 50 24 50 26"></path>
+          <path id="flow-grid-pulse" class="flow-pulse" d="M 62 24 H 52 Q 50 24 50 26"></path>
+          <path id="flow-battery-pulse" class="flow-pulse" d="M 38 76 H 48 Q 50 76 50 74"></path>
+          <path id="flow-load-pulse" class="flow-pulse" d="M 62 76 H 52 Q 50 76 50 74"></path>
+          <path id="flow-trunk-pulse" class="flow-pulse" d="M 50 26 V 74"></path>
         </svg>
         <section class="metric-grid" aria-label="Estado energético actual">
           <article class="metric-card metric-card--solar" data-metric="solar">
             <div class="metric-gauge" data-gauge="solar" role="img" aria-label="Sol: -">
-              <svg class="metric-gauge__svg" viewBox="0 0 120 65" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+              <svg class="metric-gauge__svg" viewBox="0 0 120 65" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false">
                 <path class="metric-gauge__track" d="M 8 60 A 52 52 0 0 1 112 60"></path>
                 <path class="metric-gauge__level" pathLength="100" stroke-dasharray="0 100" d="M 8 60 A 52 52 0 0 1 112 60"></path>
               </svg>
               <svg class="metric-icon metric-icon--solar" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><circle cx="24" cy="24" r="8"></circle><path d="M24 3v6m0 30v6M3 24h6m30 0h6M9 9l4 4m22 22 4 4M9 39l4-4m22-22 4-4"></path></svg>
               <p class="metric-value">
                 <span class="metric-primary"><span id="solar-value">-</span><span class="metric-unit"> W</span></span>
-                <span class="metric-secondary" id="solar-details">PV1: - W · - A<br>PV2: - W · - A</span>
-                <span class="metric-secondary" id="solar-today">Hoy: -</span>
               </p>
+              <span class="metric-details metric-secondary">
+                <span id="solar-details">PV1: - W · - A<br>PV2: - W · - A</span>
+                <span id="solar-today">Hoy: -</span>
+              </span>
             </div>
             <h2>Sol</h2>
           </article>
 
           <article class="metric-card metric-card--grid" data-metric="grid">
             <div class="metric-gauge" data-gauge="grid" role="img" aria-label="Red: -">
-              <svg class="metric-gauge__svg" viewBox="0 0 120 65" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+              <svg class="metric-gauge__svg" viewBox="0 0 120 65" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false">
                 <path class="metric-gauge__track" d="M 8 60 A 52 52 0 0 1 112 60"></path>
                 <path class="metric-gauge__level" pathLength="100" stroke-dasharray="0 100" d="M 8 60 A 52 52 0 0 1 112 60"></path>
               </svg>
               <svg class="metric-icon metric-icon--grid" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><path d="M21 4h6l11 40M21 4 10 44m0 0h28M17 16h14M13 28h22M8 19v-5l16-6 16 6v5M5 30v-5l19-7 19 7v5M17 16l18 12-25 16m21-28L13 28l25 16"></path></svg>
               <p class="metric-value">
                 <span class="metric-primary"><span id="grid-value">-</span><span class="metric-unit"> W</span></span>
-                <span class="metric-secondary" id="grid-top">Tensión: -</span>
-                <span class="metric-secondary">Hoy: <span id="grid-today">-</span></span>
-                <span class="metric-secondary" id="grid-bottom">Ciclo: -</span>
               </p>
+              <span class="metric-details metric-secondary">
+                <span id="grid-top">Tensión: -</span>
+                <span>Hoy: <span id="grid-today">-</span></span>
+                <span id="grid-bottom">Ciclo: -</span>
+              </span>
             </div>
             <h2>Red</h2>
           </article>
 
           <article class="metric-card metric-card--load" data-metric="load">
             <div class="metric-gauge" data-gauge="load" role="img" aria-label="Casa: -">
-              <svg class="metric-gauge__svg" viewBox="0 0 120 65" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+              <svg class="metric-gauge__svg" viewBox="0 0 120 65" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false">
                 <defs><linearGradient id="house-gradient" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#f5e841"></stop><stop offset=".55" stop-color="#d9ed42"></stop><stop offset="1" stop-color="#56b978"></stop></linearGradient></defs>
                 <path class="metric-gauge__track" d="M 8 60 A 52 52 0 0 1 112 60"></path>
                 <path class="metric-gauge__level" pathLength="100" stroke-dasharray="0 100" d="M 8 60 A 52 52 0 0 1 112 60"></path>
@@ -71,10 +76,12 @@
               <svg class="metric-icon metric-icon--load" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><path d="m4 23 20-17 20 17M10 19v24h28V19M29 10V5h6v10M20 43V29h9v14"></path></svg>
               <p class="metric-value">
                 <span class="metric-primary"><span id="load-value">-</span><span class="metric-unit"> W</span></span>
-                <span class="metric-secondary" id="load-current">Corriente: - A</span>
-                <span class="metric-secondary" id="load-top">Hoy: -</span>
-                <span class="metric-secondary" id="load-bottom">Mes: -</span>
               </p>
+              <span class="metric-details metric-secondary">
+                <span id="load-current">Corriente: - A</span>
+                <span id="load-top">Hoy: -</span>
+                <span id="load-bottom">Mes: -</span>
+              </span>
             </div>
             <h2>Casa</h2>
             <section class="energy-summary" aria-label="Consumo mensual de Casa">
@@ -89,42 +96,33 @@
           <article class="metric-card metric-card--battery" data-metric="battery">
             <div class="battery-display" data-gauge="battery" role="img" aria-label="Batería: -">
               <div class="metric-gauge">
-                <svg class="metric-gauge__svg" viewBox="0 0 120 65" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+                <svg class="metric-gauge__svg" viewBox="0 0 120 65" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false">
                   <path class="metric-gauge__track" d="M 8 60 A 52 52 0 0 1 112 60"></path>
                   <path class="metric-gauge__level" pathLength="100" stroke-dasharray="0 100" d="M 8 60 A 52 52 0 0 1 112 60"></path>
                 </svg>
+                <span class="battery-flow-status" id="battery-power-status">Sin dato</span>
                 <p class="metric-value">
-                  <span class="metric-primary"><span id="battery-soc">-</span><span class="metric-unit"> %</span></span>
-                  <span class="metric-secondary"><span id="battery-value">-</span> kWh disponibles</span>
-                  <span class="metric-secondary"><span id="battery-power">-</span> W</span>
+                  <span class="metric-primary"><span id="battery-power">-</span><span class="metric-unit"> W</span></span>
+                  <span class="battery-state-line"><span id="battery-soc">-</span><span class="metric-unit"> %</span><span class="battery-separator"> · </span><span id="battery-value">-</span> kWh</span>
                 </p>
               </div>
               <div class="battery-shell" aria-hidden="true"><div class="battery-fill"><span class="battery-segment"></span><span class="battery-segment"></span><span class="battery-segment"></span><span class="battery-segment"></span><span class="battery-segment"></span><span class="battery-segment"></span><span class="battery-segment"></span><span class="battery-segment"></span><span class="battery-segment"></span><span class="battery-segment"></span></div></div>
-            </div>
-            <div class="battery-power-gauge" role="img" aria-label="Potencia de batería: sin dato">
-              <div class="battery-power-directions" aria-hidden="true"><span></span><span id="battery-power-status">Sin dato</span><span></span></div>
-              <div class="battery-power-track" aria-hidden="true"><div class="battery-power-fill"></div></div>
-              <div class="battery-power-scale" aria-hidden="true"><span id="battery-scale-min">−</span><span id="battery-scale-charge">−</span><span>0 W</span><span id="battery-scale-discharge">−</span><span id="battery-scale-max">−</span></div>
             </div>
             <h2>Batería</h2>
           </article>
         </section>
       </div>
-      <div class="temperature-cards" aria-label="Temperaturas ambiente e historial">
+      <div class="temperature-cards" aria-label="Temperaturas ambiente">
         <article class="ambient-card" data-ambient-temperature data-state="unknown" aria-labelledby="ambient-title">
           <h2 id="ambient-title">Temperatura ambiente</h2>
           <p id="ambient-status" class="ambient-status" aria-live="polite">Sin dato</p>
-          <p class="ambient-reading"><span id="ambient-value">Sin dato</span> <span class="ambient-unit">°C</span></p>
+          <p class="ambient-reading"><span id="ambient-value">−</span> <span class="ambient-unit">°C</span></p>
         </article>
         <article class="ambient-card ambient-card--second" data-ambient-temperature2 data-state="unknown" aria-labelledby="ambient2-title">
           <h2 id="ambient2-title">Temperatura ambiente 2</h2>
           <p id="ambient2-status" class="ambient-status" aria-live="polite">Sin dato</p>
-          <p class="ambient-reading"><span id="ambient2-value">Sin dato</span> <span class="ambient-unit">°C</span></p>
+          <p class="ambient-reading"><span id="ambient2-value">−</span> <span class="ambient-unit">°C</span></p>
         </article>
-        <section class="history history--temperature" aria-label="Historial de temperatura ambiente">
-          <p id="temperature-history-status" aria-live="polite">Cargando historial de temperatura…</p>
-          <div id="temperature-chart" class="chart" aria-label="Temperaturas ambiente 1 y 2 en grados Celsius durante las últimas 24 horas"></div>
-        </section>
         <nav class="dashboard-actions" aria-label="Acciones del dashboard">
           <button id="enable-beep" hidden>Activar sonido</button>
         </nav>
@@ -133,7 +131,6 @@
     <footer class="dashboard-footer" aria-hidden="true"></footer>
   </main>
   <script src="/static/display.js?v=3"></script>
-  <script src="/static/uPlot.iife.min.js?v=6"></script>
-  <script src="/static/app.js?v=27"></script>
+  <script src="/static/app.js?v=28"></script>
 </body>
 </html>

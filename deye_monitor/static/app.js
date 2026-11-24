@@ -59,10 +59,8 @@ function setFlow(id,value,result,pathDirection,label){
   const line=document.querySelector(`#flow-${id}`);
   if(!line)return;
   line.setAttribute('class',`flow-line ${result.status}${pathDirection<0?' reverse':''}`);
-  line.removeAttribute('marker-start');
-  line.removeAttribute('marker-end');
-  if(result.status==='active'&&pathDirection>0)line.setAttribute('marker-end','url(#flow-arrow)');
-  if(result.status==='active'&&pathDirection<0)line.setAttribute('marker-start','url(#flow-arrow)');
+  const pulse=document.querySelector(`#flow-${id}-pulse`);
+  if(pulse)pulse.setAttribute('class',`flow-pulse ${result.status}${pathDirection<0?' reverse':''}`);
   const suffix=result.status==='stale'?' · dato antiguo':result.status==='offline'?' · sin conexión':result.status==='unknown'?' · sin dato':'';
   line.setAttribute('aria-label',`${label}: ${known(value)?number(Math.abs(value)): 'Sin dato'}${suffix}`);
 }
@@ -79,15 +77,32 @@ function renderFlow(snapshot){
     ['battery','battery.power_w','Inversor → Batería'],
     ['load','load.total_power_w','Inversor → Casa'],
   ];
+  const results={};
   flows.forEach(([id,path,forwardLabel])=>{
     const value=source(path);
     const result=FlowLogic.state(id,value,deadband,fresh(path),connectivity,simulated);
+    results[id]=result;
     const pathDirection=FlowLogic.pathDirection(id,result.direction);
     let label=forwardLabel;
     if(id==='grid'&&result.direction<0)label='Inversor → Red';
     if(id==='battery'&&result.direction>0)label='Batería → Inversor';
     setFlow(id,value,result,pathDirection,label);
   });
+  const upperFields=['solar.total_power_w','grid.power_w'];
+  const lowerFields=['battery.power_w','load.total_power_w'];
+  const allFresh=[...upperFields,...lowerFields].every(path=>fresh(path)&&known(source(path))&&metricState(snapshot,...path.split('.'))==='online');
+  const upperNet=source(upperFields[0])+source(upperFields[1]);
+  const lowerNet=source(lowerFields[0])-source(lowerFields[1]);
+  const trunk=document.querySelector('#flow-trunk');
+  if(trunk){
+    const downward=allFresh&&upperNet>deadband&&lowerNet < -deadband;
+    const upward=allFresh&&upperNet < -deadband&&lowerNet>deadband;
+    const status=Object.values(results).some(result=>result.status==='offline')?'offline':!allFresh?'stale':'idle';
+    trunk.setAttribute('class',`flow-line ${downward||upward?'active':status}${upward?' reverse':''}`);
+    const pulse=document.querySelector('#flow-trunk-pulse');
+    if(pulse)pulse.setAttribute('class',`flow-pulse ${downward||upward?'active':status}${upward?' reverse':''}`);
+    trunk.setAttribute('aria-label',`Flujo central: ${downward?'hacia batería y casa':upward?'hacia red':'en reposo'}`);
+  }
 }
 
 let dashboardConfig=null, energySummary=null, lastSnapshot=null, previousAlert=false, audioContext=null;
@@ -137,7 +152,10 @@ function renderMetrics(snapshot){
       const chargeFraction=metricState(snapshot,'battery','soc_pct')==='online'?Math.min(1,Math.max(0,snapshot.battery.soc_pct/100)):null;
       if(gauge){
         gauge.dataset.chargeFraction=chargeFraction===null?'':String(chargeFraction);
-        gauge.querySelector('.metric-gauge__level')?.setAttribute('stroke-dasharray',`${(chargeFraction??0)*100} 100`);
+        const powerPercent=state==='online'?gaugePercent(value,dashboardConfig?.gauge_max_w?.battery??6000,true):0;
+        gauge.querySelector('.metric-gauge__level')?.setAttribute('stroke-dasharray',`${powerPercent??0} 100`);
+        const powerLevel=gauge.querySelector('.metric-gauge__level');
+        if(powerLevel)powerLevel.style.visibility=powerPercent>0?'visible':'hidden';
         gauge.querySelectorAll('.battery-segment').forEach((segment,index)=>{
           segment.classList.toggle('active',chargeFraction!==null&&index<Math.round(chargeFraction*10));
         });
@@ -155,24 +173,10 @@ function renderMetrics(snapshot){
       }
     }
   }
-  const powerGauge=document.querySelector('.battery-power-gauge');
-  if(powerGauge){
-    const maximum=dashboardConfig?.gauge_max_w?.battery??6000;
-    const raw=snapshot.battery?.power_w;
-    const online=metricState(snapshot,'battery','power_w')==='online';
-    const direction=online?batteryFlowState(raw):'unknown';
-    const width=online?gaugePercent(raw,maximum,true)/2:0;
-    powerGauge.dataset.direction=direction;
-    const fill=powerGauge.querySelector('.battery-power-fill');
-    if(fill){fill.style.width=`${width}%`;fill.style.left=`${direction==='discharging'?50-width:50}%`}
-    put('battery-scale-min',number(maximum));
-    put('battery-scale-charge',number(maximum/2));
-    put('battery-scale-discharge',number(-maximum/2));
-    put('battery-scale-max',number(-maximum));
-    const label={charging:'Cargando',discharging:'Descargando',idle:'En reposo',unknown:'Sin dato'}[direction];
-    put('battery-power-status',label);
-    powerGauge.setAttribute('aria-label',`Potencia de batería: ${label}${online?` · ${number(raw)}`:''} · escala de ${number(-maximum)} a ${number(maximum)}`);
-  }
+  const batteryPowerKnown=metricState(snapshot,'battery','power_w')==='online';
+  const batteryDirection=batteryPowerKnown?batteryFlowState(snapshot.battery?.power_w):'unknown';
+  const flowLabel={charging:'Cargando',discharging:'Descargando',idle:'En reposo',unknown:'Sin dato'}[batteryDirection];
+  put('battery-power-status',flowLabel);
   renderStationDetails(snapshot);
   if(!dashboardConfig)return;
   const cfg=dashboardConfig;
@@ -214,7 +218,7 @@ function renderAmbientTemperature(snapshot){
     const reading=document.querySelector(valueId);
     if(card)card.dataset.state=state;
     if(status)status.textContent=stateLabel(state);
-    if(reading)reading.textContent=valueText(value);
+    if(reading)reading.textContent=known(value)?valueText(value):'−';
     if(card)card.setAttribute('aria-label',`${label}: ${valueText(value)} °C · ${stateLabel(state)}`);
   }
 }
@@ -433,11 +437,7 @@ function resizePlot(){
 if(typeof document!=='undefined'){
   initial();
   const stopConnection=connect();
-  startHistoryRefresh();
   startEnergyRefresh();
-  document.addEventListener('visibilitychange',()=>{
-    if(document.visibilityState==='visible')loadHistory(false);
-  });
   window.addEventListener('beforeunload',()=>{
     stopConnection();
     if(renderTimer!==null)clearTimeout(renderTimer);
@@ -446,11 +446,6 @@ if(typeof document!=='undefined'){
     historyRefreshTimer=null;
     energyRefreshTimer=null;
   },{once:true});
-  if(typeof ResizeObserver!=='undefined'){
-    const historyResizeObserver=new ResizeObserver(resizePlot);
-    historyResizeObserver.observe(document.querySelector('#temperature-chart'));
-  }
-  else window.addEventListener('resize',resizePlot);
 }
 
 if(typeof module!=='undefined')module.exports={batteryDetails,homeDayScale,known,lookup,number,valueText,batteryFlowState,gaugePercent,metricState,temperatureData,rollingDayRange,rollingDaySplits,temperatureChartOptions,FlowLogic,chartHeight,fetchJson,runGuarded,renderStationDetails};
