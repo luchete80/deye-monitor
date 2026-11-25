@@ -142,7 +142,7 @@ cero para facilitar el dibujo.
 
 ## Setpoint del termotanque
 
-Los dos tópicos son absolutos. El payload es un entero de 40 a 70 °C, como texto (por ejemplo `55`).
+Los dos tópicos son absolutos. El payload es un entero de 40 a 75 °C, como texto (por ejemplo `55`).
 
 | Tópico | Publica | QoS de publicación | Retenido |
 | --- | --- | --- | --- |

@@ -126,8 +126,8 @@ def create_app(config: Config | None = None, start_source: bool = True) -> Flask
             return jsonify({"error": "Se requiere una solicitud JSON."}), 415
         payload = request.get_json(silent=True)
         value = payload.get("value") if isinstance(payload, dict) else None
-        if type(value) is not int or not 40 <= value <= 70:
-            return jsonify({"error": "Elegí un valor entero entre 40 y 70 °C."}), 400
+        if type(value) is not int or not 40 <= value <= 75:
+            return jsonify({"error": "Elegí un valor entero entre 40 y 75 °C."}), 400
 
         source = app.extensions.get("deye_source")
         if config.data_source == "simulated":

@@ -69,7 +69,7 @@ class SG03LP1Adapter:
         if field in {"thermotank.requested_c", "thermotank.actual_c"}:
             if payload in (b"", ""):
                 return field, None
-            if value is not None and value.is_integer() and 40 <= value <= 70:
+            if value is not None and value.is_integer() and 40 <= value <= 75:
                 return field, int(value)
             return None
         if value is None:
