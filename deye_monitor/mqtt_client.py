@@ -5,6 +5,10 @@ from uuid import uuid4
 import paho.mqtt.client as mqtt
 
 
+THERMOTANK_SETPOINT_TOPIC = "termotanque/setpoint"
+THERMOTANK_ACTUAL_TOPIC = "termotanque/setpoint_actual"
+
+
 class MQTTClient:
     """Thin paho boundary: callbacks only adapt and update the thread-safe store."""
     def __init__(self, config, adapter, state, client_factory=mqtt.Client):
@@ -24,6 +28,18 @@ class MQTTClient:
         self.client.loop_stop()
         self.client.disconnect()
 
+    def publish_thermotank_setpoint(self, value: int) -> bool:
+        if not self.client.is_connected():
+            return False
+        message = self.client.publish(THERMOTANK_SETPOINT_TOPIC, str(value), qos=1, retain=True)
+        if message.rc != mqtt.MQTT_ERR_SUCCESS:
+            return False
+        try:
+            message.wait_for_publish(timeout=3)
+            return message.is_published()
+        except (RuntimeError, ValueError):
+            return False
+
     def _on_connect(self, client, userdata, flags, reason_code, properties=None):
         if reason_code == 0:
             self.state.set_broker(True)
@@ -39,6 +55,6 @@ class MQTTClient:
     def _on_message(self, client, userdata, message):
         try:
             for adapted in self.adapter.adapt_many(message.topic, message.payload):
-                self.state.update(*adapted)
+                self.state.update(*adapted, retained=getattr(message, "retain", False))
         except Exception:
             self.log.exception("Ignoring MQTT callback failure")

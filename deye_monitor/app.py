@@ -9,9 +9,9 @@ from pathlib import Path
 from flask import Flask, Response, jsonify, request, send_from_directory, stream_with_context
 from .adapter import SG03LP1Adapter
 from .config import Config
-from .mqtt_client import MQTTClient
+from .mqtt_client import MQTTClient, THERMOTANK_ACTUAL_TOPIC, THERMOTANK_SETPOINT_TOPIC
 from .simulator import FixtureSimulator
-from .state import StateStore
+from .state import StateStore, THERMOTANK_TIMEOUT_SECONDS
 from .history import HistoryStore, SnapshotRecorder
 from .energy import EnergyStore
 
@@ -60,11 +60,17 @@ def dummy_temperature_history(now: datetime | None = None) -> list[dict[str, flo
 def event_stream(store: StateStore):
     listener = store.subscribe()
     try:
-        yield f"event: state\ndata: {json.dumps(store.snapshot())}\n\n"
+        state = store.snapshot()
         while True:
-            try: state = listener.get(timeout=10)
-            except queue.Empty: state = store.snapshot()
             yield f"event: state\ndata: {json.dumps(state)}\n\n"
+            timeout = 10
+            thermotank = state["thermotank"]
+            if thermotank["communication"] in {"waiting", "online"}:
+                timeout = min(timeout, max(0.01, THERMOTANK_TIMEOUT_SECONDS - thermotank["temperature_age_seconds"]))
+            try:
+                state = listener.get(timeout=timeout)
+            except queue.Empty:
+                state = store.snapshot()
     finally: store.unsubscribe(listener)
 
 
@@ -77,7 +83,12 @@ def create_app(config: Config | None = None, start_source: bool = True) -> Flask
     )
     adapter = SG03LP1Adapter(
         config.mqtt_prefix, config.topics, config.grid_power_sign,
-        config.battery_power_sign, config.mqtt_absolute_topics,
+        config.battery_power_sign,
+        {
+            **config.mqtt_absolute_topics,
+            "thermotank.requested_c": THERMOTANK_SETPOINT_TOPIC,
+            "thermotank.actual_c": THERMOTANK_ACTUAL_TOPIC,
+        },
     )
     # Keep short-lived dashboard series in RAM; raw samples are no longer written to disk.
     history = HistoryStore(":memory:", config.history_retention_hours)
@@ -109,6 +120,22 @@ def create_app(config: Config | None = None, start_source: bool = True) -> Flask
         if not request.is_json:
             return jsonify({"error": "JSON request required"}), 415
         return jsonify(energy.reset_home())
+    @app.post("/api/termotanque/setpoint")
+    def api_thermotank_setpoint():
+        if not request.is_json:
+            return jsonify({"error": "Se requiere una solicitud JSON."}), 415
+        payload = request.get_json(silent=True)
+        value = payload.get("value") if isinstance(payload, dict) else None
+        if type(value) is not int or not 40 <= value <= 70:
+            return jsonify({"error": "Elegí un valor entero entre 40 y 70 °C."}), 400
+
+        source = app.extensions.get("deye_source")
+        if config.data_source == "simulated":
+            return jsonify({"error": "La publicación MQTT no está disponible en modo simulado."}), 503
+        if source is None or not source.publish_thermotank_setpoint(value):
+            return jsonify({"error": "No se pudo confirmar la publicación MQTT."}), 503
+        return jsonify({"value": value})
+
     @app.get("/api/history/temperature")
     def api_temperature_history():
         range_name = request.args.get("range", "24h")

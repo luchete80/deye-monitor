@@ -228,6 +228,7 @@ function render(snapshot){
   document.querySelectorAll('[data-path]').forEach(element=>element.textContent=number(lookup(snapshot,element.dataset.path),element.dataset.unit));
   renderMetrics(snapshot);
   renderAmbientTemperature(snapshot);
+  renderThermotankSetpoint?.(snapshot);
   renderFlow(snapshot);
 
 }
@@ -434,7 +435,81 @@ function resizePlot(){
   }
 }
 
+let renderThermotankSetpoint;
+
+function initThermotankSetpoint(){
+  const range=document.querySelector('#setpoint-range');
+  if(!range)return;
+  const output=document.querySelector('#setpoint-value');
+  const decrease=document.querySelector('#setpoint-decrease');
+  const increase=document.querySelector('#setpoint-increase');
+  const status=document.querySelector('#setpoint-status');
+  const communication=document.querySelector('#thermotank-communication');
+  let edited=false, sending=false, errorMessage='';
+
+  function renderControls(){
+    output.value=`${range.value} °C`;
+    range.disabled=sending;
+    decrease.disabled=sending||range.valueAsNumber<=Number(range.min);
+    increase.disabled=sending||range.valueAsNumber>=Number(range.max);
+  }
+
+  function renderFeedback(snapshot){
+    const requested=snapshot?.thermotank?.requested_c;
+    const actual=snapshot?.thermotank?.actual_c;
+    put('setpoint-requested',requested==null?'—':`${requested} °C`);
+    put('setpoint-actual',actual==null?'—':`${actual} °C`);
+    if(!edited&&requested!=null){
+      range.value=requested;
+      renderControls();
+    }
+    let message='Sin solicitud';
+    if(requested!=null){
+      message=requested===actual?'Confirmado':'Pendiente';
+    }
+    if(sending)message='Publicando…';
+    if(errorMessage)message=errorMessage;
+    status.toggleAttribute('data-error',Boolean(errorMessage));
+    if(status.textContent!==message)status.textContent=message;
+    const connection={
+      waiting:'Esperando temperaturas',
+      lost:'Comunicación perdida',
+    }[snapshot?.thermotank?.communication]||'';
+    if(communication.textContent!==connection)communication.textContent=connection;
+  }
+
+  async function publish(){
+    const value=range.valueAsNumber;
+    edited=true;
+    sending=true;
+    errorMessage='';
+    renderControls();
+    renderFeedback(lastSnapshot);
+    try{
+      await fetchJson('/api/termotanque/setpoint','No se pudo publicar el setpoint',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({value}),
+      });
+    }catch(error){
+      errorMessage=error.message;
+    }finally{
+      sending=false;
+      renderControls();
+      renderFeedback(lastSnapshot);
+    }
+  }
+
+  range.addEventListener('input',()=>{edited=true;renderControls()});
+  range.addEventListener('change',publish);
+  decrease.addEventListener('click',()=>{range.stepDown();publish()});
+  increase.addEventListener('click',()=>{range.stepUp();publish()});
+  renderControls();
+  renderThermotankSetpoint=renderFeedback;
+}
+
 if(typeof document!=='undefined'){
+  initThermotankSetpoint();
   initial();
   const stopConnection=connect();
   startEnergyRefresh();

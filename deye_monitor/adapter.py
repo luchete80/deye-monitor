@@ -66,6 +66,12 @@ class SG03LP1Adapter:
             status = parse_status(payload)
             return (field, status) if status is not None else None
         value = parse_payload(payload)
+        if field in {"thermotank.requested_c", "thermotank.actual_c"}:
+            if payload in (b"", ""):
+                return field, None
+            if value is not None and value.is_integer() and 40 <= value <= 70:
+                return field, int(value)
+            return None
         if value is None:
             return None
         # A configured power source remains unknown until its sign convention is explicit.

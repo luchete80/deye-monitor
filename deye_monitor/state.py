@@ -6,6 +6,8 @@ import queue
 import threading
 
 
+THERMOTANK_TIMEOUT_SECONDS = 30
+
 def utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
@@ -34,12 +36,15 @@ class StateStore:
             "inverter": {"ac_power_w": None},
             "temperature": {"radiator_c": None, "ac_c": None, "ambient_c": None, "ambient2_c": None},
         }
+        self._values["thermotank"] = {"requested_c": None, "actual_c": None}
+        self._started_at = self.clock()
+        self._last_live_temperature_at = None
         self._timestamps = {group: {key: None for key in fields} for group, fields in self._values.items()}
         self._connectivity = {"broker": "disconnected", "service": "unknown", "logger": "unknown"}
         self._observed_at: datetime | None = None
         self._data_observed_at: datetime | None = None
 
-    def update(self, dotted: str, value: object, received_at: datetime | None = None) -> None:
+    def update(self, dotted: str, value: object, received_at: datetime | None = None, *, retained: bool = False) -> None:
         received_at = received_at or self.clock()
         group, field = dotted.split(".", 1)
         with self._lock:
@@ -47,8 +52,11 @@ class StateStore:
                 self._connectivity[field] = value
             else:
                 self._values[group][field] = value
-                self._timestamps[group][field] = received_at
-                self._data_observed_at = received_at
+                self._timestamps[group][field] = received_at if value is not None else None
+                if dotted in {"temperature.ambient_c", "temperature.ambient2_c"} and value is not None and not retained:
+                    self._last_live_temperature_at = received_at
+                if group != "thermotank":
+                    self._data_observed_at = received_at
             self._observed_at = received_at
         self._notify()
 
@@ -60,6 +68,13 @@ class StateStore:
         with self._lock:
             result = deepcopy(self._values)
             timestamps = deepcopy(self._timestamps)
+            temperature_age = (now - (self._last_live_temperature_at or self._started_at)).total_seconds()
+            communication = "waiting" if self._last_live_temperature_at is None else "online"
+            if self.simulated:
+                communication = "simulated"
+            elif temperature_age >= THERMOTANK_TIMEOUT_SECONDS:
+                communication = "lost"
+            result["thermotank"].update(communication=communication, temperature_age_seconds=temperature_age)
             pv1_at = timestamps["solar"]["pv1_power_w"]
             pv2_at = timestamps["solar"]["pv2_power_w"]
             result["solar"]["total_power_w"] = self._sum_known(result["solar"]["pv1_power_w"], result["solar"]["pv2_power_w"])

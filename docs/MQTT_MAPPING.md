@@ -140,3 +140,20 @@ cero para facilitar el dibujo.
 7. Repetir con intervalos de 5 s, 2 s y opcionalmente 1 s.
 8. Reemplazar cada **VALIDAR** con la evidencia y fecha de prueba.
 
+## Setpoint del termotanque
+
+Los dos tópicos son absolutos. El payload es un entero de 40 a 70 °C, como texto (por ejemplo `55`).
+
+| Tópico | Publica | QoS de publicación | Retenido |
+| --- | --- | --- | --- |
+| `termotanque/setpoint` | Raspberry Pi al cambiar el control | 1 | Sí |
+| `termotanque/setpoint_actual` | NodeMCU al aceptar el valor y cada 10 s junto con las temperaturas, si tiene un valor válido | 0 (PubSubClient) | Sí |
+
+El firmware se suscribe a `termotanque/setpoint` con QoS 1. Valida y guarda el valor
+antes de publicar el setpoint aceptado. Recibir dos veces el mismo pedido es
+posible con QoS 1 y debe ser inocuo.
+
+Mosquitto requiere `persistence true` para recuperar los valores retenidos al
+reiniciar. El panel indica comunicación perdida a los 30 s sin temperaturas
+nuevas. Los mensajes de temperatura entregados como retenidos y las
+confirmaciones de setpoint no reinician ese plazo.

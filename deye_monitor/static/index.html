@@ -4,14 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Deye Monitor</title>
-  <link rel="stylesheet" href="/static/style.css?v=49">
+  <link rel="stylesheet" href="/static/style.css?v=52">
   <link rel="stylesheet" href="/static/config.css?v=7">
 </head>
 <body>
   <main class="dashboard-shell">
     <p id="connection-status" class="connection-status" role="status"></p>
     <section class="dashboard-main" aria-label="Sol, Red, Casa y Batería">
-      <img class="dashboard-logo" src="/images/logo.png" alt="GreenVolt">
       <div class="dashboard-flow">
         <svg id="dashboard-flow-arrows" class="flow-arrows" viewBox="0 0 100 100" preserveAspectRatio="none" role="img" aria-labelledby="flow-arrows-title flow-arrows-description">
           <title id="flow-arrows-title">Sentido del flujo energético</title>
@@ -123,14 +122,30 @@
           <p id="ambient2-status" class="ambient-status" aria-live="polite">Sin dato</p>
           <p class="ambient-reading"><span id="ambient2-value">−</span> <span class="ambient-unit">°C</span></p>
         </article>
+        <section id="thermotank-setpoint" aria-labelledby="setpoint-label">
+          <div class="setpoint-heading">
+            <label id="setpoint-label" for="setpoint-range">Setpoint termotanque</label>
+            <output id="setpoint-value" for="setpoint-range">50 °C</output>
+          </div>
+          <div class="setpoint-controls">
+            <button id="setpoint-decrease" type="button" aria-label="Bajar 1 grado">−</button>
+            <input id="setpoint-range" type="range" min="40" max="70" step="1" value="50">
+            <button id="setpoint-increase" type="button" aria-label="Subir 1 grado">+</button>
+          </div>
+          <p class="setpoint-feedback">Solicitado <span id="setpoint-requested">—</span></p>
+          <p class="setpoint-feedback">Último <span id="setpoint-actual">—</span></p>
+          <p id="setpoint-status" role="status">Sin solicitud</p>
+          <p id="thermotank-communication" class="setpoint-feedback" role="status"></p>
+        </section>
         <nav class="dashboard-actions" aria-label="Acciones del dashboard">
           <button id="enable-beep" hidden>Activar sonido</button>
         </nav>
+        <img class="dashboard-logo" src="/images/logo.png" alt="GreenVolt">
       </div>
     </section>
     <footer class="dashboard-footer" aria-hidden="true"></footer>
   </main>
   <script src="/static/display.js?v=3"></script>
-  <script src="/static/app.js?v=28"></script>
+  <script src="/static/app.js?v=32"></script>
 </body>
 </html>
