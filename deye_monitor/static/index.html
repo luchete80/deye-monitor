@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Deye Monitor</title>
-  <link rel="stylesheet" href="/static/style.css?v=53">
+  <link rel="stylesheet" href="/static/style.css?v=57">
   <link rel="stylesheet" href="/static/config.css?v=7">
 </head>
 <body>
@@ -15,17 +15,21 @@
         <svg id="dashboard-flow-arrows" class="flow-arrows" viewBox="0 0 100 100" preserveAspectRatio="none" role="img" aria-labelledby="flow-arrows-title flow-arrows-description">
           <title id="flow-arrows-title">Sentido del flujo energético</title>
           <desc id="flow-arrows-description">El sentido de las conexiones se actualiza según las potencias medidas.</desc>
-          <path class="flow-cable" d="M 38 24 H 48 Q 50 24 50 26 M 62 24 H 52 Q 50 24 50 26 M 38 76 H 48 Q 50 76 50 74 M 62 76 H 52 Q 50 76 50 74 M 50 26 V 74"></path>
-          <path id="flow-trunk" class="flow-line idle" d="M 50 26 V 74"></path>
-          <path id="flow-pv" class="flow-line idle" d="M 38 24 H 48 Q 50 24 50 26"></path>
-          <path id="flow-grid" class="flow-line idle" d="M 62 24 H 52 Q 50 24 50 26"></path>
-          <path id="flow-battery" class="flow-line idle" d="M 38 76 H 48 Q 50 76 50 74"></path>
-          <path id="flow-load" class="flow-line idle" d="M 62 76 H 52 Q 50 76 50 74"></path>
-          <path id="flow-pv-pulse" class="flow-pulse" d="M 38 24 H 48 Q 50 24 50 26"></path>
-          <path id="flow-grid-pulse" class="flow-pulse" d="M 62 24 H 52 Q 50 24 50 26"></path>
-          <path id="flow-battery-pulse" class="flow-pulse" d="M 38 76 H 48 Q 50 76 50 74"></path>
-          <path id="flow-load-pulse" class="flow-pulse" d="M 62 76 H 52 Q 50 76 50 74"></path>
-          <path id="flow-trunk-pulse" class="flow-pulse" d="M 50 26 V 74"></path>
+          <path id="flow-cable-pv" class="flow-cable idle" d="M 42 18.5 H 50"></path>
+          <path id="flow-cable-grid" class="flow-cable idle" d="M 58 18.5 H 50"></path>
+          <path id="flow-cable-battery" class="flow-cable idle" d="M 42 70.5 H 50"></path>
+          <path id="flow-cable-load" class="flow-cable idle" d="M 58 70.5 H 50"></path>
+          <path id="flow-cable-trunk" class="flow-cable idle" d="M 50 18.5 V 70.5"></path>
+          <path id="flow-trunk" class="flow-line idle" d="M 50 18.5 V 70.5"></path>
+          <path id="flow-pv" class="flow-line idle" d="M 42 18.5 H 50"></path>
+          <path id="flow-grid" class="flow-line idle" d="M 58 18.5 H 50"></path>
+          <path id="flow-battery" class="flow-line idle" d="M 42 70.5 H 50"></path>
+          <path id="flow-load" class="flow-line idle" d="M 58 70.5 H 50"></path>
+          <path id="flow-pv-pulse" class="flow-pulse" d="M 42 18.5 H 50"></path>
+          <path id="flow-grid-pulse" class="flow-pulse" d="M 58 18.5 H 50"></path>
+          <path id="flow-battery-pulse" class="flow-pulse" d="M 42 70.5 H 50"></path>
+          <path id="flow-load-pulse" class="flow-pulse" d="M 58 70.5 H 50"></path>
+          <path id="flow-trunk-pulse" class="flow-pulse" d="M 50 18.5 V 70.5"></path>
         </svg>
         <section class="metric-grid" aria-label="Estado energético actual">
           <article class="metric-card metric-card--solar" data-metric="solar">
@@ -39,7 +43,7 @@
                 <span class="metric-primary"><span id="solar-value">-</span><span class="metric-unit"> W</span></span>
               </p>
               <span class="metric-details metric-secondary">
-                <span id="solar-details">PV1: - W · - A<br>PV2: - W · - A</span>
+                <span id="solar-details"></span>
                 <span id="solar-today">Hoy: -</span>
               </span>
             </div>
@@ -57,8 +61,8 @@
                 <span class="metric-primary"><span id="grid-value">-</span><span class="metric-unit"> W</span></span>
               </p>
               <span class="metric-details metric-secondary">
-                <span id="grid-top">Tensión: -</span>
-                <span>Hoy: <span id="grid-today">-</span></span>
+                <span id="grid-top">-</span>
+                <span id="grid-today"></span>
                 <span id="grid-bottom">Ciclo: -</span>
               </span>
             </div>
@@ -77,7 +81,7 @@
                 <span class="metric-primary"><span id="load-value">-</span><span class="metric-unit"> W</span></span>
               </p>
               <span class="metric-details metric-secondary">
-                <span id="load-current">Corriente: - A</span>
+                <span id="load-current">-</span>
                 <span id="load-top">Hoy: -</span>
                 <span id="load-bottom">Mes: -</span>
               </span>
@@ -99,10 +103,10 @@
                   <path class="metric-gauge__track" d="M 8 60 A 52 52 0 0 1 112 60"></path>
                   <path class="metric-gauge__level" pathLength="100" stroke-dasharray="0 100" d="M 8 60 A 52 52 0 0 1 112 60"></path>
                 </svg>
-                <span class="battery-flow-status" id="battery-power-status">Sin dato</span>
+                <svg class="metric-icon metric-icon--battery" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><rect x="7" y="12" width="34" height="24" rx="4"></rect><path d="M41 20h3v8h-3M19 18l-5 7h7l-3 6 8-9h-7l3-4"></path></svg>
                 <p class="metric-value">
                   <span class="metric-primary"><span id="battery-power">-</span><span class="metric-unit"> W</span></span>
-                  <span class="battery-state-line"><span id="battery-soc">-</span><span class="metric-unit"> %</span><span class="battery-separator"> · </span><span id="battery-value">-</span> kWh</span>
+                  <span class="battery-state-line"><span id="battery-soc">-</span><span class="metric-unit"> %</span><span class="battery-separator"> · </span><span id="battery-value">-</span><span class="battery-capacity-unit"> kWh</span></span>
                 </p>
               </div>
               <div class="battery-shell" aria-hidden="true"><div class="battery-fill"><span class="battery-segment"></span><span class="battery-segment"></span><span class="battery-segment"></span><span class="battery-segment"></span><span class="battery-segment"></span><span class="battery-segment"></span><span class="battery-segment"></span><span class="battery-segment"></span><span class="battery-segment"></span><span class="battery-segment"></span></div></div>
@@ -146,6 +150,6 @@
     <footer class="dashboard-footer" aria-hidden="true"></footer>
   </main>
   <script src="/static/display.js?v=3"></script>
-  <script src="/static/app.js?v=32"></script>
+  <script src="/static/app.js?v=33"></script>
 </body>
 </html>

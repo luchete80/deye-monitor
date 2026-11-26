@@ -74,9 +74,9 @@ class SG03LP1Adapter:
             return None
         if value is None:
             return None
-        # A configured power source remains unknown until its sign convention is explicit.
+        # Normalize grid import and battery discharge as positive; unknown conventions stay unpublished.
         sign = self.signs.get(field)
-        if sign == "export_positive" or sign == "discharge_positive":
+        if sign == "export_positive" or sign == "charge_positive":
             value = -value
         if sign == "unknown":
             return None

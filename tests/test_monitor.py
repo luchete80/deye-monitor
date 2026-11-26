@@ -109,7 +109,11 @@ def test_configured_power_signs_are_explicit_and_unknown_is_not_published():
     assert unknown.adapt("deye/ac/grid", b"30") is None
     explicit = SG03LP1Adapter("deye", topics, grid_power_sign="export_positive", battery_power_sign="charge_positive")
     assert explicit.adapt("deye/ac/grid", b"30") == ("grid.power_w", -30.0)
-    assert explicit.adapt("deye/battery/power", b"30") == ("battery.power_w", 30.0)
+    assert explicit.adapt("deye/battery/power", b"30") == ("battery.power_w", -30.0)
+    assert explicit.adapt("deye/battery/power", b"-30") == ("battery.power_w", 30.0)
+    discharge_positive = SG03LP1Adapter("deye", topics, battery_power_sign="discharge_positive")
+    assert discharge_positive.adapt("deye/battery/power", b"30") == ("battery.power_w", 30.0)
+    assert discharge_positive.adapt("deye/battery/power", b"-30") == ("battery.power_w", -30.0)
 
 
 def test_invalid_sign_and_data_source_configuration_fail_fast():

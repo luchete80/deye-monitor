@@ -225,13 +225,14 @@ Los bloques y el encabezado mostrarán el estado “Dato antiguo”.
 
 ## Configuración y validación pendiente (Delivery 0)
 
-Copiar `.env.example` a `.env`. Todos los suffixes, prefijo, umbral stale y credenciales MQTT son configurables allí. El adaptador inicial cubre `dc/pv1/power`, `dc/pv2/power`, `ac/l1/voltage`, `ac/daily_energy_bought`, `ac/daily_energy_sold`, `ac/total_power`, `radiator_temp` y `ac/temperature`.
+Copiar `.env.example` a `.env`. Todos los suffixes, prefijo, umbral stale y credenciales MQTT son configurables allí. El adaptador inicial cubre `dc/pv1/power`, `dc/pv2/power`, `day_energy`, `ac/l1/voltage`, `ac/daily_energy_bought`, `ac/daily_energy_sold`, `ac/total_power`, `radiator_temp` y `ac/temperature`. El total diario de PV usa `DEYE_TOPIC_PV_ENERGY_TODAY` (`day_energy` por defecto); queda separado del historial PV integrado desde potencia anterior al cambio.
 
 No se infieren SOC, potencia/estado de batería, consumo UPS + Load ni potencia de red. `ac/total_power` queda como diagnóstico del inversor, no como carga ni red. Sólo se puede habilitar potencia de red/batería con sus variables de topic y una convención explícita (`import_positive`/`export_positive`, `charge_positive`/`discharge_positive`); con `unknown` no se publica un valor. El topic de salida se habilita por separado con `DEYE_TOPIC_UPS_LOAD_POWER`, una vez confirmado en Delivery 0.
 
 Las convenciones de signo son estrictas: un valor distinto de esos conjuntos
 detiene el arranque con un error de configuración, en lugar de interpretar una
-potencia ambiguamente.
+potencia ambiguamente. Los valores publicados se normalizan a importación de
+red positiva y descarga de batería positiva; la carga de batería queda negativa.
 
 Antes de conectar al inversor real se debe validar y documentar: existencia y unidades de cada topic, prefijo y nivel de logger, payload/retained, frecuencia real y umbral stale, significado de `status` y `logger_status`, y signos de potencia de red/batería durante importación, exportación, carga y descarga. Los fixtures `grid_*_hypothesis.json` son hipótesis de signo, no evidencia.
 
@@ -273,8 +274,9 @@ lectura de tensión es fresca. Lecturas desconocidas/vencidas no indican corte.
 
 SQLite guarda agregados diarios en `energy_days` y bases del contador mensual
 reiniciable en `energy_resets`, independientemente de la retención del historial.
-Cada métrica se integra por separado; no hace falta SOC para acumular Casa.
-Se integra la parte positiva de potencia con intervalos cortos y frescos,
+Casa y Red se integran por separado. La integración de Casa solo requiere su
+potencia. El total solar diario guarda el último contador MQTT del día local.
+Para Casa y Red, se integra la parte positiva de potencia con intervalos cortos y frescos,
 separando días locales y cruces por cero. Los contadores diarios de compra/venta
 del equipo corrigen la estimación entre lecturas válidas, con control de saltos
 imposibles y reinicios. No se integra a través de huecos de datos o reinicios del

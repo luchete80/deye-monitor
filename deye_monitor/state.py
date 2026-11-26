@@ -26,6 +26,7 @@ class StateStore:
             "solar": {
                 "pv1_power_w": None, "pv2_power_w": None, "total_power_w": None,
                 "pv1_current_a": None, "pv2_current_a": None,
+                "energy_today_kwh": None,
             },
             "battery": {"soc_pct": None, "power_w": None, "current_a": None},
             "grid": {

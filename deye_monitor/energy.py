@@ -41,7 +41,7 @@ class EnergyStore:
         now = now or datetime.now(timezone.utc)
         offline = (not snapshot.get('flow', {}).get('simulated') and snapshot.get('connectivity', {}).get('broker') == 'disconnected') or any(snapshot.get('connectivity', {}).get(k) == 'offline' for k in ('service', 'logger'))
         with self._lock, self.db:
-            for metric, group in (('home', 'load'), ('solar', 'solar'), ('grid_import', 'grid'), ('grid_export', 'grid')):
+            for metric, group in (('home', 'load'), ('grid_import', 'grid'), ('grid_export', 'grid')):
                 field = 'power_w' if group == 'grid' else 'total_power_w'
                 value = snapshot.get(group, {}).get(field)
                 fresh = snapshot.get('field_freshness', {}).get(group, {}).get(field) is True
@@ -99,11 +99,33 @@ class EnergyStore:
                 else:
                     self._counters.pop(metric, None)
 
+            counter = snapshot.get('solar', {}).get('energy_today_kwh')
+            current_day = snapshot.get('field_freshness', {}).get('solar', {}).get('energy_today_kwh') is True
+            day = now.astimezone(self.zone).date()
+            # Counter topics may publish less often than the power freshness TTL.
+            # Accept a stale last value only when its observation is from today.
+            stamp = snapshot.get('field_timestamps', {}).get('solar', {}).get('energy_today_kwh')
+            if stamp:
+                try:
+                    current_day = datetime.fromisoformat(stamp).astimezone(self.zone).date() == day
+                except (TypeError, ValueError):
+                    current_day = False
+            if not offline and current_day and valid(counter) and counter >= 0:
+                # A distinct metric keeps historical power integrals out of this total.
+                self.db.execute(
+                    "INSERT INTO energy_days VALUES (?, 'solar_counter', ?, 0) "
+                    "ON CONFLICT(day, metric) DO UPDATE SET kwh=excluded.kwh "
+                    "WHERE energy_days.kwh != excluded.kwh",
+                    (day.isoformat(), counter),
+                )
+
     def _period(self, metric, start, end, now):
-        rows = self.db.execute("SELECT SUM(kwh) AS kwh, SUM(seconds) AS seconds FROM energy_days WHERE metric=? AND day>=? AND day<?", (metric, start.date().isoformat(), end.date().isoformat())).fetchone()
+        db_metric = 'solar_counter' if metric == 'solar' else metric
+        rows = self.db.execute("SELECT SUM(kwh) AS kwh, SUM(seconds) AS seconds FROM energy_days WHERE metric=? AND day>=? AND day<?", (db_metric, start.date().isoformat(), end.date().isoformat())).fetchone()
         expected = max(0, (min(now, end.astimezone(timezone.utc)) - start.astimezone(timezone.utc)).total_seconds())
         covered = rows['seconds'] or 0
-        return {'kwh': rows['kwh'] if covered else None, 'coverage_seconds': covered,
+        has_counter = metric == 'solar' and rows['kwh'] is not None
+        return {'kwh': rows['kwh'] if covered or has_counter else None, 'coverage_seconds': covered,
                 'complete': covered >= max(0, expected - self.max_gap) and covered > 0,
                 'start': start.isoformat(), 'end': end.isoformat()}
 

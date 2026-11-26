@@ -52,13 +52,45 @@ const FlowLogic=(()=>{
     const flowDirection=direction(kind,value,deadband);
     return{status:flowDirection?'active':'idle',direction:flowDirection};
   }
-  return{direction,pathDirection,offline,state};
+  function transition(kind,value,deadband,fresh,connectivity,simulated,previous){
+    const current=state(kind,value,deadband,fresh,connectivity,simulated);
+    if(previous?.status!=='active'||current.status==='stale'||current.status==='offline'||current.status==='unknown')return current;
+    const sign=value>0?1:value<0?-1:0;
+    if(sign!==previous.direction)return current.status==='active'?current:{status:'idle',direction:0};
+    if(Math.abs(value)<=deadband/2)return{status:'idle',direction:0};
+    return{status:'active',direction:previous.direction};
+  }
+  function bridge(results,values,deadband,previousDirection=0){
+    const active=id=>results[id]?.status==='active';
+    const pv=active('pv')&&values.pv>0?values.pv:0;
+    const grid=active('grid')?values.grid:0;
+    const battery=active('battery')?values.battery:0;
+    const load=active('load')&&values.load>0?values.load:0;
+    const upperNet=pv+grid,lowerNet=battery-load;
+    const downSupport=(active('pv')&&values.pv>0||active('grid')&&values.grid>0)&&
+      (active('battery')&&values.battery<0||active('load')&&values.load>0);
+    const upSupport=active('grid')&&values.grid<0&&active('battery')&&values.battery>0;
+    const candidate=downSupport&&upperNet>deadband&&lowerNet < -deadband?1:
+      upSupport&&upperNet < -deadband&&lowerNet>deadband?-1:0;
+    if(previousDirection){
+      const support=previousDirection>0?downSupport:upSupport;
+      const sameSide=previousDirection>0?upperNet>0&&lowerNet<0:upperNet<0&&lowerNet>0;
+      if(support&&sameSide&&Math.abs(upperNet)>deadband/2&&Math.abs(lowerNet)>deadband/2)
+        return{active:true,direction:previousDirection,upperNet,lowerNet};
+    }
+    return{active:candidate!==0,direction:candidate,upperNet,lowerNet};
+  }
+  return{direction,pathDirection,offline,state,transition,bridge};
 })();
 
+const flowBranchState={pv:null,grid:null,battery:null,load:null};
+let flowTrunkDirection=0;
 function setFlow(id,value,result,pathDirection,label){
   const line=document.querySelector(`#flow-${id}`);
   if(!line)return;
   line.setAttribute('class',`flow-line ${result.status}${pathDirection<0?' reverse':''}`);
+  const cable=document.querySelector(`#flow-cable-${id}`);
+  if(cable)cable.setAttribute('class',`flow-cable ${result.status}${pathDirection<0?' reverse':''}`);
   const pulse=document.querySelector(`#flow-${id}-pulse`);
   if(pulse)pulse.setAttribute('class',`flow-pulse ${result.status}${pathDirection<0?' reverse':''}`);
   const suffix=result.status==='stale'?' · dato antiguo':result.status==='offline'?' · sin conexión':result.status==='unknown'?' · sin dato':'';
@@ -80,7 +112,8 @@ function renderFlow(snapshot){
   const results={};
   flows.forEach(([id,path,forwardLabel])=>{
     const value=source(path);
-    const result=FlowLogic.state(id,value,deadband,fresh(path),connectivity,simulated);
+    const result=FlowLogic.transition(id,value,deadband,fresh(path),connectivity,simulated,flowBranchState[id]);
+    flowBranchState[id]=result;
     results[id]=result;
     const pathDirection=FlowLogic.pathDirection(id,result.direction);
     let label=forwardLabel;
@@ -88,20 +121,19 @@ function renderFlow(snapshot){
     if(id==='battery'&&result.direction>0)label='Batería → Inversor';
     setFlow(id,value,result,pathDirection,label);
   });
-  const upperFields=['solar.total_power_w','grid.power_w'];
-  const lowerFields=['battery.power_w','load.total_power_w'];
-  const allFresh=[...upperFields,...lowerFields].every(path=>fresh(path)&&known(source(path))&&metricState(snapshot,...path.split('.'))==='online');
-  const upperNet=source(upperFields[0])+source(upperFields[1]);
-  const lowerNet=source(lowerFields[0])-source(lowerFields[1]);
+  const values={pv:source('solar.total_power_w'),grid:source('grid.power_w'),battery:source('battery.power_w'),load:source('load.total_power_w')};
+  const bridge=FlowLogic.bridge(results,values,deadband,flowTrunkDirection);
+  flowTrunkDirection=bridge.direction;
   const trunk=document.querySelector('#flow-trunk');
   if(trunk){
-    const downward=allFresh&&upperNet>deadband&&lowerNet < -deadband;
-    const upward=allFresh&&upperNet < -deadband&&lowerNet>deadband;
-    const status=Object.values(results).some(result=>result.status==='offline')?'offline':!allFresh?'stale':'idle';
-    trunk.setAttribute('class',`flow-line ${downward||upward?'active':status}${upward?' reverse':''}`);
+    const upward=bridge.active&&bridge.direction<0;
+    const status=bridge.active?'active':'idle';
+    trunk.setAttribute('class',`flow-line ${status}${upward?' reverse':''}`);
+    const trunkCable=document.querySelector('#flow-cable-trunk');
+    if(trunkCable)trunkCable.setAttribute('class',`flow-cable ${status}${upward?' reverse':''}`);
     const pulse=document.querySelector('#flow-trunk-pulse');
-    if(pulse)pulse.setAttribute('class',`flow-pulse ${downward||upward?'active':status}${upward?' reverse':''}`);
-    trunk.setAttribute('aria-label',`Flujo central: ${downward?'hacia batería y casa':upward?'hacia red':'en reposo'}`);
+    if(pulse)pulse.setAttribute('class',`flow-pulse ${status}${upward?' reverse':''}`);
+    trunk.setAttribute('aria-label',`Flujo central: ${bridge.direction>0?'hacia batería y casa':upward?'hacia red':'en reposo'}`);
   }
 }
 
@@ -115,24 +147,42 @@ function homeDayScale(kwh,config){
 function batteryDetails(snapshot,config){
   const soc=snapshot.battery?.soc_pct,raw=snapshot.battery?.power_w;
   const fresh=metricState(snapshot,'battery','soc_pct')==='online'&&metricState(snapshot,'battery','power_w')==='online';
+  const powerFresh=metricState(snapshot,'battery','power_w')==='online';
   const deadband=snapshot.flow?.deadband_w??30;
   const charging=fresh&&raw < -deadband,discharging=fresh&&raw > deadband;
   const alert=fresh&&((soc<=config.soc_min&&!charging)||(soc>=config.soc_max&&charging));
   const fraction=metricState(snapshot,'battery','soc_pct')==='online'&&known(soc)?Math.min(1,Math.max(0,(soc-config.soc_min)/(config.soc_max-config.soc_min))):null;
   const available=known(config.battery_usable_kwh)&&fraction!==null?config.battery_usable_kwh*fraction:null;
-  return {alert,available,fraction,flow:fresh?(charging?'charging':discharging?'discharging':'idle'):'unknown'};
-}
-function energyText(period){
-  return known(period?.kwh)?`${number(period.kwh,'kWh')}${period.complete?'':''}`:'Sin historial suficiente';
+  const flow=powerFresh?(raw < -deadband?'charging':raw > deadband?'discharging':'idle'):'unknown';
+  return {alert,available,fraction,flow};
 }
 function put(id,text){const element=document.querySelector(`#${id}`);if(element)element.textContent=text}
+function appendUnit(element,unit){const suffix=document.createElement('span');suffix.className='detail-unit';suffix.textContent=` ${unit}`;element.append(suffix)}
+function putDetail(id,label,value,unit=''){
+  const element=document.querySelector(`#${id}`);if(!element)return;
+  element.replaceChildren();
+  if(label)element.append(document.createTextNode(label));
+  element.append(document.createTextNode(value));
+  if(unit&&value!=='-'&&value!=='Sin historial suficiente')appendUnit(element,unit);
+}
+function appendMeasurement(element,value,unit){
+  element.append(document.createTextNode(value));
+  appendUnit(element,unit);
+}
 function renderStationDetails(snapshot){
   const power=(group,field)=>metricState(snapshot,group,field)==='online'?dashboardValue(lookup(snapshot,`${group}.${field}`)):'-';
   const current=(group,field)=>metricState(snapshot,group,field)==='online'?dashboardValue(lookup(snapshot,`${group}.${field}`)):'-';
   const pv1w=power('solar','pv1_power_w'),pv1a=current('solar','pv1_current_a');
   const pv2w=power('solar','pv2_power_w'),pv2a=current('solar','pv2_current_a');
-  put('solar-details',`PV1: ${pv1w} W · ${pv1a} A\nPV2: ${pv2w} W · ${pv2a} A`);
-  put('load-current',`Corriente: ${current('load','current_a')} A`);
+  const solarDetails=document.querySelector('#solar-details');
+  if(solarDetails){
+    solarDetails.replaceChildren();
+    solarDetails.append(document.createTextNode('PV1: '));appendMeasurement(solarDetails,pv1w,'W');
+    solarDetails.append(document.createTextNode(' · '));appendMeasurement(solarDetails,pv1a,'A');
+    solarDetails.append(document.createElement('br'),document.createTextNode('PV2: '));appendMeasurement(solarDetails,pv2w,'W');
+    solarDetails.append(document.createTextNode(' · '));appendMeasurement(solarDetails,pv2a,'A');
+  }
+  putDetail('load-current','',current('load','current_a'),'A');
   put('battery-current',current('battery','current_a'));
 }
 function renderMetrics(snapshot){
@@ -156,9 +206,13 @@ function renderMetrics(snapshot){
         gauge.querySelector('.metric-gauge__level')?.setAttribute('stroke-dasharray',`${powerPercent??0} 100`);
         const powerLevel=gauge.querySelector('.metric-gauge__level');
         if(powerLevel)powerLevel.style.visibility=powerPercent>0?'visible':'hidden';
-        gauge.querySelectorAll('.battery-segment').forEach((segment,index)=>{
-          segment.classList.toggle('active',chargeFraction!==null&&index<Math.round(chargeFraction*10));
+        const segments=[...gauge.querySelectorAll('.battery-segment')];
+        const activeCount=chargeFraction===null?0:Math.round(chargeFraction*segments.length);
+        segments.forEach((segment,index)=>{
+          segment.classList.toggle('active',index<activeCount);
+          segment.classList.toggle('charging-tip',batteryDetail.flow==='charging'&&activeCount>0&&index===activeCount-1);
         });
+        gauge.dataset.flow=batteryDetail.flow;
         gauge.setAttribute('aria-label',`Batería: ${dashboardValue(snapshot.battery?.soc_pct)} % · ${dashboardValue(batteryDetail.available)} kWh · ${stateLabel(state)}`);
       }
     }
@@ -173,25 +227,25 @@ function renderMetrics(snapshot){
       }
     }
   }
-  const batteryPowerKnown=metricState(snapshot,'battery','power_w')==='online';
-  const batteryDirection=batteryPowerKnown?batteryFlowState(snapshot.battery?.power_w):'unknown';
-  const flowLabel={charging:'Cargando',discharging:'Descargando',idle:'En reposo',unknown:'Sin dato'}[batteryDirection];
-  put('battery-power-status',flowLabel);
   renderStationDetails(snapshot);
   if(!dashboardConfig)return;
   const cfg=dashboardConfig;
-  put('solar-today', `Hoy: ${known(energySummary?.solar_day?.kwh) ? number(energySummary.solar_day.kwh,'kWh') : '-'}`);
+  putDetail('solar-today','Hoy: ',known(energySummary?.solar_day?.kwh)?dashboardValue(energySummary.solar_day.kwh):'-','kWh');
   const voltageState=metricState(snapshot,'grid','voltage_v');
   const absent=voltageState==='online'&&snapshot.grid.voltage_v<cfg.grid_absent_below_v;
   const grid=document.querySelector('[data-metric="grid"]');
   if(grid)grid.dataset.absent=String(absent);
-  put('grid-top',absent?'Sin tensión':voltageState==='online'?`Tensión: ${number(snapshot.grid.voltage_v,'V')}`:'Tensión: sin dato');
-  const bought=metricState(snapshot,'grid','energy_bought_today_kwh')==='online'?number(snapshot.grid.energy_bought_today_kwh,'kWh'):'-';
-  put('grid-today',`Compra: ${bought}`);
-  put('grid-bottom',cfg.billing_day===null?'':`Ciclo: ${energyText(energySummary?.grid_billing)}`);
+  if(absent)put('grid-top','Sin tensión');
+  else putDetail('grid-top','',voltageState==='online'?dashboardValue(snapshot.grid.voltage_v):'-','V');
+  const bought=metricState(snapshot,'grid','energy_bought_today_kwh')==='online'?dashboardValue(snapshot.grid.energy_bought_today_kwh):'-';
+  putDetail('grid-today','Hoy: ',bought,'kWh');
+  const gridBilling=energySummary?.grid_billing;
+  if(cfg.billing_day===null)put('grid-bottom','');
+  else putDetail('grid-bottom','Ciclo: ',known(gridBilling?.kwh)?dashboardValue(gridBilling.kwh):'Sin historial suficiente',known(gridBilling?.kwh)?'kWh':'');
   const daily=energySummary?.home_day;
-  put('load-top',`Hoy: ${energyText(daily)}`);
-  put('load-bottom',`Mes: ${energyText(energySummary?.home_month)}`);
+  putDetail('load-top','Hoy: ',known(daily?.kwh)?dashboardValue(daily.kwh):'Sin historial suficiente',known(daily?.kwh)?'kWh':'');
+  const homeMonth=energySummary?.home_month;
+  putDetail('load-bottom','Mes: ',known(homeMonth?.kwh)?dashboardValue(homeMonth.kwh):'Sin historial suficiente',known(homeMonth?.kwh)?'kWh':'');
   const detail=batteryDetail;
   const battery=document.querySelector('[data-metric="battery"]');
   if(battery){battery.dataset.batteryFlow=detail.flow;battery.dataset.alert=String(detail.alert)}
@@ -200,9 +254,10 @@ function renderMetrics(snapshot){
     tone.connect(gain);gain.connect(audioContext.destination);gain.gain.value=.08;tone.frequency.value=880;tone.start();tone.stop(audioContext.currentTime+.15);
   }
   previousAlert=detail.alert;
-  put('home-last-month',`Mes anterior: ${energyText(energySummary?.home_last_month)}`);
+  const homeLastMonth=energySummary?.home_last_month;
+  putDetail('home-last-month','Mes anterior: ',known(homeLastMonth?.kwh)?dashboardValue(homeLastMonth.kwh):'Sin historial suficiente',known(homeLastMonth?.kwh)?'kWh':'');
   const counter=energySummary?.home_counter;
-  put('home-counter',`Contador mensual: ${number(counter?.kwh,'kWh')}`);
+  putDetail('home-counter','Contador mensual: ',known(counter?.kwh)?dashboardValue(counter.kwh):'-','kWh');
   put('home-reset-at',`Último reset: ${counter?.reset_at?new Date(counter.reset_at).toLocaleString('es-AR',{timeZone:cfg.timezone}):'sin dato'}`);
 }
 

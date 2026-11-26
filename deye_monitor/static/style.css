@@ -40,36 +40,44 @@ button[hidden]{display:none}
 .metric-icon--grid{color:var(--grid)}
 .metric-icon--load{color:var(--house)}
 .metric-secondary{position:static;display:block;max-width:100%;margin:0;color:#ededed;font-size:12px;font-weight:600;line-height:1.2;white-space:pre-line;text-shadow:none}
+.detail-unit{font-size:.62em;font-weight:600}
 .metric-details{position:absolute;top:53%;left:0;display:flex;width:100%;flex-direction:column;align-items:center;gap:1px;font-size:24px;line-height:1.15;text-align:center}
-.metric-card--solar .metric-value,.metric-card--grid .metric-value,.metric-card--load .metric-value,.battery-display .metric-value{inset:31% 0 auto;justify-content:flex-start;gap:2px}
+.metric-card--solar .metric-value,.metric-card--grid .metric-value{inset:31% 0 auto;justify-content:flex-start;gap:2px}
+.metric-card--load .metric-value{inset:33% 0 auto;justify-content:flex-start;gap:2px}
+.battery-display .metric-value{inset:33% 0 auto;justify-content:flex-start;gap:8px}
 .metric-card--solar .metric-secondary,.metric-card--grid .metric-secondary,.metric-card--load .metric-secondary{white-space:nowrap}
 .metric-card--solar #solar-details{white-space:pre-line;line-height:1.35}
 .metric-card--load .metric-details{font-size:21px;line-height:1.03}
 .metric-card--load .energy-summary{position:absolute;z-index:3;top:77.1%;left:0;display:flex;width:100%;flex-direction:column;align-items:center;gap:1px;color:#e7e7d3;text-align:center;font-size:10px;line-height:1.1}
+.metric-card--load .energy-summary .detail-unit{font-size:.8em}
 .metric-card--load .energy-summary button{font-size:10px;line-height:1.1}
 .metric-card--load .energy-summary #energy-status{color:#ddd}
 .battery-display{position:absolute;inset:0;display:block;color:#fff}
 .battery-display .metric-primary{font-size:clamp(40px,5.4vw,56px)}
-.battery-flow-status{position:absolute;top:11%;left:0;display:block;width:100%;color:var(--battery);font-size:32px;font-weight:700;line-height:1.1;text-align:center}
-.battery-state-line{display:block;color:#fff;font-size:26px;font-weight:650;line-height:1.1;white-space:nowrap}
-.battery-state-line .metric-unit{font-size:.75em}
+.metric-icon--battery{color:var(--battery)}
+.battery-state-line{display:block;color:#fff;font-size:24px;font-weight:650;line-height:1.1;white-space:nowrap}
+.battery-state-line .metric-unit{font-size:.58em}
+.battery-capacity-unit{font-size:.58em}
 .battery-separator{color:#aaa}
 .battery-shell{position:absolute;top:73%;left:16%;width:68%;height:19%;margin:0;padding:3px;overflow:visible;border:3px solid var(--battery);border-radius:8px;background:#000;box-shadow:none}
 .battery-shell::after{content:'';position:absolute;top:50%;right:-10px;width:7px;height:56%;transform:translateY(-50%);border:3px solid var(--battery);border-left:0;border-radius:0 5px 5px 0;background:#000}
 .battery-fill{display:grid;height:100%;grid-template-columns:repeat(10,minmax(0,1fr));gap:4px}
 .battery-segment{border-radius:3px;background:#242424}
 .battery-segment.active{background:var(--battery)}
+.battery-segment.charging-tip{animation:battery-charge-pulse 1.4s steps(1,end) infinite}
+@keyframes battery-charge-pulse{50%{background:#242424}}
 .flow-arrows{position:absolute;z-index:2;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
-.flow-cable{fill:none;stroke:#303030;stroke-width:1.25;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke;opacity:.75}
-.flow-line{fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke;opacity:.13}
-.flow-line.active{stroke:#fff;stroke-dasharray:none;animation:none;opacity:.78;filter:drop-shadow(0 0 2px #fff)}
+.flow-cable{fill:none;stroke:#303030;stroke-width:1.25;stroke-linecap:butt;stroke-linejoin:miter;vector-effect:non-scaling-stroke;visibility:hidden;opacity:0}
+.flow-cable.active{visibility:visible;opacity:.75}
+.flow-line{fill:none;stroke:#fff;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;vector-effect:non-scaling-stroke;visibility:hidden;opacity:0}
+.flow-line.active{visibility:visible;stroke:#fff;stroke-dasharray:none;animation:none;opacity:.78;filter:drop-shadow(0 0 2px #fff)}
 .flow-line.reverse{animation-direction:reverse}
 .flow-line.idle{stroke-dasharray:none;opacity:.12}
-.flow-line.stale,.flow-line.offline,.flow-line.unknown{stroke:#777;stroke-dasharray:none;opacity:.15;animation:none}
-.flow-pulse{fill:none;stroke:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke;opacity:0;pointer-events:none}
-.flow-pulse.active{stroke:#fff;stroke-dasharray:.5 12;stroke-dashoffset:0;animation:energy-flow .9s linear infinite;opacity:1;filter:drop-shadow(0 0 3px #fff)}
+.flow-line.stale,.flow-line.offline,.flow-line.unknown,.flow-line.idle{visibility:hidden;animation:none}
+.flow-pulse{fill:none;stroke:none;stroke-width:10;stroke-linecap:round;stroke-linejoin:miter;vector-effect:non-scaling-stroke;visibility:hidden;opacity:0;pointer-events:none}
+.flow-pulse.active{visibility:visible;stroke:#fff;stroke-dasharray:0 24;stroke-dashoffset:0;animation:energy-flow .9s linear infinite;opacity:1;filter:drop-shadow(0 0 3px #fff)}
 .flow-pulse.reverse{animation-direction:reverse}
-@keyframes energy-flow{to{stroke-dashoffset:-25}}
+@keyframes energy-flow{to{stroke-dashoffset:-48}}
 .temperature-cards{position:relative;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:repeat(2,minmax(0,1fr)) repeat(3,auto);gap:8px;min-width:0;min-height:0;height:100%;padding:12px 10px 16px 0;background:#000}
 .temperature-cards::before{position:absolute;top:10px;bottom:10px;left:-5px;border-left:1px solid #555;content:""}
 .ambient-card,.ambient-card--second{display:flex;box-sizing:border-box;min-width:0;min-height:0;flex-direction:column;align-items:center;justify-content:center;margin:0;padding:8px 4px;overflow:hidden;border:0;border-bottom:1px solid #555;border-radius:0;background:#000;text-align:center}
@@ -103,4 +111,4 @@ button[hidden]{display:none}
   .ambient-card h2,.ambient-card--second h2{font-size:14px}
   .ambient-reading,.ambient-card--second .ambient-reading{font-size:34px}
 }
-@media(prefers-reduced-motion:reduce){.flow-pulse.active{animation:none}}
+@media(prefers-reduced-motion:reduce){.flow-pulse.active,.battery-segment.charging-tip{animation:none}}

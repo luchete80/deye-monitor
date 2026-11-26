@@ -42,7 +42,7 @@ def test_one_kwh_independent_of_missing_sensors_and_restart_reset(tmp_path):
     end = hour(store, start)
     summary = store.summary(end)
     assert summary['home_day']['kwh'] == pytest.approx(1)
-    assert summary['solar_day']['kwh'] == pytest.approx(1)
+    assert summary['solar_day']['kwh'] is None
     assert summary['home_day']['complete']
     assert summary['grid_billing']['kwh'] == pytest.approx(1)
     reset = store.reset_home(end)
@@ -66,7 +66,7 @@ def test_gaps_stale_and_offline_are_not_integrated(tmp_path):
     store.record(stale, start + timedelta(hours=1, seconds=5))
     store.record(sample(), start + timedelta(hours=1, seconds=10))
     assert store.summary(start + timedelta(hours=1, seconds=10))['home_day']['kwh'] is None
-    assert store.summary(start + timedelta(hours=1, seconds=10))['solar_day']['kwh'] == pytest.approx(10/3600)
+    assert store.summary(start + timedelta(hours=1, seconds=10))['solar_day']['kwh'] is None
 
 
 def test_midnight_month_boundary_and_leap_billing_day(tmp_path):
@@ -80,6 +80,40 @@ def test_midnight_month_boundary_and_leap_billing_day(tmp_path):
     assert summary['grid_billing']['start'].startswith('2026-02-28')
     assert summary['grid_billing']['end'].startswith('2026-03-31')
     assert store.summary(datetime(2028, 3, 1, 4, tzinfo=timezone.utc))['grid_billing']['start'].startswith('2028-02-29')
+
+
+def test_pv_daily_counter_zero_missing_and_rollover_does_not_mix_legacy(tmp_path):
+    store = ledger(tmp_path)
+    start = datetime(2026, 10, 2, 3, tzinfo=timezone.utc)
+    with store.db:
+        store.db.execute("INSERT INTO energy_days VALUES ('2026-10-02', 'solar', 8.5, 3600)")
+    snap = sample()
+    snap['solar']['energy_today_kwh'] = 0
+    snap['field_freshness']['solar']['energy_today_kwh'] = True
+    store.record(snap, start)
+    assert store.summary(start)['solar_day']['kwh'] == 0
+
+    missing = sample()
+    store.record(missing, start + timedelta(hours=1))
+    assert store.summary(start + timedelta(hours=1))['solar_day']['kwh'] == 0
+
+    next_day = start + timedelta(days=1)
+    snap['field_timestamps'] = {
+        'solar': {'energy_today_kwh': (next_day - timedelta(seconds=1)).isoformat()},
+    }
+    store.record(snap, next_day)
+    assert store.summary(next_day)['solar_day']['kwh'] is None
+
+    rollover = sample()
+    rollover['solar']['energy_today_kwh'] = 1.25
+    rollover['field_freshness']['solar']['energy_today_kwh'] = True
+    rollover['field_timestamps'] = {'solar': {'energy_today_kwh': start.isoformat()}}
+    store.record(rollover, next_day)
+    assert store.summary(next_day)['solar_day']['kwh'] is None
+    rollover['field_timestamps']['solar']['energy_today_kwh'] = next_day.isoformat()
+    store.record(rollover, next_day + timedelta(seconds=5))
+    assert store.summary(next_day + timedelta(seconds=5))['solar_day']['kwh'] == pytest.approx(1.25)
+    assert store.db.execute("SELECT kwh FROM energy_days WHERE day='2026-10-02' AND metric='solar'").fetchone()['kwh'] == 8.5
 
 
 def test_rounded_device_counter_reconciles_without_losing_power(tmp_path):

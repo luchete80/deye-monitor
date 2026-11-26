@@ -111,6 +111,7 @@ class Config:
             "solar.pv2_power_w": _value("DEYE_TOPIC_PV2", "dc/pv2/power"),
             "solar.pv1_current_a": _value("DEYE_TOPIC_PV1_CURRENT", "dc/pv1/current"),
             "solar.pv2_current_a": _value("DEYE_TOPIC_PV2_CURRENT", "dc/pv2/current"),
+            "solar.energy_today_kwh": _value("DEYE_TOPIC_PV_ENERGY_TODAY", "day_energy"),
             "grid.voltage_v": _value("DEYE_TOPIC_GRID_VOLTAGE", "ac/l1/voltage"),
             "grid.energy_bought_today_kwh": _value("DEYE_TOPIC_GRID_ENERGY_BOUGHT", "ac/daily_energy_bought"),
             "grid.energy_sold_today_kwh": _value("DEYE_TOPIC_GRID_ENERGY_SOLD", "ac/daily_energy_sold"),
